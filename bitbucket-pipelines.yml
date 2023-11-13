@@ -1,0 +1,11 @@
+# Adapted from: https://stackoverflow.com/a/77021441
+# SPDX-FileCopyrightText: (c) 2023 "MagMax" <https://magmax.org>
+# SPDX-License-Identifier: CC-BY-SA-4.0
+pipelines:
+  branches:
+    default:
+      - step:
+          script:
+            - git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+            - git fetch --all
+            - git push --mirror ${HTMLTAG_GH_MIRROR}
