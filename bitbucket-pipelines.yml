@@ -8,4 +8,9 @@ pipelines:
           script:
             - git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
             - git fetch --all
+            - >
+             for b in $(git branch -a | grep remotes | grep -vE "(default|${BITBUCKET_BRANCH:-HEAD})");
+             do
+               git branch --track ${b#remotes/origin/} $b;
+             done
             - git push --mirror ${HTMLTAG_GH_MIRROR}
