@@ -116,6 +116,7 @@ var
   npp: TApplication;
   doc: TActiveDocument;
   Target, Match, MatchNext: TTextRange;
+  ColumnSel: Boolean;
   HiByte, LoByte: Cardinal;
   EmojiChars: array [0..1] of WideChar;
 begin
@@ -123,7 +124,7 @@ begin
 
   npp := GetApplication();
   doc := npp.ActiveDocument;
-
+  ColumnSel := (doc.SendMessage(SCI_GETSELECTIONMODE) <> SC_SEL_STREAM);
   Target := TTextRange.Create(doc, doc.Selection.StartPos, doc.Selection.EndPos);
   Match := TTextRange.Create(doc);
   try
@@ -161,7 +162,7 @@ begin
         if (Result < 1) then doc.Selection.StartPos := Match.StartPos;
         Inc(Result);
       end;
-    until Match.Length = 0;
+    until (Match.Length = 0) or (ColumnSel and (Result = doc.SendMessage(SCI_GETSELECTIONS)));
 
     if Result > 0 then doc.Selection.ClearSelection;
   finally

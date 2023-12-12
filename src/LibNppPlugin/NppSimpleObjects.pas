@@ -517,8 +517,11 @@ end;
 function TSelection.GetText: WideString;
 var
   Chars: AnsiString;
+  LenSel: Sci_Position;
 begin
-  Chars := StringOfChar(#0, Self.GetLength + 1);
+  LenSel := FEditor.SendMessage(SCI_GETSELTEXT, 0, Nil);
+  if FEditor.ApiLevel >= sciApi_GTE_515 then Inc(LenSel);
+  Chars := StringOfChar(#0, LenSel);
   FEditor.SendMessage(SCI_GETSELTEXT, 0, PAnsiChar(Chars));
   case FEditor.SendMessage(SCI_GETCODEPAGE) of
     SC_CP_UTF8:
@@ -539,6 +542,10 @@ begin
     Chars := UTF8Encode(AValue)
   else
     Chars := RawByteString(AValue);
+  end;
+  if (FEditor.SendMessage(SCI_GETSELECTIONS) > 1) then begin
+    FEditor.SendMessage(SCI_SETSEL, Self.Anchor, Self.GetCurrentPos);
+    Chars := TrimRight(Chars);
   end;
   NewLength := System.Length(Chars) - 1;
   Reversed := (Self.Anchor > Self.GetCurrentPos);
