@@ -39,6 +39,7 @@ type
     procedure LoadOptions;
     procedure SaveOptions;
     procedure FindAndDecode(const KeyCode: Integer; Cmd: TDecodeCmd = dcAuto);
+    procedure AutoCompleteMatchingTag(const StartPos: Sci_Position; TagName: nppPChar);
   public
     constructor Create;
     destructor Destroy; override;
@@ -53,6 +54,7 @@ type
     procedure commandAbout;
     procedure SetInfo(NppData: TNppData); override;
     procedure DoNppnToolbarModification; override;
+    procedure DoAutoCSelection({%H-}const hwnd: HWND; const StartPos: Sci_Position; ListItem: nppPChar); override;
     procedure DoCharAdded({%H-}const hwnd: HWND; const ch: Integer); override;
     procedure ToggleOption(OptionPtr: PPluginOption; MenuPos: TCmdMenuPosition);
     procedure ShellExecute(const FullName: WideString; const Verb: WideString = 'open'; const WorkingDir: WideString = '';
@@ -254,6 +256,16 @@ begin
     HandleException(ExceptObject, ExceptAddr);
   end;
 {$ENDIF}
+end;
+
+{ ------------------------------------------------------------------------------------------------ }
+procedure TNppPluginHTMLTag.DoAutoCSelection({%H-}const hwnd: HWND; const StartPos: Sci_Position; ListItem: nppPChar);
+begin
+{$IFDEF CPUX64}
+  if not SupportsBigFiles then
+    Exit;
+{$ENDIF}
+  AutoCompleteMatchingTag(StartPos, ListItem);
 end;
 
 { ------------------------------------------------------------------------------------------------ }
@@ -604,6 +616,39 @@ begin
     end;
     doc.Selection.ClearSelection;
     doc.CurrentPosition := caret;
+  end;
+end;
+
+{ ------------------------------------------------------------------------------------------------ }
+procedure TNppPluginHTMLTag.AutoCompleteMatchingTag(const StartPos: Sci_Position; TagName: nppPChar);
+const
+  MaxTagLength = 72; { https://www.rfc-editor.org/rfc/rfc1866#section-3.2.3 }
+var
+  Doc: TActiveDocument;
+  TagEnd: TTextRange;
+  NewTagName: PAnsiChar;
+  MultiPasteMode : Integer;
+begin
+  Doc := App.ActiveDocument;
+  NewTagName := PAnsiChar(UTF8Encode(nppString(TagName)));
+
+  if (Doc.SendMessage(SCI_GETSELECTIONS) < 2) or (Length(NewTagName) > MaxTagLength) then
+    Exit;
+
+  try
+    TagEnd := TTextRange.Create(Doc);
+    Doc.Find('[/>\s]', TagEnd, SCFIND_REGEXP, StartPos, StartPos+MaxTagLength+1);
+    if TagEnd.Length <> 0 then begin
+      MultiPasteMode := Doc.SendMessage(SCI_GETMULTIPASTE);
+      Doc.SendMessage(SCI_SETMULTIPASTE, SC_MULTIPASTE_EACH);
+      Doc.SendMessage(SCI_COPYTEXT, Length(NewTagName), NewTagName);
+      CommandSelectMatchingTags;
+      Doc.SendMessage(SCI_PASTE);
+      Doc.SendMessage(SCI_SETMULTIPASTE, MultiPasteMode);
+      Doc.SendMessage(SCI_CANCEL);
+    end;
+  finally
+    FreeAndNil(TagEnd);
   end;
 end;
 

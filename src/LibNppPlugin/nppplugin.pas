@@ -44,6 +44,7 @@ uses
   private
     FClosingBufferID: THandle;
     FConfigDir: string;
+    FIsAutoCompletionCandidate: Boolean;
     function IsDarkModeEnabled: Boolean;
     function MinSubsystemIsVista: Boolean;
   protected
@@ -81,7 +82,8 @@ uses
     procedure DoNppnShutdown; virtual;
     procedure DoNppnBufferActivated(const BufferID: THandle); virtual;
     procedure DoNppnFileClosed(const BufferID: THandle); virtual;
-    procedure DoCharAdded(const hwnd: HWND; const ch: Integer); virtual;
+    procedure DoAutoCSelection(const hwnd: HWND; const StartPos: Sci_Position; ListItem: nppPChar); virtual; abstract;
+    procedure DoCharAdded(const hwnd: HWND; const ch: Integer); virtual; abstract;
     procedure DoUpdateUI(const hwnd: HWND; const updated: Integer); virtual;
     procedure DoModified(const hwnd: HWND; const modificationType: Integer); virtual;
 
@@ -215,6 +217,13 @@ begin
       end;
     end else begin
       case sn.nmhdr.code of
+        { https://www.scintilla.org/ScintillaDoc.html#SCN_AUTOCSELECTIONCHANGE }
+        SCN_AUTOCSELECTIONCHANGE: FIsAutoCompletionCandidate := (sn.listType = 0);
+        SCN_USERLISTSELECTION: FIsAutoCompletionCandidate := False;
+        SCN_AUTOCSELECTION: begin
+          if FIsAutoCompletionCandidate then
+            Self.DoAutoCSelection(HWND(sn.nmhdr.hwndFrom), sn.position, nppPChar(UTF8Decode(PAnsiChar(@sn.text[0]))));
+        end;
         SCN_CHARADDED: begin
           if (sn.characterSource = SC_CHARACTERSOURCE_DIRECT_INPUT) then
             Self.DoCharAdded(HWND(sn.nmhdr.hwndFrom), sn.ch);
@@ -263,10 +272,6 @@ end;
 procedure TNppPlugin.DoNppnFileClosed(const BufferID: THandle);
 begin
   // override these
-end;
-
-procedure TNppPlugin.DoCharAdded(const hwnd: HWND; const ch: Integer);
-begin
 end;
 
 procedure TNppPlugin.DoModified(const hwnd: HWND; const modificationType: Integer);
