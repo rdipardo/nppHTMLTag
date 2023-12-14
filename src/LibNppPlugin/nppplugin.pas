@@ -53,6 +53,7 @@ uses
     function SupportsBigFiles: Boolean;
     function HasV5Apis: Boolean;
     function HasFullRangeApis: Boolean;
+    function HasMinimalReplacementApi: Boolean;
     function GetApiLevel: TSciApiLevel;
     function GetNppVersion: Cardinal;
     function GetPluginsConfigDir: string;
@@ -332,8 +333,10 @@ begin
     Result := sciApi_LT_5
   else if (not self.HasFullRangeApis) then
     Result := sciApi_GTE_515
+  else if (not self.HasMinimalReplacementApi) then
+    Result := sciApi_GTE_523
   else
-    Result := sciApi_GTE_523;
+    Result := sciApi_GTE_532;
 end;
 
 function TNppPlugin.GetNppVersion: Cardinal;
@@ -385,8 +388,7 @@ begin
   NppVersion := GetNppVersion;
   Result :=
     (HIWORD(NppVersion) > 8) or
-    ((HIWORD(NppVersion) = 8) and
-       ((LOWORD(NppVersion) >= 43) and (not (LOWORD(NppVersion) in [191, 192, 193]))));
+    ((HIWORD(NppVersion) = 8) and (LOWORD(NppVersion) >= 430));
 end;
 
 function TNppPlugin.IsDarkModeEnabled: Boolean;
@@ -409,6 +411,16 @@ begin
         (TWinVer(SendMessage(self.NppData.NppHandle, NPPM_GETWINDOWSVERSION, 0, 0)) >= WV_WIN8);
 end;
 
+function TNppPlugin.HasMinimalReplacementApi: Boolean;
+var
+  NppVersion: Cardinal;
+begin
+  NppVersion := GetNppVersion;
+  Result :=
+    ((HIWORD(NppVersion) > 8) or
+     ((HIWORD(NppVersion) = 8) and (LOWORD(NppVersion) >= 480)));
+end;
+
 function TNppPlugin.MinSubsystemIsVista: Boolean;
 var
   NppVersion: Cardinal;
@@ -416,8 +428,7 @@ begin
   NppVersion := GetNppVersion;
   Result :=
     ((HIWORD(NppVersion) > 8) or
-     ((HIWORD(NppVersion) = 8) and
-        (((LOWORD(NppVersion) >= 49) and (not (LOWORD(NppVersion) in [191, 192, 193]))))));
+     ((HIWORD(NppVersion) = 8) and (LOWORD(NppVersion) >= 490)));
 end;
 
 end.

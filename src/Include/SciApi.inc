@@ -1,7 +1,7 @@
 {$IFNDEF SCIAPI_INC}
 {$DEFINE SCIAPI_INC}
 {
-  Copyright (c) 2022 Robert Di Pardo <dipardo.r@gmail.com>
+  Copyright (c) 2022, 2023 Robert Di Pardo <dipardo.r@gmail.com>
 
   This Source Code Form is subject to the terms of the Mozilla Public License,
   v. 2.0. If a copy of the MPL was not distributed with this file, You can
@@ -21,7 +21,12 @@ type
         /// >= v5.2.3
         /// SCI_GETTEXTRANGEFULL, SCI_FINDTEXTFULL and SCI_FORMATRANGEFULL introduced
         /// https://groups.google.com/g/scintilla-interest/c/mPLwYdC0-FE
-        sciApi_GTE_523
+        sciApi_GTE_523,
+
+        /// >= v5.3.2
+        /// SCI_REPLACETARGETMINIMAL introduced
+        /// https://groups.google.com/g/scintilla-interest/c/9OG2VdnWJ5I
+        sciApi_GTE_532
     );
 
 {$ENDIF ~SCIAPI_INC}

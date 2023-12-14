@@ -345,12 +345,9 @@ var
   tr: RSciTextRange;
   Chars: AnsiString;
 begin
-  case FEditor.ApiLevel of
-    sciApi_GTE_523:
-      SciMsg := SCI_GETTEXTRANGEFULL;
-    else
+  SciMsg := SCI_GETTEXTRANGEFULL;
+  if FEditor.ApiLevel < sciApi_GTE_523 then
       SciMsg := SCI_GETTEXTRANGE;
-  end;
   Chars := AnsiString(StringOfChar(#0, GetLength + 1));
   tr.chrg.cpMin := FStartPos;
   tr.chrg.cpMax := FEndPos;
@@ -361,9 +358,13 @@ end;
 { ------------------------------------------------------------------------------------------------ }
 procedure TTextRange.SetText(const AValue: WideString);
 var
+  SciMsg: UINT;
   Chars: AnsiString;
   TxtRng: Integer;
 begin
+  SciMsg := SCI_REPLACETARGETMINIMAL;
+  if FEditor.ApiLevel < sciApi_GTE_532 then
+    SciMsg := SCI_REPLACETARGET;
   case FEditor.SendMessage(SCI_GETCODEPAGE) of
   SC_CP_UTF8:
     Chars := UTF8Encode(AValue)
@@ -373,7 +374,7 @@ begin
   TxtRng := System.Length(Chars);
   FEditor.SendMessage(SCI_SETTARGETSTART, FStartPos);
   FEditor.SendMessage(SCI_SETTARGETEND, FEndPos);
-  Dec(FEndPos, (FEndPos - FStartPos) - Integer(FEditor.SendMessage(SCI_REPLACETARGET, TxtRng, PAnsiChar(Chars))));
+  Inc(FStartPos, Sci_Position(FEditor.SendMessage(SciMsg, TxtRng, PAnsiChar(Chars))));
 end;
 
 
@@ -665,12 +666,9 @@ var
   TTF: RSciTextToFind;
   StartPos: LRESULT;
 begin
-  case Self.ApiLevel of
-    sciApi_GTE_523:
-      SciMsg := SCI_FINDTEXTFULL;
-    else
+  SciMsg := SCI_FINDTEXTFULL;
+  if Self.ApiLevel < sciApi_GTE_523 then
       SciMsg := SCI_FINDTEXT;
-  end;
   TTF := Default(RSciTextToFind);
   if AStartPos < 0 then
     TTF.chrg.cpMin := 0
