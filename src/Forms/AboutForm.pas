@@ -45,8 +45,8 @@ type
     txtFpgAuthors: TfpgPanel;
     lblFpgLicense: TfpgPanel;
     txtFpgLicense: TfpgPanel;
-    lblHomeDir: TfpgPanel;
-    txtHomeDir: TfpgPanel;
+    lblUnicodeFormat: TfpgPanel;
+    txtUnicodeConfig: TfpgPanel;
     lblConfigDir: TfpgPanel;
     txtConfigDir: TfpgPanel;
     lblEntities: TfpgPanel;
@@ -59,11 +59,12 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure AfterCreate; override;
-  published
     procedure DoOnShow({%H-}Sender: TObject);
+  published
     procedure FormClose({%H-}Sender: TObject);
     procedure GoToChangelog({%H-}Sender: TObject);
     procedure GoToEntities({%H-}Sender: TObject);
+    procedure ShowConfigForm({%H-}Sender: TObject);
     procedure FollowPath(Sender: TObject);
     procedure ShowLink(Sender: TObject);
     procedure RevertCursor(Sender: TObject);
@@ -87,10 +88,10 @@ implementation
 
 uses
   SysUtils,
-  StrUtils,
   Windows,
   L_SpecialFolders,
   NppPlugin,
+  ConfigForm,
   U_Npp_HTMLTag;
 
 constructor TFrmAbout.Create(AOwner: TComponent);
@@ -145,16 +146,18 @@ begin
     txtFpgLicense := MakeText(FpgLicense);
     lblSpacer2 := MakeText(' ', 8);
 
-    lblHomeDir := MakeText('Plugin location');
-    txtHomeDir := MakeText(UTF8ToAnsi(UTF8Encode(ExtractFileDir(FDLLName))), 24);
-    WrapFilePath(txtHomeDir);
-
     lblConfigDir := MakeText('Config location');
     txtConfigDir := MakeText(UTF8ToAnsi(UTF8Encode(Npp.PluginConfigDir)), 24);
     WrapFilePath(txtConfigDir);
 
     lblEntities := MakeText('HTML entities file');
     txtEntities := MakeText('', 24);
+
+    lblUnicodeFormat := MakeText('Unicode character format: ' + Npp.Options.UnicodePrefix + '0000');
+    txtUnicodeConfig := MakeText('Configure', 24);
+    SetUrl(txtUnicodeConfig);
+    txtUnicodeConfig.Onclick := ShowConfigForm;
+    txtUnicodeConfig.FontDesc := FPG_DEFAULT_FONT_DESC;
 
     btnSpacer := MakeText(' ', 12);
 
@@ -226,9 +229,25 @@ begin
   Close;
 end;
 
+procedure TFrmAbout.ShowConfigForm({%H-}Sender: TObject);
+var
+  Frm : TFrmConfig;
+  Current: ShortString;
+begin
+  Current := Npp.Options.UnicodePrefix;
+  try
+    fpgApplication.CreateForm(TFrmConfig, Frm);
+    if (Frm.ShowModal = mrOK) then
+      lblUnicodeFormat.Text := LeftStr(lblUnicodeFormat.Text, 25) +
+        StringReplace(Copy(lblUnicodeFormat.Text, 26, MaxInt), Current, Npp.Options.UnicodePrefix, []);
+  finally
+    FreeAndNil(Frm);
+  end;
+end;
+
 procedure TFrmAbout.FollowPath(Sender: TObject);
 begin
-  Npp.ShellExecute(PChar(ReplaceStr(TfpgPanel(Sender).Hint, NewLine, '')));
+  Npp.ShellExecute(PChar(StringReplace(TfpgPanel(Sender).Hint, NewLine, '', [])));
   Close;
 end;
 
@@ -249,7 +268,7 @@ if Npp.DarkModeEnabled then
   TfpgPanel(Sender).TextColor := fpgColor($0, $BF, $FF)
 else
   TfpgPanel(Sender).TextColor := clHyperLink;
-  TfpgPanel(Sender).FontDesc := ReplaceStr(TfpgPanel(Sender).FontDesc, ':Underline', '');
+  TfpgPanel(Sender).FontDesc := StringReplace(TfpgPanel(Sender).FontDesc, ':Underline', '', []);
 end;
 
 function TFrmAbout.MakeText(const Txt: string; const Height: TfpgCoord): TfpgPanel;
@@ -288,7 +307,7 @@ begin
     else
     begin
       Text := 'Not found';
-      FontDesc := ReplaceStr(FontDesc, ':Underline', '');
+      FontDesc := StringReplace(FontDesc, ':Underline', '', []);
   if Npp.DarkModeEnabled then
       TextColor := fpgColor($FF, $63, $47)
   else
@@ -333,7 +352,7 @@ begin
     end
     else
     begin
-      WrapAt := Round(BtnWidth * 0.8);
+      WrapAt := (BtnWidth div 10)*9;
       if (OS > WV_WIN10) then
         LineSpc := 8
       else
@@ -374,8 +393,8 @@ begin
   lblFpgLicense.TextColor := clBlack;
   txtFpgAuthors.TextColor := clBlack;
   txtFpgLicense.TextColor := clBlack;
-  lblHomeDir.TextColor := clBlack;
-  txtHomeDir.TextColor := clBlack;
+  lblUnicodeFormat.TextColor := clBlack;
+  txtUnicodeConfig.TextColor := clHyperLink;
   lblConfigDir.TextColor := clBlack;
   txtConfigDir.TextColor := clBlack;
   lblEntities.TextColor := clBlack;
@@ -399,8 +418,8 @@ begin
   lblFpgLicense.TextColor := clWhite;
   txtFpgAuthors.TextColor := clWhite;
   txtFpgLicense.TextColor := clWhite;
-  lblHomeDir.TextColor := clWhite;
-  txtHomeDir.TextColor := clWhite;
+  lblUnicodeFormat.TextColor := clWhite;
+  txtUnicodeConfig.TextColor := fpgColor($0, $BF, $FF);
   lblConfigDir.TextColor := clWhite;
   txtConfigDir.TextColor := clWhite;
   lblEntities.TextColor := clWhite;

@@ -83,6 +83,7 @@ uses
     procedure DoNppnShutdown; virtual;
     procedure DoNppnBufferActivated(const BufferID: THandle); virtual;
     procedure DoNppnFileClosed(const BufferID: THandle); virtual;
+    procedure DoNppnThemeChanged; virtual; abstract;
     procedure DoAutoCSelection(const hwnd: HWND; const StartPos: Sci_Position; ListItem: nppPChar); virtual; abstract;
     procedure DoCharAdded(const hwnd: HWND; const ch: Integer); virtual; abstract;
     procedure DoUpdateUI(const hwnd: HWND; const updated: Integer); virtual;
@@ -202,6 +203,9 @@ begin
       case sn.nmhdr.code of
         NPPN_TB_MODIFICATION: begin
           self.DoNppnToolbarModification;
+        end;
+        NPPN_DARKMODECHANGED: begin
+          self.DoNppnThemeChanged;
         end;
         NPPN_SHUTDOWN: begin
           self.DoNppnShutdown;

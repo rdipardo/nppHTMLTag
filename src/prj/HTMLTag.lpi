@@ -88,7 +88,7 @@
         <DefaultFilename Value="..\Forms\fpg\src\corelib\gdi\fpgui_toolkit.lpk"/>
       </Item1>
     </RequiredPackages>
-    <Units Count="7">
+    <Units Count="8">
       <Unit0>
         <Filename Value="HTMLTag.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -117,6 +117,10 @@
         <Filename Value="..\Forms\AboutForm.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit6>
+      <Unit7>
+        <Filename Value="..\Forms\ConfigForm.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit7>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
