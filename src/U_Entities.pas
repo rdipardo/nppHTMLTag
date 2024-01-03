@@ -140,7 +140,7 @@ begin
       doc := npp.App.ActiveDocument;
       Text := doc.Selection.Text;
       if DoEncodeEntities(Text, FetchEntities, Options) > 0 then begin
-        doc.Selection.Text := Text;
+        doc.ReplaceSelection(Text);
         doc.Selection.ClearSelection;
       end;
     end;
@@ -150,8 +150,9 @@ end{EncodeEntities};
 { ------------------------------------------------------------------------------------------------ }
 function DoEncodeEntities(var Text: WideString; const Entities: THashedStringList; const Options: TEntityReplacementOptions): Integer;
 var
+  Doc: TActiveDocument;
   CharIndex, EntityIndex: integer;
-  ReplaceEntity: boolean;
+  ReplaceEntity, MultiSel: boolean;
   EncodedEntity: WideString;
   EntitiesReplaced: integer;
 begin
@@ -162,6 +163,8 @@ begin
   end;
 
   EncodedEntity := '';
+  Doc := Npp.App.ActiveDocument;
+  MultiSel := (doc.SelectionMode = smStreamMulti);
   for CharIndex := Length(Text) downto 1 do begin
     EntityIndex := Entities.IndexOfName(IntToStr(integer(Ord(Text[CharIndex]))));
     if EntityIndex > -1 then begin
@@ -177,10 +180,16 @@ begin
       ReplaceEntity := False;
     end;
     if ReplaceEntity then begin
-      Text := Copy(Text, 1, CharIndex - 1)
-              + '&' + EncodedEntity + ';'
-              + Copy(Text, CharIndex + 1);
+      if MultiSel then begin
+        doc.SelectMultiple(doc.Selection.StartPos + Pos(Text[CharIndex], Text) - 1, doc.CharWidth);
+        Text := '&' + EncodedEntity + ';';
+      end else begin
+        Text := Copy(Text, 1, CharIndex - 1)
+                + '&' + EncodedEntity + ';'
+                + Copy(Text, CharIndex + 1);
+      end;
       Inc(EntitiesReplaced);
+      if MultiSel then Break;
     end;
   end;
   Result := EntitiesReplaced;
@@ -199,7 +208,7 @@ var
   CharIndex, EntityIndex: integer;
   EntitiesReplaced: integer;
   FirstPos, LastPos, NextIndex, i: Integer;
-  IsNumeric, IsHex, IsValid: boolean;
+  IsNumeric, IsHex, IsValid, MultiSel: boolean;
   AllowedChars: WideString;
   Entity: string;
   CodePoint: integer;
@@ -224,6 +233,7 @@ begin
   if not (Pos(';', Text) > CharIndex) then
     Exit;
 
+  MultiSel := (doc.SelectionMode = smStreamMulti);
   while CharIndex > 0 do begin
     FirstPos := CharIndex;
     LastPos := FirstPos;
@@ -297,11 +307,18 @@ begin
     end;
 
     if IsValid then begin
-      Text := Copy(Text, 1, FirstPos - 1)
-              + WideChar(CodePoint)
-              + Copy(Text, NextIndex);
-      Dec(NextIndex, (LastPos - FirstPos + 1));
+      if MultiSel then begin
+        if IsNumeric then Inc(LastPos);
+        doc.SelectMultiple(doc.Selection.StartPos + FirstPos - 1, (LastPos - FirstPos) + 1);
+        Text := WideChar(CodePoint);
+      end else begin
+        Text := Copy(Text, 1, FirstPos - 1)
+                + WideChar(CodePoint)
+                + Copy(Text, NextIndex);
+        Dec(NextIndex, (LastPos - FirstPos + 1));
+      end;
       Inc(EntitiesReplaced);
+      if MultiSel then Break;
     end;
 
     CharIndex := PosEx('&', Text, NextIndex);
@@ -312,7 +329,7 @@ begin
   end;
 
   if EntitiesReplaced > 0 then begin
-    doc.Selection.Text := Text;
+    doc.ReplaceSelection(Text);
     doc.Selection.ClearSelection;
   end;
 

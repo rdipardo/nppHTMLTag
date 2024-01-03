@@ -15,6 +15,9 @@ interface
 
 {$I '..\Include\SciApi.inc'}
 
+  const
+    MULTISELECTION_MASK: 0..4 = $4;
+
   type
   //////////////////////////////////////////////////////////////////////////////////////////////////
     TActiveDocument = class;
@@ -84,7 +87,7 @@ interface
         property StartPos: Sci_Position read GetStart         write SetStart;
         property EndPos: Sci_Position   read GetEnd           write SetEnd;
         property Length: Sci_Position   read GetLength        write SetLength;
-        property Text: WideString       read GetText          write SetText;
+        property Text: WideString       read GetText;
     end;
     { -------------------------------------------------------------------------------------------- }
     TTextRangeMark = class
@@ -116,9 +119,9 @@ interface
     end;
 
     { -------------------------------------------------------------------------------------------- }
+    TSelectionMode = (smStreamSingle = SC_SEL_STREAM, smColumn, smLines, smThin, smStreamMulti);
     TActiveDocument = class(TWindowedObject)
       private
-
         FSelection: TSelection;
 
         function  GetEditor(): TActiveDocument;
@@ -133,7 +136,6 @@ interface
         function  GetNextLineStart(): Sci_Position;
         function  GetLangType(): LangType;
         procedure SetLangType(const AValue: LangType);
-
         function  GetCurrentPos(): Sci_Position;
         procedure SetCurrentPos(const AValue: Sci_Position);
         function  GetSelection: TSelection;
@@ -141,18 +143,15 @@ interface
         function  GetLinesOnScreen: Sci_Position;
       public
         destructor Destroy(); override;
-
         function  Activate(): TActiveDocument;
-
         procedure Insert(const Text: WideString; const Position: Sci_Position = Sci_Position(High(Cardinal)));
-
         function  GetRange(const StartPosition: Sci_Position = 0; const LastPosition: Sci_Position = Sci_Position(High(Cardinal))): TTextRange;
         function  GetLines(const FirstLine: Sci_Position; const Count: Sci_Position = 1): TTextRange;
-
+        function  CharWidth: Byte;
+        function  SelectionMode: TSelectionMode;
         procedure Select(const Start: Sci_Position = 0; const Length: Sci_Position = Sci_Position(High(Cardinal)));
-        procedure SelectLines(const FirstLine: Sci_Position; const LineCount: Sci_Position = 1);
-        procedure SelectColumns(const FirstPosition, LastPosition: Sci_Position);
-
+        procedure SelectMultiple(const Start: Sci_Position; const ALength: Sci_Position; MatchAll: Boolean = True);
+        procedure ReplaceSelection(const AValue: WideString);
         procedure Find(const AText: WideString; var ATarget: TTextRange; const AOptions: integer = 0;
                         const AStartPos: Sci_Position = -1; const AEndPos: Sci_Position = -1); overload;
         procedure Find(const AText: WideString; var ATarget: TTextRange; const AOptions: integer); overload;
@@ -164,7 +163,6 @@ interface
         property LineCount: Sci_Position read GetLineCount;
         property NextLineStartPosition: Sci_Position read GetNextLineStart;
         property Language: LangType   read GetLangType  write SetLangType;
-
         property CurrentPosition:Sci_Position read GetCurrentPos  write SetCurrentPos;
         property Selection: TSelection        read GetSelection;
         property TopLine: Sci_Position        read GetFirstVisibleLine;
@@ -691,6 +689,14 @@ begin
 end;
 
 { ------------------------------------------------------------------------------------------------ }
+function TActiveDocument.SelectionMode: TSelectionMode;
+begin
+  Result := TSelectionMode(Self.SendMessage(SCI_GETSELECTIONMODE));
+  if (Ord(Result) = SC_SEL_STREAM) and (Self.SendMessage(SCI_GETSELECTIONS) > 1) then
+    Result := smStreamMulti;
+end;
+
+{ ------------------------------------------------------------------------------------------------ }
 
 function TActiveDocument.GetCurrentPos: Sci_Position;
 begin
@@ -719,6 +725,15 @@ end;
 
 { ------------------------------------------------------------------------------------------------ }
 
+function TActiveDocument.CharWidth: Byte;
+begin
+  Result := SizeOf(AnsiChar);
+  if (SendMessage(SCI_GETCODEPAGE) = SC_CP_UTF8) then
+    Result := Sizeof(Widechar);
+end;
+
+{ ------------------------------------------------------------------------------------------------ }
+
 function TActiveDocument.GetLangType: LangType;
 var
   LT: integer;
@@ -743,42 +758,52 @@ end;
 { ------------------------------------------------------------------------------------------------ }
 procedure TActiveDocument.Select(const Start, Length: Sci_Position);
 var
-  SelMode: cardinal; // TODO: implement this as a property of the editor (or the selection object?)
+  SelMode: TSelectionMode;
 begin
-  SelMode := SendMessage(SCI_GETSELECTIONMODE);
-  if SelMode <> SC_SEL_STREAM then
+  SelMode := TSelectionMode(Ord(SelectionMode) and (not MULTISELECTION_MASK));
+  if SelMode <> smStreamSingle then
     SendMessage(SCI_SETSELECTIONMODE, SC_SEL_STREAM);
   SendMessage(SCI_SETSEL, Start, Start + Length);
-  if SelMode <> SC_SEL_STREAM then
-    SendMessage(SCI_SETSELECTIONMODE, SelMode);
+  if SelMode <> smStreamSingle then
+    SendMessage(SCI_SETSELECTIONMODE, Ord(SelMode))
 end;
 
 { ------------------------------------------------------------------------------------------------ }
 
-procedure TActiveDocument.SelectColumns(const FirstPosition, LastPosition: Sci_Position);
+procedure TActiveDocument.SelectMultiple(const Start: Sci_Position; const ALength: Sci_Position; MatchAll: Boolean);
 var
-  SelMode: cardinal; // TODO: implement this as a property of the editor (or the selection object?)
+  SciMsg : cardinal;
 begin
-  SelMode := SendMessage(SCI_GETSELECTIONMODE);
-  if SelMode <> SC_SEL_RECTANGLE then
-    SendMessage(SCI_SETSELECTIONMODE, SC_SEL_RECTANGLE);
-  SendMessage(SCI_SETSEL, FirstPosition, LastPosition);
-  if SelMode <> SC_SEL_RECTANGLE then
-    SendMessage(SCI_SETSELECTIONMODE, SelMode);
+  SendMessage(SCI_CANCEL);
+  FSelection.StartPos := SendMessage(SCI_POSITIONAFTER, (Start - (CharWidth shr 1)));
+  FSelection.EndPos := FSelection.StartPos + ALength;
+  SciMsg := SCI_MULTIPLESELECTADDEACH;
+  if not MatchAll then
+    SciMsg := SCI_MULTIPLESELECTADDNEXT;
+  SendMessage(SciMsg);
 end;
 
 { ------------------------------------------------------------------------------------------------ }
 
-procedure TActiveDocument.SelectLines(const FirstLine, LineCount: Sci_Position);
+procedure TActiveDocument.ReplaceSelection(const AValue: WideString);
 var
-  SelMode: cardinal; // TODO: implement this as a property of the editor (or the selection object?)
+  Chars: AnsiString;
+  MultiPasteMode: Cardinal;
 begin
-  SelMode := SendMessage(SCI_GETSELECTIONMODE);
-  if SelMode <> SC_SEL_LINES then
-    SendMessage(SCI_SETSELECTIONMODE, SC_SEL_LINES);
-  SendMessage(SCI_SETSEL, SendMessage(SCI_POSITIONFROMLINE, FirstLine), SendMessage(SCI_GETLINEENDPOSITION, FirstLine + LineCount));
-  if SelMode <> SC_SEL_LINES then
-    SendMessage(SCI_SETSELECTIONMODE, SelMode);
+  case Self.SendMessage(SCI_GETCODEPAGE) of
+  SC_CP_UTF8:
+    Chars := UTF8Encode(AValue)
+  else
+    Chars := RawByteString(AValue);
+  end;
+  if (SelectionMode = smStreamMulti) then begin
+    MultiPasteMode := SendMessage(SCI_GETMULTIPASTE);
+    SendMessage(SCI_SETMULTIPASTE, SC_MULTIPASTE_EACH);
+    SendMessage(SCI_COPYTEXT, System.Length(Chars), PAnsiChar(Chars));
+    SendMessage(SCI_PASTE);
+    SendMessage(SCI_SETMULTIPASTE, MultiPasteMode);
+  end else
+    Selection.SetText(AValue);
 end;
 
 { ================================================================================================ }

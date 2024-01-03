@@ -592,7 +592,7 @@ begin
 
   lenPrefix := Length(Options.UnicodePrefix);
   lenCodePt := 4 + lenPrefix;
-  charOffset := 0;
+  charOffset := -1;
   didReplace := False;
   doc := App.ActiveDocument;
   caret := doc.CurrentPosition;
@@ -664,25 +664,19 @@ var
   Doc: TActiveDocument;
   TagEnd: TTextRange;
   NewTagName: PAnsiChar;
-  MultiPasteMode : Integer;
 begin
   Doc := App.ActiveDocument;
   NewTagName := PAnsiChar(UTF8Encode(nppString(TagName)));
 
-  if (Doc.SendMessage(SCI_GETSELECTIONS) < 2) or (Length(NewTagName) > MaxTagLength) then
+  if (Doc.SelectionMode <> smStreamMulti) or (Length(NewTagName) > MaxTagLength) then
     Exit;
 
   try
     TagEnd := TTextRange.Create(Doc);
     Doc.Find('[/>\s]', TagEnd, SCFIND_REGEXP, StartPos, StartPos+MaxTagLength+1);
     if TagEnd.Length <> 0 then begin
-      MultiPasteMode := Doc.SendMessage(SCI_GETMULTIPASTE);
-      Doc.SendMessage(SCI_SETMULTIPASTE, SC_MULTIPASTE_EACH);
-      Doc.SendMessage(SCI_COPYTEXT, Length(NewTagName), NewTagName);
       CommandSelectMatchingTags;
-      Doc.SendMessage(SCI_PASTE);
-      Doc.SendMessage(SCI_SETMULTIPASTE, MultiPasteMode);
-      Doc.SendMessage(SCI_CANCEL);
+      Doc.ReplaceSelection(TagName);
     end;
   finally
     FreeAndNil(TagEnd);
