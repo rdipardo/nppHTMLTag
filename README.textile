@@ -14,6 +14,14 @@ h3. Old Versions (..., 1.1.0)
 *Note*
 _v1.1.0 was the last release supporting ANSI versions of Notepad++_
 
+h3. Development builds
+
+* Visit https://circleci.com/gh/rdipardo/nppHTMLTag
+* Look in the "Trigger Event" column to locate the build run you want to see
+* Click "lazarus-build" beside the commit message
+* Click on the name of the job (e.g. "build")
+* Click on the "ARTIFACTS" tab
+* Select "HTMLTag.dll" (64-bit), or "HTMLTag_unicode.dll" (32-bit)
 
 h2. Introduction
 
@@ -67,7 +75,7 @@ Restart Notepad++ if it's already running.
 h2. Usage
 
 | Alt+T  | to select the matching tag |
-| Alt+F2 | to select both matching tags -- edits will be synchronized while the multiple selections are active |
+| Alt+F2 | to select both matching tags -- edits and autocompletions will be synchronized while the multiple selections are active |
 | Alt+Shift+T | to select both tags and the entire contents in between |
 | Ctrl+Alt+T | to select only the contents between tags |
 | Ctrl+E | to encode all selected non-ASCII characters to their HTML entities |
@@ -75,6 +83,7 @@ h2. Usage
 | Ctrl+Shift+E | to dEcode all selected HTML entities |
 | Alt+J | to encode all selected non-ASCII character to their Javascript entities |
 | Alt+Shift+J | to dEcode all selected JS entities |
+| | *Hint:* to decode entities when nothing is selected, position the caret after the target text and execute one of the commands above. |
 
 All commands are available under the Plugins menu item 'HTML Tag'; the shortcut keys can be adjusted
 with the shortcut mapper.

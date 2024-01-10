@@ -2,6 +2,18 @@ h2. Changes since v1.1
 
 h3. Released Versions
 
+* 1.4.2 (2024-01-10)
+** Fixed: (de/en)code multiple stream selections in place [d59daf6]
+** Fixed: correctly measure the target range of rectangular selections and (de/en)code them in place [a9c305c]
+** Fixed: reposition the caret _after_ (not before) automatically replaced Unicode characters, same as entities [7fb8043]
+** Fixed: restore backward compatibility with N++ 8.4.1/2, regressed in 5951d5b, by checking for zero-padded version words [7fb8043]
+** Fixed: restore the About form's dimensions in N++ 8.4.1 thru 8.4.8, regressed in c4d621b [7fb8043]
+** Fixed: don't export functions with mangled names [9ef7a60]
+** Changed: when matching tags are selected, replace both if one of them is autocompleted [bfcf374]
+** Changed: send @SCI_REPLACETARGETMINIMAL@ when replacing Unicode character ranges [7fb8043]
+** Changed: remove some runtime checks to reduce binary size [2478b15]
+** Added: new option to configure the prefix used to detect Unicode escape characters [a2d8d08]
+
 * 1.4.1 (2023-07-26)
 ** Added: new command to select matching tags [2ee0e5a]
 

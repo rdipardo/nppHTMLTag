@@ -11,6 +11,9 @@ uses
 
 {$R *.res}
 {$Include '..\Include\NppPluginInclude.pas'}
+{$if NOT DECLARED(useheaptrace)}
+  {$SetPEOptFlags $40}
+{$endif}
 
 begin
   DLL_PROCESS_DETACH_Hook := @DLLEntryPoint;
