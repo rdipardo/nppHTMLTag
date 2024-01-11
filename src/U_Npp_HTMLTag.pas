@@ -44,7 +44,7 @@ type
     procedure LoadOptions;
     procedure SaveOptions;
     procedure FindAndDecode(const KeyCode: Integer; Cmd: TDecodeCmd = dcAuto);
-    procedure AutoCompleteMatchingTag(const StartPos: Sci_Position; TagName: nppPChar);
+    function AutoCompleteMatchingTag(const StartPos: Sci_Position; TagName: nppPChar): Boolean;
   public
     constructor Create;
     destructor Destroy; override;
@@ -273,7 +273,8 @@ begin
   if not SupportsBigFiles then
     Exit;
 {$ENDIF}
-  AutoCompleteMatchingTag(StartPos, ListItem);
+  if AutoCompleteMatchingTag(StartPos, ListItem) then
+    App.ActiveDocument.SendMessage(SCI_AUTOCCANCEL);
 end;
 
 { ------------------------------------------------------------------------------------------------ }
@@ -657,7 +658,7 @@ begin
 end;
 
 { ------------------------------------------------------------------------------------------------ }
-procedure TNppPluginHTMLTag.AutoCompleteMatchingTag(const StartPos: Sci_Position; TagName: nppPChar);
+function TNppPluginHTMLTag.AutoCompleteMatchingTag(const StartPos: Sci_Position; TagName: nppPChar): Boolean;
 const
   MaxTagLength = 72; { https://www.rfc-editor.org/rfc/rfc1866#section-3.2.3 }
 var
@@ -665,10 +666,12 @@ var
   TagEnd: TTextRange;
   NewTagName: PAnsiChar;
 begin
+  Result := False;
   Doc := App.ActiveDocument;
   NewTagName := PAnsiChar(UTF8Encode(nppString(TagName)));
 
-  if (Doc.SelectionMode <> smStreamMulti) or (Length(NewTagName) > MaxTagLength) then
+  if not (Doc.Language in [L_HTML, L_XML, L_PHP, L_ASP, L_JSP]) or
+     (Doc.SelectionMode <> smStreamMulti) or (Length(NewTagName) > MaxTagLength) then
     Exit;
 
   try
@@ -677,6 +680,7 @@ begin
     if TagEnd.Length <> 0 then begin
       CommandSelectMatchingTags;
       Doc.ReplaceSelection(TagName);
+      Result := True;
     end;
   finally
     FreeAndNil(TagEnd);
