@@ -25,6 +25,7 @@ const
   FrmHeight = 112;
   FrmWidth = 400;
   BtnWidth = 85;
+  MaxPrefixLen = 6;
 
 type
   TFrmConfig = class(TfpgForm)
@@ -63,7 +64,6 @@ begin
   lblDigits := CreateLabel(self, (txtPrefix.Left + txtPrefix.Width + 2), lblFmt.Top, '0000', 64, 28);
   with txtPrefix do begin
     FontDesc := 'Consolas-8';
-    MaxLength := 8;
     TabOrder := 0;
     OnPaint := ValidatePrefix;
   end;
@@ -127,6 +127,8 @@ var
 begin
   Input := TfpgMemo(Sender).Text;
   btnOK.Enabled := (Length(Input) > 0) and (Ord(Input[1]) > $20);
+  if Length(Input) > MaxPrefixLen then
+    TfpgMemo(Sender).Text:= Copy(Input, 1, MaxPrefixLen);
 end;
 
 procedure TFrmConfig.SetUpButton(var Btn: TfpgButton; Value: TfpgModalResult; Index: SmallInt; Icon: TfpgString);
