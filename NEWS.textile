@@ -2,6 +2,13 @@ h2. Changes since v1.1
 
 h3. Released Versions
 
+* 1.4.3 (2024-01-12)
+** Fixed: include semi-colons when decoding multi-selected named entities [08d07ec]
+** Fixed: avoid overwriting multi-selected tags when replacing them from an autocompletion list [203c3a9]
+** Fixed: avoid leaking memory when no valid start tag can be found [8d210c7]
+** Fixed: typing into the Unicode character prefix edit control now overwrites an active selection [f3e8786]
+** Changed: the Unicode prefix edit control now accepts a maximum of six characters [f3e8786]
+
 * 1.4.2 (2024-01-10)
 ** Fixed: (de/en)code multiple stream selections in place [d59daf6]
 ** Fixed: correctly measure the target range of rectangular selections and (de/en)code them in place [a9c305c]

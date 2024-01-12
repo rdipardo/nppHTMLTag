@@ -21,8 +21,8 @@
       <UseVersionInfo Value="True"/>
       <MajorVersionNr Value="1"/>
       <MinorVersionNr Value="4"/>
-      <RevisionNr Value="2"/>
-      <StringTable Comments="https://github.com/rdipardo/nppHTMLTag/issues" CompanyName="Voronwë" FileDescription="HTML Tag plugin for Notepad++" InternalName="$NameOnly($(ProjFile))" LegalCopyright="Martijn Coppoolse" OriginalFilename="$NameOnly($(ProjFile)).dll" ProductName="$NameOnly($(ProjFile))" ProductVersion="1.4.2.0"/>
+      <RevisionNr Value="3"/>
+      <StringTable Comments="https://github.com/rdipardo/nppHTMLTag/issues" CompanyName="Voronwë" FileDescription="HTML Tag plugin for Notepad++" InternalName="$NameOnly($(ProjFile))" LegalCopyright="Martijn Coppoolse" OriginalFilename="$NameOnly($(ProjFile)).dll" ProductName="$NameOnly($(ProjFile))" ProductVersion="1.4.3.0"/>
     </VersionInfo>
     <BuildModes Count="2">
       <Item1 Name="Debug" Default="True"/>
@@ -72,7 +72,7 @@
         </CompilerOptions>
       </Item2>
       <SharedMatrixOptions Count="1">
-        <Item1 ID="874394513237" Targets="*" Modes="Release" Value="-O3"/>
+        <Item1 ID="874394513237" Targets="*" Modes="Release" Value="-O3s"/>
       </SharedMatrixOptions>
     </BuildModes>
     <PublishOptions>
