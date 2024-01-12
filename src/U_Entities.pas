@@ -308,8 +308,7 @@ begin
 
     if IsValid then begin
       if MultiSel then begin
-        if IsNumeric then Inc(LastPos);
-        doc.SelectMultiple(doc.Selection.StartPos + FirstPos - 1, (LastPos - FirstPos) + 1);
+        doc.SelectMultiple(doc.Selection.StartPos + FirstPos - 1, (LastPos - FirstPos) + 2);
         Text := WideChar(CodePoint);
       end else begin
         Text := Copy(Text, 1, FirstPos - 1)
