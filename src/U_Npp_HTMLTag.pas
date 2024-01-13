@@ -19,12 +19,17 @@ uses
   AboutForm,
   NppSimpleObjects, L_VersionInfoW;
 
+const
+  DEFAULT_UNICODE_ESC_PREFIX = '\u';
+
 type
   TDecodeCmd = (dcAuto = -1, dcEntity, dcUnicode);
   TCmdMenuPosition = (cmpUnicode = 3, cmpEntities);
   TPluginOptions = packed record
     LiveEntityDecoding: LongBool;
     LiveUnicodeDecoding: LongBool;
+    UnicodePrefix: ShortString;
+    UnicodeRE: ShortString;
   end;
   PPluginOption = ^LongBool;
 
@@ -45,6 +50,7 @@ type
     procedure LoadOptions;
     procedure SaveOptions;
     procedure FindAndDecode(const KeyCode: Integer; Cmd: TDecodeCmd = dcAuto);
+    function AutoCompleteMatchingTag(const StartPos: Sci_Position; TagName: nppPChar): Boolean;
   public
     constructor Create;
     destructor Destroy; override;
@@ -59,9 +65,12 @@ type
     procedure commandAbout;
     procedure SetInfo(NppData: TNppData); override;
     procedure DoNppnToolbarModification; override;
+    procedure DoNppnThemeChanged; override;
+    procedure DoAutoCSelection({%H-}const hwnd: HWND; const StartPos: Sci_Position; ListItem: nppPChar); override;
     procedure DoCharAdded({%H-}const hwnd: HWND; const ch: Integer); override;
     function GetMessage(const Key: string): WideString; override;
     procedure ToggleOption(OptionPtr: PPluginOption; MenuPos: TCmdMenuPosition);
+    procedure SetUnicodeFormatOptions(const Prefix: ShortString);
     procedure ShellExecute(const FullName: WideString; const Verb: WideString = 'open'; const WorkingDir: WideString = '';
       const ShowWindow: Integer = SW_SHOWDEFAULT);
 
@@ -100,6 +109,7 @@ var
 implementation
 
 uses
+  StrUtils,
   ShellAPI,
   L_SpecialFolders,
   Utf8IniFiles,
@@ -251,6 +261,8 @@ end;
 
 { ------------------------------------------------------------------------------------------------ }
 procedure TNppPluginHTMLTag.DoNppnToolbarModification;
+var
+  Msg: WideString;
 begin
   inherited;
   FApp := GetApplication(@Self.NppData, NppSimpleObjects.TSciApiLevel(Self.GetApiLevel));
@@ -267,6 +279,17 @@ begin
 end;
 
 { ------------------------------------------------------------------------------------------------ }
+procedure TNppPluginHTMLTag.DoAutoCSelection({%H-}const hwnd: HWND; const StartPos: Sci_Position; ListItem: nppPChar);
+begin
+{$IFDEF CPUX64}
+  if not SupportsBigFiles then
+    Exit;
+{$ENDIF}
+  if AutoCompleteMatchingTag(StartPos, ListItem) then
+    App.ActiveDocument.SendMessage(SCI_AUTOCCANCEL);
+end;
+
+{ ------------------------------------------------------------------------------------------------ }
 procedure TNppPluginHTMLTag.DoCharAdded({%H-}const hwnd: HWND; const ch: Integer);
 begin
 {$IFDEF CPUX64}
@@ -274,6 +297,12 @@ begin
     Exit;
 {$ENDIF}
   FindAndDecode(ch);
+end;
+
+{ ------------------------------------------------------------------------------------------------ }
+procedure TNppPluginHTMLTag.DoNppnThemeChanged;
+begin
+  if Assigned(About) then About.DoOnShow(nil);
 end;
 
 { ------------------------------------------------------------------------------------------------ }
@@ -298,6 +327,18 @@ begin
   OptionPtr^ := (not OptionPtr^);
   cmdIdx := Length(FuncArray) - Integer(MenuPos);
   SendMessage(Npp.NppData.nppHandle, NPPM_SETMENUITEMCHECK, FuncArray[cmdIdx].CmdID, LPARAM(OptionPtr^));
+end;
+
+{ ------------------------------------------------------------------------------------------------ }
+procedure TNppPluginHTMLTag.SetUnicodeFormatOptions(const Prefix: ShortString);
+begin
+  if Length(Trim(Prefix)) > 0 then begin
+    FOptions.UnicodePrefix := Trim(Prefix);
+    FOptions.UnicodeRE := StringsReplace(UTF8Encode(AnsiToUtf8(Options.UnicodePrefix)),
+      ['\','.', '*', '+','?', '^','$','{','}','(',')','[',']','|'],
+      ['\\','\.', '\*', '\+','\?', '\^','\$','\{','\}','\(','\)','\[','\]','\|'], [rfReplaceAll]) + '[0-9A-F]{4}';
+  end else if FOptions.UnicodePrefix = '' then
+    SetUnicodeFormatOptions(DEFAULT_UNICODE_ESC_PREFIX);
 end;
 
 { ------------------------------------------------------------------------------------------------ }
@@ -549,9 +590,12 @@ begin
     try
       FOptions.LiveEntityDecoding := config.ReadBool('AUTO_DECODE', 'ENTITIES', False);
       FOptions.LiveUnicodeDecoding := config.ReadBool('AUTO_DECODE', 'UNICODE_ESCAPE_CHARS', False);
+      SetUnicodeFormatOptions(config.ReadString('FORMAT', 'UNICODE_ESCAPE_PREFIX', DEFAULT_UNICODE_ESC_PREFIX));
     finally
       config.Free;
     end;
+  end else begin
+    SetUnicodeFormatOptions(DEFAULT_UNICODE_ESC_PREFIX);
   end;
   autoDecodeJs := Length(FuncArray) - Integer(cmpUnicode);
   autoDecodeEntities := Length(FuncArray) - Integer(cmpEntities);
@@ -568,6 +612,7 @@ begin
   try
     config.WriteBool('AUTO_DECODE', 'ENTITIES', Options.LiveEntityDecoding);
     config.WriteBool('AUTO_DECODE', 'UNICODE_ESCAPE_CHARS', Options.LiveUnicodeDecoding);
+    config.WriteString('FORMAT', 'UNICODE_ESCAPE_PREFIX', UTF8ToAnsi(Options.UnicodePrefix));
   finally
     config.Free;
   end;
@@ -579,8 +624,8 @@ type
   TReplaceFunc = function(Scope: U_Entities.TEntityReplacementScope = ersSelection): Integer;
 var
   doc: TActiveDocument;
-  anchor, caret, selStart, nextCaretPos: Sci_Position;
-  ch, charOffset, chValue: Integer;
+  anchor, caret, selStart, nextCaretPos, lenPrefix, lenCodePt, i: Sci_Position;
+  ch, charOffset, chValue, chCurrent: Integer;
   didReplace: Boolean;
 
   function Replace(Func: TReplaceFunc; Start: Sci_Position; EndPos: Sci_Position): Boolean;
@@ -604,7 +649,9 @@ begin
         (not (ch in [$09..$0D, $20])))) then
     Exit;
 
-  charOffset := 0;
+  lenPrefix := Length(Options.UnicodePrefix);
+  lenCodePt := 4 + lenPrefix;
+  charOffset := -1;
   didReplace := False;
   doc := App.ActiveDocument;
   caret := doc.CurrentPosition;
@@ -612,7 +659,8 @@ begin
     caret := doc.SendMessage(SCI_POSITIONBEFORE, doc.CurrentPosition);
 
   for anchor := caret - 1 downto 0 do begin
-    case (Integer(doc.SendMessage(SCI_GETCHARAT, anchor))) of
+    chCurrent := Integer(doc.SendMessage(SCI_GETCHARAT, anchor));
+    case chCurrent of
       0..$20: Break;
       $26 {'&'}: begin
           if (Options.LiveEntityDecoding or (cmd = dcEntity)) then begin
@@ -620,19 +668,23 @@ begin
             Break;
           end;
       end;
-      $5C {'\'}: begin
+      else begin
+          if (chCurrent <> Integer(Options.UnicodePrefix[1])) then
+            Continue;
           if (Options.LiveUnicodeDecoding or (cmd = dcUnicode)) then begin
             selStart := anchor;
             // backtrack to previous codepoint, in case it's part of a multi-byte glyph
-            if Integer(doc.SendMessage(SCI_GETCHARAT, anchor - 6)) = $5C then begin
-              doc.Select(anchor - 6, 6);
-              chValue := StrToInt(Format('$%s', [Copy(doc.Selection.Text, 3, 4)]));
-              if (chValue >= $D800) and (chValue <= $DBFF) then
-                Dec(selStart, 6);
+            chCurrent := Integer(doc.SendMessage(SCI_GETCHARAT, anchor - lenCodePt));
+            if (chCurrent = Integer(Options.UnicodePrefix[1])) then begin
+              doc.Select(anchor - lenCodePt, lenCodePt);
+              if TryStrToInt(Format('$%s', [Copy(doc.Selection.Text, lenPrefix+1, 4)]), chValue) and
+                 (chValue >= $D800) and (chValue <= $DBFF) then
+                Dec(selStart, lenCodePt);
             end;
             didReplace := Replace(@(U_JSEncode.DecodeJS), selStart, caret);
-            // compensate for both characters of '\u' prefix
-            Inc(charOffset);
+            // compensate for prefix length
+            for i := 1 to lenPrefix-1 do
+              Inc(charOffset);
             Break;
           end;
       end;
@@ -660,6 +712,36 @@ begin
     end;
     doc.Selection.ClearSelection;
     doc.CurrentPosition := caret;
+  end;
+end;
+
+{ ------------------------------------------------------------------------------------------------ }
+function TNppPluginHTMLTag.AutoCompleteMatchingTag(const StartPos: Sci_Position; TagName: nppPChar): Boolean;
+const
+  MaxTagLength = 72; { https://www.rfc-editor.org/rfc/rfc1866#section-3.2.3 }
+var
+  Doc: TActiveDocument;
+  TagEnd: TTextRange;
+  NewTagName: PAnsiChar;
+begin
+  Result := False;
+  Doc := App.ActiveDocument;
+  NewTagName := PAnsiChar(UTF8Encode(nppString(TagName)));
+
+  if not (Doc.Language in [L_HTML, L_XML, L_PHP, L_ASP, L_JSP]) or
+     (Doc.SelectionMode <> smStreamMulti) or (Length(NewTagName) > MaxTagLength) then
+    Exit;
+
+  try
+    TagEnd := TTextRange.Create(Doc);
+    Doc.Find('[/>\s]', TagEnd, SCFIND_REGEXP, StartPos, StartPos+MaxTagLength+1);
+    if TagEnd.Length <> 0 then begin
+      CommandSelectMatchingTags;
+      Doc.ReplaceSelection(TagName);
+      Result := True;
+    end;
+  finally
+    FreeAndNil(TagEnd);
   end;
 end;
 

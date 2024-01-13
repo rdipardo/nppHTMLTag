@@ -48,7 +48,9 @@ var
   ClosureFound: boolean;
 begin
   ATagName := '';
-  TagEnd := TTextRange.Create(AView);
+  AOpening := True;
+  AClosing := False;
+  ClosureFound := False;
   Result := TTextRange.Create(AView);
 
   if (APosition < 0) then begin
@@ -76,6 +78,7 @@ begin
   //   - if InnerLevel > 0 then InnerLevel := InnerLevel - 1;
   //   - else TagEnd has been found
 
+  TagEnd := TTextRange.Create(AView);
   AView.Find('>', TagEnd, 0, Result.EndPos + 1);
   if TagEnd.Length = 0 then begin
     ATagName := '';
@@ -86,9 +89,6 @@ begin
   end;
 
   // Determine the tag name, and whether it's an opening and/or closing tag
-  AOpening := True;
-  AClosing := False;
-  ClosureFound := False;
   StartIndex := 0;
   EndIndex := 0;
   ATagName := UTF8Encode(Result.Text);
@@ -225,7 +225,7 @@ begin
           Tag := ExtractTagName(doc, TagName, TagOpens, TagCloses, NextTag.StartPos + 1);
           FreeAndNil(NextTag);
         end;
-        if Assigned(Tag) then begin
+        if Assigned(Tag) and (TagName <> '' ) then begin
 
           // If we're in HTML mode, check for any of the HTML 4 empty tags -- they're really self-closing
           if (not IsXML) and TagOpens and (not TagCloses) then begin
@@ -380,7 +380,7 @@ begin
 
     except
       on E: Exception do begin
-        MessageBeep(MB_ICONERROR);
+        MessageBox(0, PChar(E.Message), PChar(@E.ClassName()[1]), MB_ICONERROR);
       end;
     end;
   finally

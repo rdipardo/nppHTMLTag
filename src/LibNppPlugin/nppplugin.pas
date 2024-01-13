@@ -44,6 +44,7 @@ uses
   private
     FClosingBufferID: THandle;
     FConfigDir: string;
+    FIsAutoCompletionCandidate: Boolean;
     function IsDarkModeEnabled: Boolean;
     function MinSubsystemIsVista: Boolean;
   protected
@@ -52,6 +53,7 @@ uses
     function SupportsBigFiles: Boolean;
     function HasV5Apis: Boolean;
     function HasFullRangeApis: Boolean;
+    function HasMinimalReplacementApi: Boolean;
     function GetApiLevel: TSciApiLevel;
     function GetNppVersion: Cardinal;
     function GetPluginsConfigDir: string;
@@ -81,7 +83,9 @@ uses
     procedure DoNppnShutdown; virtual;
     procedure DoNppnBufferActivated(const BufferID: THandle); virtual;
     procedure DoNppnFileClosed(const BufferID: THandle); virtual;
-    procedure DoCharAdded(const hwnd: HWND; const ch: Integer); virtual;
+    procedure DoNppnThemeChanged; virtual; abstract;
+    procedure DoAutoCSelection(const hwnd: HWND; const StartPos: Sci_Position; ListItem: nppPChar); virtual; abstract;
+    procedure DoCharAdded(const hwnd: HWND; const ch: Integer); virtual; abstract;
     procedure DoUpdateUI(const hwnd: HWND; const updated: Integer); virtual;
     procedure DoModified(const hwnd: HWND; const modificationType: Integer); virtual;
 
@@ -200,6 +204,9 @@ begin
         NPPN_TB_MODIFICATION: begin
           self.DoNppnToolbarModification;
         end;
+        NPPN_DARKMODECHANGED: begin
+          self.DoNppnThemeChanged;
+        end;
         NPPN_SHUTDOWN: begin
           self.DoNppnShutdown;
         end;
@@ -215,6 +222,13 @@ begin
       end;
     end else begin
       case sn.nmhdr.code of
+        { https://www.scintilla.org/ScintillaDoc.html#SCN_AUTOCSELECTIONCHANGE }
+        SCN_AUTOCSELECTIONCHANGE: FIsAutoCompletionCandidate := (sn.listType = 0);
+        SCN_USERLISTSELECTION: FIsAutoCompletionCandidate := False;
+        SCN_AUTOCSELECTION: begin
+          if FIsAutoCompletionCandidate then
+            Self.DoAutoCSelection(HWND(sn.nmhdr.hwndFrom), sn.position, nppPChar(UTF8Decode(PAnsiChar(@sn.text[0]))));
+        end;
         SCN_CHARADDED: begin
           if (sn.characterSource = SC_CHARACTERSOURCE_DIRECT_INPUT) then
             Self.DoCharAdded(HWND(sn.nmhdr.hwndFrom), sn.ch);
@@ -263,10 +277,6 @@ end;
 procedure TNppPlugin.DoNppnFileClosed(const BufferID: THandle);
 begin
   // override these
-end;
-
-procedure TNppPlugin.DoCharAdded(const hwnd: HWND; const ch: Integer);
-begin
 end;
 
 procedure TNppPlugin.DoModified(const hwnd: HWND; const modificationType: Integer);
@@ -327,8 +337,10 @@ begin
     Result := sciApi_LT_5
   else if (not self.HasFullRangeApis) then
     Result := sciApi_GTE_515
+  else if (not self.HasMinimalReplacementApi) then
+    Result := sciApi_GTE_523
   else
-    Result := sciApi_GTE_523;
+    Result := sciApi_GTE_532;
 end;
 
 function TNppPlugin.GetNppVersion: Cardinal;
@@ -380,8 +392,7 @@ begin
   NppVersion := GetNppVersion;
   Result :=
     (HIWORD(NppVersion) > 8) or
-    ((HIWORD(NppVersion) = 8) and
-       ((LOWORD(NppVersion) >= 43) and (not (LOWORD(NppVersion) in [191, 192, 193]))));
+    ((HIWORD(NppVersion) = 8) and (LOWORD(NppVersion) >= 430));
 end;
 
 function TNppPlugin.IsDarkModeEnabled: Boolean;
@@ -404,6 +415,16 @@ begin
         (TWinVer(SendMessage(self.NppData.NppHandle, NPPM_GETWINDOWSVERSION, 0, 0)) >= WV_WIN8);
 end;
 
+function TNppPlugin.HasMinimalReplacementApi: Boolean;
+var
+  NppVersion: Cardinal;
+begin
+  NppVersion := GetNppVersion;
+  Result :=
+    ((HIWORD(NppVersion) > 8) or
+     ((HIWORD(NppVersion) = 8) and (LOWORD(NppVersion) >= 480)));
+end;
+
 function TNppPlugin.MinSubsystemIsVista: Boolean;
 var
   NppVersion: Cardinal;
@@ -411,8 +432,7 @@ begin
   NppVersion := GetNppVersion;
   Result :=
     ((HIWORD(NppVersion) > 8) or
-     ((HIWORD(NppVersion) = 8) and
-        (((LOWORD(NppVersion) >= 49) and (not (LOWORD(NppVersion) in [191, 192, 193]))))));
+     ((HIWORD(NppVersion) = 8) and (LOWORD(NppVersion) >= 490)));
 end;
 
 end.
