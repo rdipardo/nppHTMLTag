@@ -35,7 +35,7 @@
           </Target>
           <SearchPaths>
             <IncludeFiles Value="..;$(ProjOutDir)"/>
-            <OtherUnitFiles Value="..;..\Common;..\LibNppPlugin;..\Forms"/>
+            <OtherUnitFiles Value="..;..\LibNppPlugin\Source\Units\Common;..\Forms"/>
             <UnitOutputDirectory Value="..\..\out\obj\$(TargetCPU)-$(TargetOS)\$(BuildMode)"/>
           </SearchPaths>
           <Parsing>
@@ -98,19 +98,19 @@
         <IsPartOfProject Value="True"/>
       </Unit1>
       <Unit2>
-        <Filename Value="..\Common\L_VersionInfoW.pas"/>
+        <Filename Value="..\LibNppPlugin\Source\Units\Common\VersionInfo.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit2>
       <Unit3>
-        <Filename Value="..\Common\L_SpecialFolders.pas"/>
+        <Filename Value="..\LibNppPlugin\Source\Units\Common\ModulePath.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit3>
       <Unit4>
-        <Filename Value="..\LibNppPlugin\NppSimpleObjects.pas"/>
+        <Filename Value="..\NppSimpleObjects.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit4>
       <Unit5>
-        <Filename Value="..\LibNppPlugin\nppplugin.pas"/>
+        <Filename Value="..\LibNppPlugin\Source\Units\Common\nppplugin.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit5>
       <Unit6>
@@ -131,7 +131,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="..;$(ProjOutDir)"/>
-      <OtherUnitFiles Value="..;..\Common;..\LibNppPlugin;..\Forms"/>
+      <OtherUnitFiles Value="..;..\LibNppPlugin\Source\Units\Common;..\Forms"/>
       <UnitOutputDirectory Value="..\..\out\obj\$(TargetCPU)-$(TargetOS)\$(BuildMode)"/>
     </SearchPaths>
     <Parsing>

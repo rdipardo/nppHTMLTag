@@ -32,7 +32,7 @@ uses
   SysUtils, Windows, StrUtils,
   NppPlugin,
   Utf8IniFiles,
-  L_SpecialFolders;
+  ModulePath;
 
 var
   EntityLists: TStringList;
@@ -60,7 +60,7 @@ begin
     ErrMsg := WideFormat('%s must be saved in'#13#10'%s', [ExtractFileName(IniFile), ExtractFileDir(IniFile)]);
     if not FileExists(IniFile) then
       IniFile := Npp.DefaultEntitiesPath;
-      ErrMsg := Concat(ErrMsg, WideFormat(#13#10'or %s in'#13#10'%s', [ExtractFileName(IniFile), TSpecialFolders.DLL]));
+      ErrMsg := Concat(ErrMsg, WideFormat(#13#10'or %s in'#13#10'%s', [ExtractFileName(IniFile), TModulePath.DLL]));
     if not FileExists(IniFile) then begin
       MessageBoxW(ANpp.App.WindowHandle, PWideChar(ErrMsg), PWideChar('Missing Entities File'), MB_ICONERROR);
       FreeAndNil(EntityLists);

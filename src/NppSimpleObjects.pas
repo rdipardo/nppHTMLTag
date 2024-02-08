@@ -13,10 +13,13 @@ interface
   uses
     Classes, Windows, NppPlugin;
 
-{$I '..\Include\SciApi.inc'}
-
   const
     MULTISELECTION_MASK: 0..4 = $4;
+
+  type { aliases }
+     LangType = NppPlugin.TNppLang;
+     RSciTextRange = NppPlugin.TSciTextRangeFull;
+     RSciTextToFind =  NppPlugin.TSciTextToFindFull;
 
   type
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -812,8 +815,8 @@ end;
 constructor TEditors.Create(const ANPPData: PNppData);
 begin
   FList := TList.Create;
-  FList.Add(TActiveDocument.Create(ANPPData.nppScintillaMainHandle));
-  FList.Add(TActiveDocument.Create(ANPPData.nppScintillaSecondHandle));
+  FList.Add(TActiveDocument.Create(ANPPData.ScintillaMainHandle));
+  FList.Add(TActiveDocument.Create(ANPPData.ScintillaSecondHandle));
 end;
 { ------------------------------------------------------------------------------------------------ }
 destructor TEditors.Destroy;
