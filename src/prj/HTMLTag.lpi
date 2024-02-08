@@ -15,10 +15,8 @@
       <Title Value="HTMLTag"/>
       <UseAppBundle Value="False"/>
       <ResourceType Value="res"/>
-      <Icon Value="0"/>
     </General>
     <VersionInfo>
-      <UseVersionInfo Value="True"/>
       <MajorVersionNr Value="1"/>
       <MinorVersionNr Value="4"/>
       <RevisionNr Value="3"/>
@@ -68,6 +66,10 @@
             <OtherDefines Count="1">
               <Define0 Value="UNICODE"/>
             </OtherDefines>
+            <ExecuteBefore>
+              <Command Value="$(CompPath)\..\fpcres.exe -i $NameOnly($(ProjFile)).rc -o $NameOnly($(ProjFile)).res -of res -v"/>
+              <CompileReasons Run="False"/>
+            </ExecuteBefore>
           </Other>
         </CompilerOptions>
       </Item2>
@@ -171,6 +173,10 @@
 -dSCI_DISABLE_PROVISIONAL
 -WN
 -vm2026"/>
+      <ExecuteBefore>
+        <Command Value="$(CompPath)\..\fpcres.exe -D _DEBUG -i $NameOnly($(ProjFile)).rc -o $NameOnly($(ProjFile)).res -of res -v"/>
+        <CompileReasons Run="False"/>
+      </ExecuteBefore>
     </Other>
   </CompilerOptions>
   <Debugging>
