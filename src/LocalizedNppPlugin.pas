@@ -31,7 +31,7 @@ type
 
 implementation
 uses
-  Classes, SysUtils, laz2_DOM, laz2_XMLRead, L_SpecialFolders;
+  Classes, SysUtils, laz2_DOM, laz2_XMLRead, ModulePath;
 
 function GetEnvVar(const AVar: String): WideString;
 begin
@@ -88,7 +88,7 @@ var
   NppDir: WideString;
 begin
   if Local then
-    NppDir := ExtractFileDir(ExtractFileDir(ExtractFileDir(TSpecialFolders.DLL)))
+    NppDir := ExtractFileDir(ExtractFileDir(ExtractFileDir(TModulePath.DLL)))
   else
     NppDir := (WideFormat('%s%s%s', [(GetEnvVar('AppData')), PathDelim, 'Notepad++']));
 
@@ -98,7 +98,7 @@ end;
 function TLocalizedNppPlugin.GetNppInstallDir: WideString;
 begin
   Result := ExtractfileDir(ExtractFileDir(
-    IncludeTrailingPathDelimiter(ExtractFileDir(ExtractFileDir(ExtractFileDir(TSpecialFolders.DLL))))));
+    IncludeTrailingPathDelimiter(ExtractFileDir(ExtractFileDir(ExtractFileDir(TModulePath.DLL))))));
 end;
 
 end.

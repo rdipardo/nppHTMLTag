@@ -10,3 +10,4 @@
 *.ini     text   eol=crlf
 *.bat     text   eol=crlf
 *.cmd     text   eol=crlf
+*.rc      text   eol=crlf

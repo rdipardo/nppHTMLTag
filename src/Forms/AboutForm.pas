@@ -19,7 +19,7 @@ uses
   fpg_form,
   fpg_panel,
   fpg_button,
-  L_VersionInfoW;
+  VersionInfo;
 
 const
   Repo = 'https://bitbucket.org/rdipardo/htmltag/downloads';
@@ -89,7 +89,7 @@ uses
   SysUtils,
   StrUtils,
   Windows,
-  L_SpecialFolders,
+  ModulePath,
   NppPlugin,
   U_Npp_HTMLTag;
 
@@ -97,7 +97,7 @@ constructor TFrmAbout.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
   try
-    FDLLName := TSpecialFolders.DLLFullName;
+    FDLLName := TModulePath.DLLFullName;
     FVersion := TFileVersionInfo.Create(FDLLName);
     Width := 575;
     Height := InitFromHeight;

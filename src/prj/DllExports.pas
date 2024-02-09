@@ -1,3 +1,4 @@
+unit DLLExports;
 {
   This Source Code Form is subject to the terms of the Mozilla Public
   License, v. 2.0. If a copy of the MPL was not distributed with this file,
@@ -5,6 +6,19 @@
 
   Copyright (c) Martijn Coppoolse <https://sourceforge.net/u/vor0nwe>
 }
+interface
+  uses Windows, SysUtils, NppPlugin, U_Npp_HTMLTag;
+
+function isUnicode : Boolean; cdecl;
+function getName(): nppPchar; cdecl;
+function getFuncsArray(var nFuncs:integer): Pointer; cdecl;
+function messageProc(msg: Integer; _wParam: WPARAM; _lParam: LPARAM): LRESULT; cdecl;
+procedure setInfo(NppData: TNppData); cdecl;
+procedure beNotified(sn: PSciNotification); cdecl;
+procedure DLLEntryPoint(dwReason: DWord);
+
+implementation
+
 procedure DLLEntryPoint(dwReason: DWord);
 begin
   case dwReason of
@@ -43,7 +57,7 @@ begin
     Result := Npp.GetFuncsArray(nFuncs);
 end;
 
-procedure beNotified(sn: PSCNotification); cdecl;
+procedure beNotified(sn: PSciNotification); cdecl;
 begin
   if Assigned(Npp) then
     Npp.BeNotified(sn);
@@ -66,5 +80,4 @@ begin
   Result := true;
 end;
 
-exports
-  setInfo, getName, getFuncsArray, beNotified, messageProc, isUnicode;
+end.
