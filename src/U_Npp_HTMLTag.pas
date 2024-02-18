@@ -672,6 +672,8 @@ begin
       $26 {'&'}: begin
           if (Options.LiveEntityDecoding or (cmd = dcEntity)) then begin
             didReplace := Replace(@(U_Entities.DecodeEntities), anchor, caret);
+            if not (ch in [$0A, $0D]) then
+              Inc(charOffset);
             Break;
           end;
       end;
