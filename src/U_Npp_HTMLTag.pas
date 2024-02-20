@@ -328,7 +328,8 @@ begin
   if not SupportsBigFiles then
     Exit;
 {$ENDIF}
-  FindAndDecode(ch);
+  if (App.ActiveDocument.Selection.Length = 0) then
+    FindAndDecode(ch);
 end;
 
 { ------------------------------------------------------------------------------------------------ }

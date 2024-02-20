@@ -6,8 +6,8 @@
   Copyright (c) Martijn Coppoolse <https://github.com/vor0nwe>
   Revisions copyright (c) 2022-2024 Robert Di Pardo <dipardo.r@gmail.com>
 */
-#define HTMLTAG_VERSION L"1.4.3.0\0"
-#define HTMLTAG_VERSION_WORDS 1,4,3,0
+#define HTMLTAG_VERSION L"1.4.3.1\0"
+#define HTMLTAG_VERSION_WORDS 1,4,3,1
 
 MAINICON ICON "HTMLTag.ico"
 
@@ -29,7 +29,7 @@ BEGIN
     BLOCK "040904e4"
     BEGIN
       VALUE "Comments", L"https://github.com/rdipardo/nppHTMLTag/issues\0"
-      VALUE "CompanyName", L"Voronw�\0"
+      VALUE "CompanyName", L"Voronw\x00EB\0"
       VALUE "FileDescription", L"HTML Tag plugin for Notepad++\0"
       VALUE "InternalName", L"HTMLTag\0"
       VALUE "LegalCopyright", L"Martijn Coppoolse\0"
