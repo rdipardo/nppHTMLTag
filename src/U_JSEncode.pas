@@ -52,15 +52,12 @@ var
     for CharIndex := Length(Text) downto 1 do begin
       CharCode := Ord(Text[CharIndex]);
       if CharCode > 127 then begin
-        if MultiSel then begin
-          doc.SelectMultiple(doc.Selection.StartPos + Pos(WideChar(CharCode), Text) - 1, doc.CharWidth);
-          Text := WideFormat('%s%s', [CharPrefix, IntToHex(CharCode, 4)]);
-        end else begin
+        if not MultiSel then begin
           Text := Copy(Text, 1, CharIndex - 1)
                   + WideFormat('%s%s', [CharPrefix, IntToHex(CharCode, 4)])
                   + Copy(Text, CharIndex + 1);
+          Inc(EntitiesReplaced);
         end;
-        Inc(EntitiesReplaced);
       end;
     end;
     Result := EntitiesReplaced;
@@ -104,9 +101,9 @@ begin
     else begin // ersSelection
       doc := npp.ActiveDocument;
       TargetText := doc.Selection.Text;
-      MultiSel := (doc.SelectionMode = smStreamMulti);
+      MultiSel := (doc.SelectionMode <> smStreamSingle);
       if DoEncode(TargetText) > 0 then begin
-        doc.ReplaceSelection(TargetText);
+        doc.Selection.Text := TargetText;
         doc.Selection.ClearSelection;
       end;
     end;
@@ -120,7 +117,6 @@ var
   doc: TActiveDocument;
   Target, Match, MatchNext: TTextRange;
   Pattern: WideString;
-  ColumnSel, MultiSel: Boolean;
   LenPrefix: Sci_Position;
   HiByte, LoByte: Integer;
   EmojiChars: array [0..1] of WideChar;
@@ -129,17 +125,13 @@ begin
 
   npp := GetApplication();
   doc := npp.ActiveDocument;
-  ColumnSel := (doc.SelectionMode = smColumn);
-  MultiSel := (doc.SelectionMode = smStreamMulti);
+  if (doc.SelectionMode <> smStreamSingle) then
+    Exit;
+
   Target := TTextRange.Create(doc, doc.Selection.StartPos, doc.Selection.EndPos);
   Match := TTextRange.Create(doc);
   Pattern := UTF8Decode(U_Npp_HTMLTag.Npp.Options.UnicodeRE);
   LenPrefix := Length(U_Npp_HTMLTag.Npp.Options.UnicodePrefix);
-  { NOTE: Carets don't line up correctly unless we search from the first match in the docuemnt(?) }
-  if MultiSel then begin
-    Target.StartPos := Pos(Copy(Target.Text, 0, 2*lenPrefix+8), doc.Text) - 1;
-    Target.EndPos := doc.SendMessage(SCI_GETSELECTIONNEND, doc.SendMessage(SCI_GETSELECTIONS) - 1);
-  end;
   try
     repeat
       doc.Find(Pattern, Match, SCFIND_REGEXP, Target.StartPos, Target.EndPos);
@@ -158,13 +150,8 @@ begin
             begin
               EmojiChars[0] := WideChar(LoByte);
               EmojiChars[1] := WideChar(HiByte);
-              if MultiSel then begin
-                doc.SelectMultiple(Match.StartPos, Match.Length*2);
-                doc.ReplaceSelection(WideCharToString(EmojiChars));
-              end else begin
-                MatchNext.Text := EmptyWideStr;
-                Match.Text := WideCharToString(EmojiChars);
-              end;
+              MatchNext.Text := EmptyWideStr;
+              Match.Text := WideCharToString(EmojiChars);
 
               if (Result < 1) then doc.Selection.StartPos := Match.StartPos;
             end;
@@ -172,17 +159,12 @@ begin
             MatchNext.Free;
           end;
         end else
-          if MultiSel then begin
-            doc.SelectMultiple(Match.StartPos, Match.Length);
-            doc.ReplaceSelection(WideChar(HiByte));
-          end else
             Match.Text := WideChar(HiByte);
 
         if (Result < 1) then doc.Selection.StartPos := Match.StartPos;
         Inc(Result);
-        if MultiSel then Break;
       end;
-    until (Match.Length = 0) or (ColumnSel and (Result = doc.SendMessage(SCI_GETSELECTIONS)));
+    until (Match.Length = 0);
 
     if Result > 0 then doc.Selection.ClearSelection;
   finally

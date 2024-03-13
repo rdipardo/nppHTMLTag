@@ -90,7 +90,7 @@ interface
         property StartPos: Sci_Position read GetStart         write SetStart;
         property EndPos: Sci_Position   read GetEnd           write SetEnd;
         property Length: Sci_Position   read GetLength        write SetLength;
-        property Text: WideString       read GetText;
+        property Text: WideString       read GetText          write SetText;
     end;
     { -------------------------------------------------------------------------------------------- }
     TTextRangeMark = class

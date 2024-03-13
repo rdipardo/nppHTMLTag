@@ -140,7 +140,7 @@ begin
       doc := npp.App.ActiveDocument;
       Text := doc.Selection.Text;
       if DoEncodeEntities(Text, FetchEntities, Options) > 0 then begin
-        doc.ReplaceSelection(Text);
+        doc.Selection.Text := Text;
         doc.Selection.ClearSelection;
       end;
     end;
@@ -164,7 +164,7 @@ begin
 
   EncodedEntity := '';
   Doc := Npp.App.ActiveDocument;
-  MultiSel := (doc.SelectionMode = smStreamMulti);
+  MultiSel := (doc.SelectionMode <> smStreamSingle);
   for CharIndex := Length(Text) downto 1 do begin
     EntityIndex := Entities.IndexOfName(IntToStr(integer(Ord(Text[CharIndex]))));
     if EntityIndex > -1 then begin
@@ -180,15 +180,12 @@ begin
       ReplaceEntity := False;
     end;
     if ReplaceEntity then begin
-      if MultiSel then begin
-        doc.SelectMultiple(doc.Selection.StartPos + Pos(Text[CharIndex], Text) - 1, doc.CharWidth);
-        Text := '&' + EncodedEntity + ';';
-      end else begin
+      if not MultiSel then begin
         Text := Copy(Text, 1, CharIndex - 1)
                 + '&' + EncodedEntity + ';'
                 + Copy(Text, CharIndex + 1);
+         Inc(EntitiesReplaced);
       end;
-      Inc(EntitiesReplaced);
       if MultiSel then Break;
     end;
   end;
@@ -233,7 +230,7 @@ begin
   if not (Pos(';', Text) > CharIndex) then
     Exit;
 
-  MultiSel := (doc.SelectionMode = smStreamMulti);
+  MultiSel := (doc.SelectionMode <> smStreamSingle);
   while CharIndex > 0 do begin
     FirstPos := CharIndex;
     LastPos := FirstPos;
@@ -307,16 +304,13 @@ begin
     end;
 
     if IsValid then begin
-      if MultiSel then begin
-        doc.SelectMultiple(doc.Selection.StartPos + FirstPos - 1, (LastPos - FirstPos) + 2);
-        Text := WideChar(CodePoint);
-      end else begin
+      if not MultiSel then begin
         Text := Copy(Text, 1, FirstPos - 1)
                 + WideChar(CodePoint)
                 + Copy(Text, NextIndex);
         Dec(NextIndex, (LastPos - FirstPos + 1));
+        Inc(EntitiesReplaced);
       end;
-      Inc(EntitiesReplaced);
       if MultiSel then Break;
     end;
 
@@ -328,7 +322,7 @@ begin
   end;
 
   if EntitiesReplaced > 0 then begin
-    doc.ReplaceSelection(Text);
+    doc.Selection.Text := Text;
     doc.Selection.ClearSelection;
   end;
 
