@@ -133,6 +133,7 @@ begin
   Pattern := UTF8Decode(U_Npp_HTMLTag.Npp.Options.UnicodeRE);
   LenPrefix := Length(U_Npp_HTMLTag.Npp.Options.UnicodePrefix);
   try
+    doc.SendMessage(SCI_BEGINUNDOACTION);
     repeat
       doc.Find(Pattern, Match, SCFIND_REGEXP, Target.StartPos, Target.EndPos);
       if Match.Length <> 0 then begin
@@ -168,6 +169,7 @@ begin
 
     if Result > 0 then doc.Selection.ClearSelection;
   finally
+    doc.SendMessage(SCI_ENDUNDOACTION);
     Target.Free;
     Match.Free;
   end;
