@@ -16,7 +16,7 @@ printf '\\t%s\\n' "$(sha256sum ${SLUGX86})" >> sha256sums.md
 printf '\\t%s\\n' "$(sha256sum ${SLUGX64})" >> sha256sums.md
 curl -sL -X POST \
     -H "Accept: application/vnd.github+json" \
-    -H "Authorization: Bearer ${GH_API_TOKEN}" \
+    -H "Authorization: Bearer ${GH_API_TOKEN_2024}" \
         "https://api.github.com/repos/${CIRCLE_USERNAME}/nppHTMLTag/releases" \
     -d "{\"tag_name\":\"${CIRCLE_TAG}\",
         \"target_commitish\":\"${BRANCH}\",
