@@ -34,16 +34,8 @@ Visit "the wiki":https://github.com/rdipardo/nppHTMLTag/wiki for more detailed i
 
 h2. Installation
 
-===============================================================================================
-
-h3. _Warning_
-
-_*Always* check your Notepad++ version at "? > Debug Info" before installing plugins_
+*Note*
 _Notepad++ 8.3 is the *minimum required* version for 64-bit releases of HTML Tag 1.2 and newer_
-
-You can safely use any 32-bit version of HTML Tag with any 32-bit version of Notepad++
-
-===============================================================================================
 
 h3. Plugins Admin
 
