@@ -52,6 +52,7 @@ type
     function MinSubsystemIsVista: Boolean;
     procedure LoadOptions;
     procedure SaveOptions;
+    procedure InitMenu;
     procedure FindAndDecode(const KeyCode: Integer; Cmd: TDecodeCmd = dcAuto);
     function AutoCompleteMatchingTag(const StartPos: Sci_Position; TagName: nppPChar): Boolean;
   public
@@ -199,13 +200,29 @@ end;
 
 { ------------------------------------------------------------------------------------------------ }
 constructor TNppPluginHTMLTag.Create;
-var
-  sk: PShortcutKey;
 begin
   inherited;
 
   self.PluginName := '&HTML Tag';
   FConfigDir := EmptyWideStr;
+end;
+
+{ ------------------------------------------------------------------------------------------------ }
+procedure TNppPluginHTMLTag.InitMenu;
+var
+  sk: PShortcutKey;
+  i: Integer;
+begin
+  self.SetLanguage;
+  if Length(self.FuncArray) > 0 then
+  begin
+    for i := 0 to Length(self.FuncArray) - 1 do
+    begin
+        if FuncArray[i].ItemName <> '' then
+          FuncArray[i].ItemName := GetMessage('menu_' + IntToStr(i));
+    end;
+    Exit;
+  end;
 
   sk := self.MakeShortcutKey(False, True, False, Ord('T')); // Alt-T
   self.AddFuncItem(GetMessage('menu_0'), _commandFindMatchingTag, sk);
@@ -267,6 +284,7 @@ begin
   if not FileExists(Entities) then
     CopyFileW(PWChar(DefaultEntitiesPath), PWChar(Entities), True);
 
+  InitMenu;
   LoadOptions;
 end;
 

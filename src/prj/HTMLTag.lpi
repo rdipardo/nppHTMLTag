@@ -74,7 +74,7 @@
         </CompilerOptions>
       </Item2>
       <SharedMatrixOptions Count="1">
-        <Item1 ID="874394513237" Targets="*" Modes="Release" Value="-O3s"/>
+        <Item1 ID="874394513237" Targets="#project,fpgui_toolkit" Modes="Release" Value="-O3s"/>
       </SharedMatrixOptions>
     </BuildModes>
     <PublishOptions>
