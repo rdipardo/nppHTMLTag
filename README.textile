@@ -30,6 +30,7 @@ This plugin provides the following core functions (see the full list of commands
 * HTML entity encoding/decoding (example: @é@ to @&eacute;@)
 * JS character encoding/decoding (example: @é@ to @\u00E9@)
 
+Visit "the wiki":https://github.com/rdipardo/nppHTMLTag/wiki for more detailed information and illustrations.
 
 h2. Installation
 

@@ -2,6 +2,12 @@ h2. Changes since v1.1
 
 h3. Released Versions
 
+* 1.4.4 (2024-03-14)
+** Fixed: don't overwrite active selections when auto decoding is on ("#7":7) [0dd3aa6]
+** Fixed: position caret one space after auto-decoded entities [af8a88f], regressed by decrementing the initial value of @charOffset@ in [d59daf6]
+** Changed: roll back most of [a9c305c] and [d59daf6] to prevent overwriting multiple stream and rectangular selections [bf7a02d]
+** Changed: make Unicode conversions easier to undo [1c7a195]
+
 * 1.4.3 (2024-01-12)
 ** Fixed: include semi-colons when decoding multi-selected named entities [08d07ec]
 ** Fixed: avoid overwriting multi-selected tags when replacing them from an autocompletion list [203c3a9]
@@ -98,6 +104,7 @@ h3. Unreleased, Unstable Versions
 
 
 [db330832]https://github.com/notepad-plus-plus/notepad-plus-plus/commit/db3308329bd23a073b7de6f4ded2a523b282fcc3#diff-8968b5cad4cc8f62c9204894eea9941dac353af428a26be64f52055e99992040
+[7]https://github.com/rdipardo/nppHTMLTag/issues/7
 [cref]https://community.notepad-plus-plus.org/topic/22471/recompile-your-x64-plugins-with-new-header
 [jsDecodeBug]https://community.notepad-plus-plus.org/topic/18488/htmltag-1-1-plugin-broken-since-npp-7-7
 [jsDecodeBugOrig]https://fossil.2of4.net/npp_htmltag/tktview?name=c3c733e21f

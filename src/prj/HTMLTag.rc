@@ -6,8 +6,8 @@
   Copyright (c) Martijn Coppoolse <https://github.com/vor0nwe>
   Revisions copyright (c) 2022-2024 Robert Di Pardo <dipardo.r@gmail.com>
 */
-#define HTMLTAG_VERSION L"1.4.3.1\0"
-#define HTMLTAG_VERSION_WORDS 1,4,3,1
+#define HTMLTAG_VERSION L"1.4.4.0\0"
+#define HTMLTAG_VERSION_WORDS 1,4,4,0
 
 MAINICON ICON "HTMLTag.ico"
 
