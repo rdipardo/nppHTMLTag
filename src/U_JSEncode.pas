@@ -25,30 +25,62 @@ function  DecodeJS(Scope: TEntityReplacementScope = ersSelection): Integer;
 implementation
 uses
   SysUtils,
+  U_Npp_HTMLTag,
   NppPlugin;
 
 { ------------------------------------------------------------------------------------------------ }
 type
   TTextRange = NppSimpleObjects.TTextRange;
-  TRangeConversionMethod = function(const TextRange: TTextRange): Integer;
 
 { ------------------------------------------------------------------------------------------------ }
-function PerformConversion(Conversion: TRangeConversionMethod; Scope: TEntityReplacementScope = ersSelection): Integer;
+procedure EncodeJS(Scope: TEntityReplacementScope = ersSelection);
 var
   npp: TApplication;
   doc: TActiveDocument;
   DocIndex: Integer;
   Range: TTextRange;
+  TargetText: WideString;
+  MultiSel: Boolean;
+  // ---------------------------------------------------------------------------------------------
+  function DoEncode(var Text: WideString): Cardinal; overload;
+  var
+    CharPrefix: String;
+    CharIndex, CharCode, EntitiesReplaced: Cardinal;
+  begin
+    EntitiesReplaced := 0;
+    CharPrefix := U_Npp_HTMLTag.Npp.Options.UnicodePrefix;
+    for CharIndex := Length(Text) downto 1 do begin
+      CharCode := Ord(Text[CharIndex]);
+      if CharCode > 127 then begin
+        if not MultiSel then begin
+          Text := Copy(Text, 1, CharIndex - 1)
+                  + WideFormat('%s%s', [CharPrefix, IntToHex(CharCode, 4)])
+                  + Copy(Text, CharIndex + 1);
+          Inc(EntitiesReplaced);
+        end;
+      end;
+    end;
+    Result := EntitiesReplaced;
+  end;
+  function DoEncode: Cardinal; overload;
+  begin
+    TargetText := Range.Text;
+    Result := DoEncode(TargetText);
+    if Result > 0 then begin
+      Range.Text := TargetText;
+      Range.ClearSelection;
+    end;
+  end;
+  // ---------------------------------------------------------------------------------------------
 begin
   npp := GetApplication();
 
-  Result := 0;
   case Scope of
     ersDocument: begin
       doc := npp.ActiveDocument;
       Range := doc.GetRange();
       try
-        Result := Conversion(Range);
+        DoEncode;
       finally
         Range.Free;
       end;
@@ -58,56 +90,24 @@ begin
       for DocIndex := 0 to npp.Editors.Count - 1 do begin
         doc := npp.Editors[DocIndex];
         Range := doc.GetRange();
-        Result := Conversion(Range);
+        try
+          DoEncode;
+        finally
+          Range.Free;
+        end;
       end;
     end;
 
     else begin // ersSelection
       doc := npp.ActiveDocument;
-      Range := doc.Selection;
-      Result := Conversion(Range);
+      TargetText := doc.Selection.Text;
+      MultiSel := (doc.SelectionMode <> smStreamSingle);
+      if DoEncode(TargetText) > 0 then begin
+        doc.Selection.Text := TargetText;
+        doc.Selection.ClearSelection;
+      end;
     end;
   end{case};
-end {PerformConversion};
-
-{ ------------------------------------------------------------------------------------------------ }
-function DoEncodeJS(var Text: WideString): Integer; overload;
-var
-  CharIndex: Cardinal;
-  CharCode: Cardinal;
-  EntitiesReplaced: integer;
-begin
-  EntitiesReplaced := 0;
-
-  for CharIndex := Length(Text) downto 1 do begin
-    CharCode := Ord(Text[CharIndex]);
-    if CharCode > 127 then begin
-      Text := Copy(Text, 1, CharIndex - 1)
-              + WideFormat('\u%s', [IntToHex(CharCode, 4)])
-              + Copy(Text, CharIndex + 1);
-      Inc(EntitiesReplaced);
-    end;
-  end;
-  Result := EntitiesReplaced;
-end {DoEncodeJS};
-
-{ ------------------------------------------------------------------------------------------------ }
-function DoEncodeJS(const Range: TTextRange): Integer; overload;
-var
-  Text: WideString;
-begin
-  Text := Range.Text;
-  Result := DoEncodeJS(Text);
-  if Result > 0 then begin
-    Range.Text := Text;
-    Range.ClearSelection;
-  end;
-end{DoEncodeJS};
-
-{ ------------------------------------------------------------------------------------------------ }
-procedure EncodeJS(Scope: TEntityReplacementScope = ersSelection);
-begin
-  PerformConversion(DoEncodeJS, Scope);
 end{EncodeJS};
 
 { ------------------------------------------------------------------------------------------------ }
@@ -116,55 +116,60 @@ var
   npp: TApplication;
   doc: TActiveDocument;
   Target, Match, MatchNext: TTextRange;
-  HiByte, LoByte: Cardinal;
+  Pattern: WideString;
+  LenPrefix: Sci_Position;
+  HiByte, LoByte: Integer;
   EmojiChars: array [0..1] of WideChar;
 begin
   Result := 0;
 
   npp := GetApplication();
   doc := npp.ActiveDocument;
+  if (doc.SelectionMode <> smStreamSingle) then
+    Exit;
 
   Target := TTextRange.Create(doc, doc.Selection.StartPos, doc.Selection.EndPos);
   Match := TTextRange.Create(doc);
+  Pattern := UTF8Decode(U_Npp_HTMLTag.Npp.Options.UnicodeRE);
+  LenPrefix := Length(U_Npp_HTMLTag.Npp.Options.UnicodePrefix);
   try
+    doc.SendMessage(SCI_BEGINUNDOACTION);
     repeat
-      doc.Find('\\u[0-9A-F]{4}', Match, SCFIND_REGEXP, Target.StartPos, Target.EndPos);
+      doc.Find(Pattern, Match, SCFIND_REGEXP, Target.StartPos, Target.EndPos);
       if Match.Length <> 0 then begin
         // Adjust the target already
         Target.StartPos := Match.StartPos + 1;
 
-        // replace this match's text by the appropriate Unicode character
-        HiByte := StrToInt(Format('$%s', [Copy(Match.Text, 3, 4)]));
-
         // check if code point belongs to a multi-byte glyph
-        if (HiByte >= $D800) and (HiByte <= $DBFF) then
+        if TryStrToInt(Format('$%s', [Copy(Match.Text, lenPrefix+1, 4)]), HiByte) and
+           (HiByte >= $D800) and (HiByte <= $DBFF) then
         begin
           try
             MatchNext := TTextRange.Create(doc);
-            doc.Find('\\u[0-9A-F]{4}', MatchNext, SCFIND_REGEXP, Match.EndPos-2, Target.EndPos);
-            if MatchNext.Length <> 0 then
+            doc.Find(Pattern, MatchNext, SCFIND_REGEXP, Match.EndPos-lenPrefix, Target.EndPos);
+            if (MatchNext.Length <> 0) and TryStrToInt(Format('$%s', [Copy(MatchNext.Text, lenPrefix+1, 4)]), LoByte) then
             begin
-              LoByte := StrToInt(Format('$%s', [Copy(MatchNext.Text, 3, 4)]));
-              // erase tail character
-              MatchNext.Text := EmptyWideStr;
               EmojiChars[0] := WideChar(LoByte);
               EmojiChars[1] := WideChar(HiByte);
+              MatchNext.Text := EmptyWideStr;
               Match.Text := WideCharToString(EmojiChars);
+
               if (Result < 1) then doc.Selection.StartPos := Match.StartPos;
             end;
           finally
             MatchNext.Free;
           end;
         end else
-          Match.Text := WideChar(HiByte);
+            Match.Text := WideChar(HiByte);
 
         if (Result < 1) then doc.Selection.StartPos := Match.StartPos;
         Inc(Result);
       end;
-    until Match.Length = 0;
+    until (Match.Length = 0);
 
     if Result > 0 then doc.Selection.ClearSelection;
   finally
+    doc.SendMessage(SCI_ENDUNDOACTION);
     Target.Free;
     Match.Free;
   end;

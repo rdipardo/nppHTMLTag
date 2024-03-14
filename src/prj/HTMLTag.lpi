@@ -15,14 +15,12 @@
       <Title Value="HTMLTag"/>
       <UseAppBundle Value="False"/>
       <ResourceType Value="res"/>
-      <Icon Value="0"/>
     </General>
     <VersionInfo>
-      <UseVersionInfo Value="True"/>
       <MajorVersionNr Value="1"/>
       <MinorVersionNr Value="4"/>
-      <RevisionNr Value="1"/>
-      <StringTable Comments="https://github.com/rdipardo/nppHTMLTag/issues" CompanyName="Voronwë" FileDescription="HTML Tag plugin for Notepad++" InternalName="$NameOnly($(ProjFile))" LegalCopyright="Martijn Coppoolse" OriginalFilename="$NameOnly($(ProjFile)).dll" ProductName="$NameOnly($(ProjFile))" ProductVersion="1.4.1.0"/>
+      <RevisionNr Value="3"/>
+      <StringTable Comments="https://github.com/rdipardo/nppHTMLTag/issues" CompanyName="Voronwë" FileDescription="HTML Tag plugin for Notepad++" InternalName="$NameOnly($(ProjFile))" LegalCopyright="Martijn Coppoolse" OriginalFilename="$NameOnly($(ProjFile)).dll" ProductName="$NameOnly($(ProjFile))" ProductVersion="1.4.3.0"/>
     </VersionInfo>
     <BuildModes Count="2">
       <Item1 Name="Debug" Default="True"/>
@@ -35,7 +33,7 @@
           </Target>
           <SearchPaths>
             <IncludeFiles Value="..;$(ProjOutDir)"/>
-            <OtherUnitFiles Value="..;..\Common;..\LibNppPlugin;..\Forms"/>
+            <OtherUnitFiles Value="..;..\LibNppPlugin\Source\Units\Common;..\Forms"/>
             <UnitOutputDirectory Value="..\..\out\obj\$(TargetCPU)-$(TargetOS)\$(BuildMode)"/>
           </SearchPaths>
           <Parsing>
@@ -47,9 +45,6 @@
           <CodeGeneration>
             <RelocatableUnit Value="True"/>
             <TargetCPU Value="x86_64"/>
-            <Optimizations>
-              <OptimizationLevel Value="3"/>
-            </Optimizations>
           </CodeGeneration>
           <Linking>
             <Debugging>
@@ -71,9 +66,16 @@
             <OtherDefines Count="1">
               <Define0 Value="UNICODE"/>
             </OtherDefines>
+            <ExecuteBefore>
+              <Command Value="$(CompPath)\..\fpcres.exe -i $NameOnly($(ProjFile)).rc -o $NameOnly($(ProjFile)).res -of res -v"/>
+              <CompileReasons Run="False"/>
+            </ExecuteBefore>
           </Other>
         </CompilerOptions>
       </Item2>
+      <SharedMatrixOptions Count="1">
+        <Item1 ID="874394513237" Targets="#project,fpgui_toolkit" Modes="Release" Value="-O3s"/>
+      </SharedMatrixOptions>
     </BuildModes>
     <PublishOptions>
       <Version Value="2"/>
@@ -91,7 +93,7 @@
         <PackageName Value="LazUtils"/>
       </Item2>
     </RequiredPackages>
-    <Units Count="7">
+    <Units Count="8">
       <Unit0>
         <Filename Value="HTMLTag.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -101,25 +103,29 @@
         <IsPartOfProject Value="True"/>
       </Unit1>
       <Unit2>
-        <Filename Value="..\Common\L_VersionInfoW.pas"/>
+        <Filename Value="..\LibNppPlugin\Source\Units\Common\VersionInfo.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit2>
       <Unit3>
-        <Filename Value="..\Common\L_SpecialFolders.pas"/>
+        <Filename Value="..\LibNppPlugin\Source\Units\Common\ModulePath.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit3>
       <Unit4>
-        <Filename Value="..\LibNppPlugin\NppSimpleObjects.pas"/>
+        <Filename Value="..\NppSimpleObjects.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit4>
       <Unit5>
-        <Filename Value="..\LibNppPlugin\nppplugin.pas"/>
+        <Filename Value="..\LibNppPlugin\Source\Units\Common\nppplugin.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit5>
       <Unit6>
         <Filename Value="..\Forms\AboutForm.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit6>
+      <Unit7>
+        <Filename Value="..\Forms\ConfigForm.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit7>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -130,7 +136,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="..;$(ProjOutDir)"/>
-      <OtherUnitFiles Value="..;..\Common;..\LibNppPlugin;..\Forms"/>
+      <OtherUnitFiles Value="..;..\LibNppPlugin\Source\Units\Common;..\Forms"/>
       <UnitOutputDirectory Value="..\..\out\obj\$(TargetCPU)-$(TargetOS)\$(BuildMode)"/>
     </SearchPaths>
     <Parsing>
@@ -170,6 +176,10 @@
 -dSCI_DISABLE_PROVISIONAL
 -WN
 -vm2026"/>
+      <ExecuteBefore>
+        <Command Value="$(CompPath)\..\fpcres.exe -D _DEBUG -i $NameOnly($(ProjFile)).rc -o $NameOnly($(ProjFile)).res -of res -v"/>
+        <CompileReasons Run="False"/>
+      </ExecuteBefore>
     </Other>
   </CompilerOptions>
   <Debugging>

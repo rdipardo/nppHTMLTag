@@ -1,0 +1,46 @@
+/*
+  This Source Code Form is subject to the terms of the Mozilla Public
+  License, v. 2.0. If a copy of the MPL was not distributed with this file,
+  You can obtain one at https://mozilla.org/MPL/2.0/.
+
+  Copyright (c) Martijn Coppoolse <https://github.com/vor0nwe>
+  Revisions copyright (c) 2022-2024 Robert Di Pardo <dipardo.r@gmail.com>
+*/
+#define HTMLTAG_VERSION L"1.5.0.0\0"
+#define HTMLTAG_VERSION_WORDS 1,5,0,0
+
+MAINICON ICON "HTMLTag.ico"
+
+1 VERSIONINFO
+  FILEVERSION HTMLTAG_VERSION_WORDS
+  PRODUCTVERSION HTMLTAG_VERSION_WORDS
+  FILEFLAGSMASK 0x3FL
+#ifdef _DEBUG
+  FILEFLAGS 0x1L
+#else
+  FILEFLAGS 0x0L
+#endif
+  FILEOS 0x40004L
+  FILETYPE 0x2L
+  FILESUBTYPE 0x0L
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904e4"
+    BEGIN
+      VALUE "Comments", L"https://github.com/rdipardo/nppHTMLTag/issues\0"
+      VALUE "CompanyName", L"Voronw\x00EB\0"
+      VALUE "FileDescription", L"HTML Tag plugin for Notepad++\0"
+      VALUE "InternalName", L"HTMLTag\0"
+      VALUE "LegalCopyright", L"Martijn Coppoolse\0"
+      VALUE "OriginalFilename", L"HTMLTag.dll\0"
+      VALUE "ProductName", L"HTML Tag\0"
+      VALUE "ProductVersion", HTMLTAG_VERSION
+      VALUE "FileVersion", HTMLTAG_VERSION
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1252
+  END
+END

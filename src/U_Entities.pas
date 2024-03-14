@@ -32,7 +32,7 @@ uses
   SysUtils, Windows, StrUtils,
   NppPlugin,
   Utf8IniFiles,
-  L_SpecialFolders;
+  ModulePath;
 
 var
   EntityLists: TStringList;
@@ -60,7 +60,7 @@ begin
     ErrMsg := WideFormat('%s must be saved in'#13#10'%s', [ExtractFileName(IniFile), ExtractFileDir(IniFile)]);
     if not FileExists(IniFile) then
       IniFile := Npp.DefaultEntitiesPath;
-      ErrMsg := Concat(ErrMsg, WideFormat(#13#10'or %s in'#13#10'%s', [ExtractFileName(IniFile), TSpecialFolders.DLL]));
+      ErrMsg := Concat(ErrMsg, WideFormat(#13#10'or %s in'#13#10'%s', [ExtractFileName(IniFile), TModulePath.DLL]));
     if not FileExists(IniFile) then begin
       MessageBoxW(ANpp.App.WindowHandle, PWideChar(ErrMsg), PWideChar('Missing Entities File'), MB_ICONERROR);
       FreeAndNil(EntityLists);
@@ -150,8 +150,9 @@ end{EncodeEntities};
 { ------------------------------------------------------------------------------------------------ }
 function DoEncodeEntities(var Text: WideString; const Entities: THashedStringList; const Options: TEntityReplacementOptions): Integer;
 var
+  Doc: TActiveDocument;
   CharIndex, EntityIndex: integer;
-  ReplaceEntity: boolean;
+  ReplaceEntity, MultiSel: boolean;
   EncodedEntity: WideString;
   EntitiesReplaced: integer;
 begin
@@ -162,6 +163,8 @@ begin
   end;
 
   EncodedEntity := '';
+  Doc := Npp.App.ActiveDocument;
+  MultiSel := (doc.SelectionMode <> smStreamSingle);
   for CharIndex := Length(Text) downto 1 do begin
     EntityIndex := Entities.IndexOfName(IntToStr(integer(Ord(Text[CharIndex]))));
     if EntityIndex > -1 then begin
@@ -177,10 +180,13 @@ begin
       ReplaceEntity := False;
     end;
     if ReplaceEntity then begin
-      Text := Copy(Text, 1, CharIndex - 1)
-              + '&' + EncodedEntity + ';'
-              + Copy(Text, CharIndex + 1);
-      Inc(EntitiesReplaced);
+      if not MultiSel then begin
+        Text := Copy(Text, 1, CharIndex - 1)
+                + '&' + EncodedEntity + ';'
+                + Copy(Text, CharIndex + 1);
+         Inc(EntitiesReplaced);
+      end;
+      if MultiSel then Break;
     end;
   end;
   Result := EntitiesReplaced;
@@ -199,7 +205,7 @@ var
   CharIndex, EntityIndex: integer;
   EntitiesReplaced: integer;
   FirstPos, LastPos, NextIndex, i: Integer;
-  IsNumeric, IsHex, IsValid: boolean;
+  IsNumeric, IsHex, IsValid, MultiSel: boolean;
   AllowedChars: WideString;
   Entity: string;
   CodePoint: integer;
@@ -224,6 +230,7 @@ begin
   if not (Pos(';', Text) > CharIndex) then
     Exit;
 
+  MultiSel := (doc.SelectionMode <> smStreamSingle);
   while CharIndex > 0 do begin
     FirstPos := CharIndex;
     LastPos := FirstPos;
@@ -297,11 +304,14 @@ begin
     end;
 
     if IsValid then begin
-      Text := Copy(Text, 1, FirstPos - 1)
-              + WideChar(CodePoint)
-              + Copy(Text, NextIndex);
-      Dec(NextIndex, (LastPos - FirstPos + 1));
-      Inc(EntitiesReplaced);
+      if not MultiSel then begin
+        Text := Copy(Text, 1, FirstPos - 1)
+                + WideChar(CodePoint)
+                + Copy(Text, NextIndex);
+        Dec(NextIndex, (LastPos - FirstPos + 1));
+        Inc(EntitiesReplaced);
+      end;
+      if MultiSel then Break;
     end;
 
     CharIndex := PosEx('&', Text, NextIndex);

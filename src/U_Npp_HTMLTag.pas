@@ -17,7 +17,10 @@ uses
   LocalizedNppPlugin,
   fpg_main,
   AboutForm,
-  NppSimpleObjects, L_VersionInfoW;
+  NppSimpleObjects, VersionInfo;
+
+const
+  DEFAULT_UNICODE_ESC_PREFIX = '\u';
 
 type
   TDecodeCmd = (dcAuto = -1, dcEntity, dcUnicode);
@@ -25,6 +28,8 @@ type
   TPluginOptions = packed record
     LiveEntityDecoding: LongBool;
     LiveUnicodeDecoding: LongBool;
+    UnicodePrefix: ShortString;
+    UnicodeRE: ShortString;
   end;
   PPluginOption = ^LongBool;
 
@@ -34,6 +39,8 @@ type
     FApp: TApplication;
     FMessages: TPluginMessages;
     FOptions: TPluginOptions;
+    FConfigDir: nppString;
+    FIsAutoCompletionCandidate: Boolean;
     function GetOptionsFilePath: nppString;
     function GetEntitiesFilePath: nppString;
     function GetDefaultEntitiesPath: nppString;
@@ -42,9 +49,12 @@ type
     function GetVersionString: nppString;
     function GetConfigDir: nppString;
     procedure LoadTranslations;
+    function MinSubsystemIsVista: Boolean;
     procedure LoadOptions;
     procedure SaveOptions;
+    procedure InitMenu;
     procedure FindAndDecode(const KeyCode: Integer; Cmd: TDecodeCmd = dcAuto);
+    function AutoCompleteMatchingTag(const StartPos: Sci_Position; TagName: nppPChar): Boolean;
   public
     constructor Create;
     destructor Destroy; override;
@@ -58,12 +68,20 @@ type
     procedure commandDecodeJS;
     procedure commandAbout;
     procedure SetInfo(NppData: TNppData); override;
+    procedure BeNotified(sn: PSciNotification); override;
     procedure DoNppnToolbarModification; override;
-    procedure DoCharAdded({%H-}const hwnd: HWND; const ch: Integer); override;
     function GetMessage(const Key: string): WideString; override;
+    procedure DoNppnThemeChanged;
+    procedure DoAutoCSelection({%H-}const hwnd: HWND; const StartPos: Sci_Position; ListItem: nppPChar);
+    procedure DoCharAdded({%H-}const hwnd: HWND; const ch: Integer);
     procedure ToggleOption(OptionPtr: PPluginOption; MenuPos: TCmdMenuPosition);
+    procedure SetUnicodeFormatOptions(const Prefix: ShortString);
     procedure ShellExecute(const FullName: WideString; const Verb: WideString = 'open'; const WorkingDir: WideString = '';
       const ShowWindow: Integer = SW_SHOWDEFAULT);
+
+    // Dialogs need extra padding since v8.4.9
+    // https://github.com/notepad-plus-plus/notepad-plus-plus/pull/13054#issuecomment-1419562836
+    function HasNarrowDialogBorders: Boolean;
 
     property App: TApplication  read FApp;
     property Options: TPluginOptions read FOptions;
@@ -71,7 +89,8 @@ type
     property OptionsConfig: nppString  read GetOptionsFilePath;
     property Entities: nppString  read GetEntitiesFilePath;
     property DefaultEntitiesPath: nppString  read GetDefaultEntitiesPath;
-    property PluginConfigDir: nppString read GetConfigDir;
+    property PluginConfigDir: nppString read FConfigDir;
+    property DarkModeEnabled: Boolean read IsDarkModeEnabled;
   end;
 
   TPluginMessages = class(TStringList)
@@ -100,8 +119,9 @@ var
 implementation
 
 uses
+  StrUtils,
   ShellAPI,
-  L_SpecialFolders,
+  ModulePath,
   Utf8IniFiles,
   U_HTMLTagFinder, U_Entities, U_JSEncode;
 
@@ -180,52 +200,69 @@ end;
 
 { ------------------------------------------------------------------------------------------------ }
 constructor TNppPluginHTMLTag.Create;
-var
-  sk: PShortcutKey;
 begin
   inherited;
 
   self.PluginName := '&HTML Tag';
+  FConfigDir := EmptyWideStr;
+end;
 
-  sk := self.MakeShortcutKey(False, True, False, 'T'); // Alt-T
+{ ------------------------------------------------------------------------------------------------ }
+procedure TNppPluginHTMLTag.InitMenu;
+var
+  sk: PShortcutKey;
+  i: Integer;
+begin
+  self.SetLanguage;
+  if Length(self.FuncArray) > 0 then
+  begin
+    for i := 0 to Length(self.FuncArray) - 1 do
+    begin
+        if FuncArray[i].ItemName <> '' then
+          FuncArray[i].ItemName := GetMessage('menu_' + IntToStr(i));
+    end;
+    Exit;
+  end;
+
+sk := self.MakeShortcutKey(False, True, False, Ord('T')); // Alt-T
   self.AddFuncItem(GetMessage('menu_0'), _commandFindMatchingTag, sk);
 
-  sk := self.MakeShortcutKey(False, True, False, #113); // Alt-F2
+  sk := self.MakeShortcutKey(False, True, False, Ord(#113)); // Alt-F2
   self.AddFuncItem(GetMessage('menu_1'), _commandSelectMatchingTags, sk);
 
-  sk := self.MakeShortcutKey(False, True, True, 'T'); // Alt-Shift-T
+  sk := self.MakeShortcutKey(False, True, True, Ord('T')); // Alt-Shift-T
   self.AddFuncItem(GetMessage('menu_2'), _commandSelectTagContents, sk);
 
-  sk := self.MakeShortcutKey(True, True, False, 'T'); // Ctrl-Alt-T
+  sk := self.MakeShortcutKey(True, True, False, Ord('T')); // Ctrl-Alt-T
   self.AddFuncItem(GetMessage('menu_3'), _commandSelectTagContentsOnly, sk);
 
-  self.AddFuncSeparator;
+  self.AddFuncItem('', nil);
 
-  sk := self.MakeShortcutKey(True, False, False, 'E'); // Ctrl-E
+  sk := self.MakeShortcutKey(True, False, False, Ord('E')); // Ctrl-E
   self.AddFuncItem(GetMessage('menu_4'), _commandEncodeEntities, sk);
 
-  sk := self.MakeShortcutKey(True, True, False, 'E'); // Ctrl-Alt-E
+  sk := self.MakeShortcutKey(True, True, False, Ord('E')); // Ctrl-Alt-E
   self.AddFuncItem(GetMessage('menu_5'), _commandEncodeEntitiesInclLineBreaks, sk);
 
-  sk := self.MakeShortcutKey(True, False, True, 'E'); // Ctrl-Shift-E
+  sk := self.MakeShortcutKey(True, False, True, Ord('E')); // Ctrl-Shift-E
   self.AddFuncItem(GetMessage('menu_6'), _commandDecodeEntities, sk);
 
-  self.AddFuncSeparator;
+  self.AddFuncItem('', nil);
 
-  sk := self.MakeShortcutKey(False, True, False, 'J'); // Alt-J
+  sk := self.MakeShortcutKey(False, True, False, Ord('J')); // Alt-J
   self.AddFuncItem(GetMessage('menu_7'), _commandEncodeJS, sk);
 
-  sk := self.MakeShortcutKey(False, True, True, 'J'); // Alt-Shift-J
+  sk := self.MakeShortcutKey(False, True, True, Ord('J')); // Alt-Shift-J
   self.AddFuncItem(GetMessage('menu_8'), _commandDecodeJS, sk);
 
-  self.AddFuncSeparator;
+  self.AddFuncItem('', nil);
 
   self.AddFuncItem(GetMessage('menu_9'), _toggleLiveEntityecoding, nil);
   self.AddFuncItem(GetMessage('menu_10'), _toggleLiveUnicodeDecoding, nil);
 
-  self.AddFuncSeparator;
+  self.AddFuncItem('', nil);
 
-  self.AddFuncItem('&About...', _commandAbout);
+  self.AddFuncItem(GetMessage('menu_11'), _commandAbout);
 end;
 
 { ------------------------------------------------------------------------------------------------ }
@@ -243,17 +280,52 @@ end;
 procedure TNppPluginHTMLTag.SetInfo(NppData: TNppData);
 begin
   inherited SetInfo(NppData);
+  FConfigDir := GetConfigDir();
   if not FileExists(Entities) then
     CopyFileW(PWChar(DefaultEntitiesPath), PWChar(Entities), True);
 
+  InitMenu;
   LoadOptions;
+end;
+
+{ ------------------------------------------------------------------------------------------------ }
+procedure TNppPluginHTMLTag.BeNotified(sn: PSciNotification);
+begin
+  inherited BeNotified(sn);
+  try
+    if HWND(sn^.nmhdr.hwndFrom) = self.NppData.NppHandle then begin
+      case sn.nmhdr.code of
+        NPPN_DARKMODECHANGED: begin
+          self.DoNppnThemeChanged;
+        end;
+      end;
+    end else begin
+      case sn.nmhdr.code of
+        { https://www.scintilla.org/ScintillaDoc.html#SCN_AUTOCSELECTIONCHANGE }
+        SCN_AUTOCSELECTIONCHANGE: FIsAutoCompletionCandidate := (sn.listType = 0);
+        SCN_USERLISTSELECTION: FIsAutoCompletionCandidate := False;
+        SCN_AUTOCSELECTION: begin
+          if FIsAutoCompletionCandidate then
+            Self.DoAutoCSelection(HWND(sn.nmhdr.hwndFrom), sn.position, nppPChar(UTF8Decode(PAnsiChar(@sn.text[0]))));
+        end;
+        SCN_CHARADDED: begin
+          if (sn.characterSource = SC_CHARACTERSOURCE_DIRECT_INPUT) then
+            Self.DoCharAdded(HWND(sn.nmhdr.hwndFrom), sn.ch);
+        end;
+      end;
+    end;
+  except
+    on E: Exception do begin
+      OutputDebugString(PAnsiChar(UTF8Encode(WideFormat('%s> %s: "%s"', [PluginName, E.ClassName, E.Message]))));
+    end;
+  end;
 end;
 
 { ------------------------------------------------------------------------------------------------ }
 procedure TNppPluginHTMLTag.DoNppnToolbarModification;
 begin
   inherited;
-  FApp := GetApplication(@Self.NppData, NppSimpleObjects.TSciApiLevel(Self.GetApiLevel));
+  FApp := GetApplication(@Self.NppData, TSciApiLevel(Self.GetApiLevel));
 
 {$IFDEF CPUX64}
   try
@@ -267,13 +339,25 @@ begin
 end;
 
 { ------------------------------------------------------------------------------------------------ }
+procedure TNppPluginHTMLTag.DoAutoCSelection({%H-}const hwnd: HWND; const StartPos: Sci_Position; ListItem: nppPChar);
+begin
+{$IFDEF CPUX64}
+  if not SupportsBigFiles then
+    Exit;
+{$ENDIF}
+  if AutoCompleteMatchingTag(StartPos, ListItem) then
+    App.ActiveDocument.SendMessage(SCI_AUTOCCANCEL);
+end;
+
+{ ------------------------------------------------------------------------------------------------ }
 procedure TNppPluginHTMLTag.DoCharAdded({%H-}const hwnd: HWND; const ch: Integer);
 begin
 {$IFDEF CPUX64}
   if not SupportsBigFiles then
     Exit;
 {$ENDIF}
-  FindAndDecode(ch);
+  if (App.ActiveDocument.Selection.Length = 0) then
+    FindAndDecode(ch);
 end;
 
 { ------------------------------------------------------------------------------------------------ }
@@ -291,13 +375,31 @@ begin
 end;
 
 { ------------------------------------------------------------------------------------------------ }
+procedure TNppPluginHTMLTag.DoNppnThemeChanged;
+begin
+  if Assigned(About) then About.DoOnShow(nil);
+end;
+
+{ ------------------------------------------------------------------------------------------------ }
 procedure TNppPluginHTMLTag.ToggleOption(OptionPtr: PPluginOption; MenuPos: TCmdMenuPosition);
 var
   cmdIdx: Integer;
 begin
   OptionPtr^ := (not OptionPtr^);
   cmdIdx := Length(FuncArray) - Integer(MenuPos);
-  SendMessage(Npp.NppData.nppHandle, NPPM_SETMENUITEMCHECK, FuncArray[cmdIdx].CmdID, LPARAM(OptionPtr^));
+  SendNppMessage(NPPM_SETMENUITEMCHECK, CmdIdFromDlgId(cmdIdx), NativeInt(OptionPtr^));
+end;
+
+{ ------------------------------------------------------------------------------------------------ }
+procedure TNppPluginHTMLTag.SetUnicodeFormatOptions(const Prefix: ShortString);
+begin
+  if Length(Trim(Prefix)) > 0 then begin
+    FOptions.UnicodePrefix := Trim(Prefix);
+    FOptions.UnicodeRE := StringsReplace(UTF8Encode(AnsiToUtf8(Options.UnicodePrefix)),
+      ['\','.', '*', '+','?', '^','$','{','}','(',')','[',']','|'],
+      ['\\','\.', '\*', '\+','\?', '\^','\$','\{','\}','\(','\)','\[','\]','\|'], [rfReplaceAll]) + '[0-9A-F]{4}';
+  end else if FOptions.UnicodePrefix = '' then
+    SetUnicodeFormatOptions(DEFAULT_UNICODE_ESC_PREFIX);
 end;
 
 { ------------------------------------------------------------------------------------------------ }
@@ -459,25 +561,25 @@ end {TNppPluginHTMLTag.commandAbout};
 { ------------------------------------------------------------------------------------------------ }
 function TNppPluginHTMLTag.GetEntitiesFilePath: nppString;
 begin
-  Result := IncludeTrailingPathDelimiter(Self.PluginConfigDir) + 'entities.ini';
+  Result := ChangeFilePath('entities.ini', Self.PluginConfigDir);
 end {TNppPluginHTMLTag.GetEntitiesFilePath};
 
 { ------------------------------------------------------------------------------------------------ }
 function TNppPluginHTMLTag.GetOptionsFilePath: nppString;
 begin
-  Result := IncludeTrailingPathDelimiter(Self.PluginConfigDir) + 'options.ini';
+  Result := ChangeFilePath('options.ini', Self.PluginConfigDir);
 end;
 
 { ------------------------------------------------------------------------------------------------ }
 function TNppPluginHTMLTag.GetDefaultEntitiesPath: nppString;
 begin
-  Result := IncludeTrailingPathDelimiter(TSpecialFolders.DLL) + PluginNameFromModule() + '-entities.ini';
+  Result := IncludeTrailingPathDelimiter(TModulePath.DLL) + PluginNameFromModule() + '-entities.ini';
 end;
 
 { ------------------------------------------------------------------------------------------------ }
 function TNppPluginHTMLTag.GetTranslationsFilePath: nppString;
 begin
-  Result := IncludeTrailingPathDelimiter(TSpecialFolders.DLL) + PluginNameFromModule() + '-translations.ini';
+  Result := IncludeTrailingPathDelimiter(TModulePath.DLL) + PluginNameFromModule() + '-translations.ini';
 end;
 
 { ------------------------------------------------------------------------------------------------ }
@@ -485,7 +587,7 @@ function TNppPluginHTMLTag.PluginNameFromModule: nppString;
 var
   PluginName: WideString;
 begin
-  PluginName := ChangeFileExt(ExtractFileName(TSpecialFolders.DLLFullName), EmptyWideStr);
+  PluginName := ChangeFileExt(ExtractFileName(TModulePath.DLLFullName), EmptyWideStr);
   Result := WideStringReplace(PluginName, '_unicode', EmptyWideStr, []);
 end;
 
@@ -496,7 +598,7 @@ var
 begin
   Result := WideStringReplace(Self.PluginName, '&', EmptyWideStr, []);
   try
-    FvInfo := TFileVersionInfo.Create(TSpecialFolders.DLLFullName);
+    FvInfo := TFileVersionInfo.Create(TModulePath.DLLFullName);
     Result := WideFormat('%s %d.%d.%d (%d bit)',
       [Result, FvInfo.MajorVersion, FvInfo.MinorVersion, FvInfo.Revision, {$IFDEF CPUX64}64{$ELSE}32{$ENDIF}]);
   finally
@@ -505,9 +607,28 @@ begin
 end;
 
 { ------------------------------------------------------------------------------------------------ }
+function TNppPluginHTMLTag.HasNarrowDialogBorders: Boolean;
+begin
+  Result :=
+    MinSubsystemIsVista and
+      (TWinVer(SendNppMessage(NPPM_GETWINDOWSVERSION)) >= WV_WIN8);
+end;
+
+{ ------------------------------------------------------------------------------------------------ }
+function TNppPluginHTMLTag.MinSubsystemIsVista: Boolean;
+var
+  NppVersion: Cardinal;
+begin
+  NppVersion := GetNppVersion;
+  Result :=
+    ((HIWORD(NppVersion) > 8) or
+     ((HIWORD(NppVersion) = 8) and (LOWORD(NppVersion) >= 490)));
+end;
+
+{ ------------------------------------------------------------------------------------------------ }
 function TNppPluginHTMLTag.GetConfigDir: nppString;
 begin
-  Result := IncludeTrailingPathDelimiter(Self.ConfigDir) + PluginNameFromModule();
+  Result := IncludeTrailingPathDelimiter(Self.GetPluginsConfigDir()) + PluginNameFromModule();
   if (not DirectoryExists(Result)) then CreateDir(Result);
 end;
 
@@ -549,9 +670,12 @@ begin
     try
       FOptions.LiveEntityDecoding := config.ReadBool('AUTO_DECODE', 'ENTITIES', False);
       FOptions.LiveUnicodeDecoding := config.ReadBool('AUTO_DECODE', 'UNICODE_ESCAPE_CHARS', False);
+      SetUnicodeFormatOptions(config.ReadString('FORMAT', 'UNICODE_ESCAPE_PREFIX', DEFAULT_UNICODE_ESC_PREFIX));
     finally
       config.Free;
     end;
+  end else begin
+    SetUnicodeFormatOptions(DEFAULT_UNICODE_ESC_PREFIX);
   end;
   autoDecodeJs := Length(FuncArray) - Integer(cmpUnicode);
   autoDecodeEntities := Length(FuncArray) - Integer(cmpEntities);
@@ -564,10 +688,13 @@ procedure TNppPluginHTMLTag.SaveOptions;
 var
   config: TUtf8IniFile;
 begin
+  if not DirectoryExists(PluginConfigDir) then
+    Exit;
   config := TUtf8IniFile.Create(OptionsConfig);
   try
     config.WriteBool('AUTO_DECODE', 'ENTITIES', Options.LiveEntityDecoding);
     config.WriteBool('AUTO_DECODE', 'UNICODE_ESCAPE_CHARS', Options.LiveUnicodeDecoding);
+    config.WriteString('FORMAT', 'UNICODE_ESCAPE_PREFIX', UTF8ToAnsi(Options.UnicodePrefix));
   finally
     config.Free;
   end;
@@ -579,8 +706,8 @@ type
   TReplaceFunc = function(Scope: U_Entities.TEntityReplacementScope = ersSelection): Integer;
 var
   doc: TActiveDocument;
-  anchor, caret, selStart, nextCaretPos: Sci_Position;
-  ch, charOffset, chValue: Integer;
+  anchor, caret, selStart, nextCaretPos, lenPrefix, lenCodePt, i: Sci_Position;
+  ch, charOffset, chValue, chCurrent: Integer;
   didReplace: Boolean;
 
   function Replace(Func: TReplaceFunc; Start: Sci_Position; EndPos: Sci_Position): Boolean;
@@ -604,7 +731,9 @@ begin
         (not (ch in [$09..$0D, $20])))) then
     Exit;
 
-  charOffset := 0;
+  lenPrefix := Length(Options.UnicodePrefix);
+  lenCodePt := 4 + lenPrefix;
+  charOffset := -1;
   didReplace := False;
   doc := App.ActiveDocument;
   caret := doc.CurrentPosition;
@@ -612,27 +741,34 @@ begin
     caret := doc.SendMessage(SCI_POSITIONBEFORE, doc.CurrentPosition);
 
   for anchor := caret - 1 downto 0 do begin
-    case (Integer(doc.SendMessage(SCI_GETCHARAT, anchor))) of
+    chCurrent := Integer(doc.SendMessage(SCI_GETCHARAT, anchor));
+    case chCurrent of
       0..$20: Break;
       $26 {'&'}: begin
           if (Options.LiveEntityDecoding or (cmd = dcEntity)) then begin
             didReplace := Replace(@(U_Entities.DecodeEntities), anchor, caret);
+            if not (ch in [$0A, $0D]) then
+              Inc(charOffset);
             Break;
           end;
       end;
-      $5C {'\'}: begin
+      else begin
+          if (chCurrent <> Integer(Options.UnicodePrefix[1])) then
+            Continue;
           if (Options.LiveUnicodeDecoding or (cmd = dcUnicode)) then begin
             selStart := anchor;
             // backtrack to previous codepoint, in case it's part of a multi-byte glyph
-            if Integer(doc.SendMessage(SCI_GETCHARAT, anchor - 6)) = $5C then begin
-              doc.Select(anchor - 6, 6);
-              chValue := StrToInt(Format('$%s', [Copy(doc.Selection.Text, 3, 4)]));
-              if (chValue >= $D800) and (chValue <= $DBFF) then
-                Dec(selStart, 6);
+            chCurrent := Integer(doc.SendMessage(SCI_GETCHARAT, anchor - lenCodePt));
+            if (chCurrent = Integer(Options.UnicodePrefix[1])) then begin
+              doc.Select(anchor - lenCodePt, lenCodePt);
+              if TryStrToInt(Format('$%s', [Copy(doc.Selection.Text, lenPrefix+1, 4)]), chValue) and
+                 (chValue >= $D800) and (chValue <= $DBFF) then
+                Dec(selStart, lenCodePt);
             end;
             didReplace := Replace(@(U_JSEncode.DecodeJS), selStart, caret);
-            // compensate for both characters of '\u' prefix
-            Inc(charOffset);
+            // compensate for prefix length
+            for i := 1 to lenPrefix-1 do
+              Inc(charOffset);
             Break;
           end;
       end;
@@ -692,6 +828,36 @@ begin
   Self.AddStrings(DefaultMsgs);
 end;
 
+
+{ ------------------------------------------------------------------------------------------------ }
+function TNppPluginHTMLTag.AutoCompleteMatchingTag(const StartPos: Sci_Position; TagName: nppPChar): Boolean;
+const
+  MaxTagLength = 72; { https://www.rfc-editor.org/rfc/rfc1866#section-3.2.3 }
+var
+  Doc: TActiveDocument;
+  TagEnd: TTextRange;
+  NewTagName: PAnsiChar;
+begin
+  Result := False;
+  Doc := App.ActiveDocument;
+  NewTagName := PAnsiChar(UTF8Encode(nppString(TagName)));
+
+  if not (Doc.Language in [L_HTML, L_XML, L_PHP, L_ASP, L_JSP]) or
+     (Doc.SelectionMode <> smStreamMulti) or (Length(NewTagName) > MaxTagLength) then
+    Exit;
+
+  try
+    TagEnd := TTextRange.Create(Doc);
+    Doc.Find('[/>\s]', TagEnd, SCFIND_REGEXP, StartPos, StartPos+MaxTagLength+1);
+    if TagEnd.Length <> 0 then begin
+      CommandSelectMatchingTags;
+      Doc.ReplaceSelection(TagName);
+      Result := True;
+    end;
+  finally
+    FreeAndNil(TagEnd);
+  end;
+end;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 initialization

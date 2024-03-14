@@ -26,11 +26,16 @@ references:
       tags:
         only: /v.*/
 
+parameters:
+  plugin-name:
+    type: string
+    default: HTMLTag
+
 jobs:
   build:
     <<: *executor
     environment:
-      UPX_VER: 4.0.2
+      UPX_VER: 4.2.2
     steps:
       - checkout
       - run:
@@ -51,29 +56,38 @@ jobs:
          name: Build and Pack
          command: make_release.cmd
          shell: cmd.exe
+      - unless:
+          condition:
+            matches:
+              pattern: 'v.*'
+              value:   << pipeline.git.tag >>
+          steps:
+            - store_artifacts:
+                name: Upload << pipeline.parameters.plugin-name >>_unicode.dll (x86)
+                path: out/i386-win32/Release/<< pipeline.parameters.plugin-name >>_unicode.dll
+                destination: << pipeline.parameters.plugin-name >>_unicode.dll
+            - store_artifacts:
+                name: Upload << pipeline.parameters.plugin-name >>s.dll (x64)
+                path: out/x86_64-win64/Release/<< pipeline.parameters.plugin-name >>.dll
+                destination: << pipeline.parameters.plugin-name >>.dll
       - persist_to_workspace:
           root: .
           paths: out
 
   push-release:
     <<: *executor
-    parameters:
-      plugin-name:
-        type: string
-        default: HTMLTag
-
     steps:
       - checkout
       - attach_workspace:
           at: .
       - store_artifacts:
-          name: Upload << parameters.plugin-name >>_<< pipeline.git.tag >>.zip
-          path: out/<< parameters.plugin-name >>_<< pipeline.git.tag >>.zip
-          destination: << parameters.plugin-name >>_<< pipeline.git.tag >>.zip
+          name: Upload << pipeline.parameters.plugin-name >>_<< pipeline.git.tag >>.zip
+          path: out/<< pipeline.parameters.plugin-name >>_<< pipeline.git.tag >>.zip
+          destination: << pipeline.parameters.plugin-name >>_<< pipeline.git.tag >>.zip
       - store_artifacts:
-          name: Upload << parameters.plugin-name >>_<< pipeline.git.tag >>_x64.zip
-          path: out/<< parameters.plugin-name >>_<< pipeline.git.tag >>_x64.zip
-          destination: << parameters.plugin-name >>_<< pipeline.git.tag >>_x64.zip
+          name: Upload << pipeline.parameters.plugin-name >>_<< pipeline.git.tag >>_x64.zip
+          path: out/<< pipeline.parameters.plugin-name >>_<< pipeline.git.tag >>_x64.zip
+          destination: << pipeline.parameters.plugin-name >>_<< pipeline.git.tag >>_x64.zip
       - run:
           name: Create Release
           command: |-
@@ -81,8 +95,8 @@ jobs:
             bash .circleci/scripts/gh_release.sh
           shell: bash.exe
           environment:
-            SLUGX86: << parameters.plugin-name >>_<< pipeline.git.tag >>.zip
-            SLUGX64: << parameters.plugin-name >>_<< pipeline.git.tag >>_x64.zip
+            SLUGX86: << pipeline.parameters.plugin-name >>_<< pipeline.git.tag >>.zip
+            SLUGX64: << pipeline.parameters.plugin-name >>_<< pipeline.git.tag >>_x64.zip
             BIN_DIR: out
 
 workflows:

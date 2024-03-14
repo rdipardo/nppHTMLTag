@@ -19,10 +19,9 @@ type
   TLocalizedNppPlugin = class(TNppPlugin)
   private
     FLang: string;
-    function GetNppConfigDir(Local: Boolean = True): WideString;
-    function GetNppInstallDir: WideString;
-    procedure SetLanguage(const LangFilePath: WideString);
+    function GetNativeLangDir: WideString;
   protected
+    procedure SetLanguage;
     function GetMessage(const Key: string): WideString; virtual; abstract;
   public
     constructor Create;
@@ -31,35 +30,25 @@ type
 
 implementation
 uses
-  Classes, SysUtils, laz2_DOM, laz2_XMLRead, L_SpecialFolders;
-
-function GetEnvVar(const AVar: String): WideString;
-begin
-  Result := SysUtils.GetEnvironmentVariable(AVar);
-end;
+  Classes, SysUtils, laz2_DOM, laz2_XMLRead;
 
 constructor TLocalizedNppPlugin.Create;
-var
-  IsPortable: Boolean;
 begin
   inherited;
-  IsPortable := not ((WideCompareText(GetNppInstallDir, GetEnvVar('ProgramFiles')) = 0) or
-                     (WideCompareText(GetNppInstallDir, GetEnvVar('ProgramFiles(x86)')) = 0));
-  SetLanguage(GetNppConfigDir(IsPortable) + 'nativeLang.xml');
+  FLang := 'default';
 end;
 
-procedure TLocalizedNppPlugin.SetLanguage(const LangFilePath: WideString);
+procedure TLocalizedNppPlugin.SetLanguage;
 var
   Doc: TXMLDocument;
   Root, Node: TDOMNode;
   hXMLFile: THandle;
   fStream: TStream;
 begin
-  FLang := 'default';
   Doc := Nil;
   fStream := Nil;
   try
-    hXMLFile := FileOpen(LangFilePath, fmOpenRead);
+    hXMLFile := FileOpen(GetNativeLangDir() + 'nativeLang.xml', fmOpenRead);
     if hXMLFile <> THandle(-1) then
     begin
       fStream := THandleStream.Create(hXMLFile);
@@ -83,22 +72,11 @@ begin
   end;
 end;
 
-function TLocalizedNppPlugin.GetNppConfigDir(Local: Boolean): WideString;
-var
-  NppDir: WideString;
+function TLocalizedNppPlugin.GetNativeLangDir: WideString;
 begin
-  if Local then
-    NppDir := ExtractFileDir(ExtractFileDir(ExtractFileDir(TSpecialFolders.DLL)))
-  else
-    NppDir := (WideFormat('%s%s%s', [(GetEnvVar('AppData')), PathDelim, 'Notepad++']));
-
-  Result := IncludeTrailingPathDelimiter(NppDir);
-end;
-
-function TLocalizedNppPlugin.GetNppInstallDir: WideString;
-begin
-  Result := ExtractfileDir(ExtractFileDir(
-    IncludeTrailingPathDelimiter(ExtractFileDir(ExtractFileDir(ExtractFileDir(TSpecialFolders.DLL))))));
+  Result := EmptyWideStr;
+  if Self.NppData.NppHandle <> 0 then
+    Result := IncludeTrailingPathDelimiter(ExtractFileDir(ExtractFileDir(Self.GetPluginsConfigDir)));
 end;
 
 end.

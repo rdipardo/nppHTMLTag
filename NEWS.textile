@@ -2,6 +2,19 @@ h2. Changes since v1.1
 
 h3. Released Versions
 
+* 1.4.4 (2024-03-14)
+** Fixed: don't overwrite active selections when auto decoding is on ("#7":7) [0dd3aa6]
+** Fixed: position caret one space after auto-decoded entities [af8a88f], regressed by decrementing the initial value of @charOffset@ in [d59daf6]
+** Changed: roll back most of [a9c305c] and [d59daf6] to prevent overwriting multiple stream and rectangular selections [bf7a02d]
+** Changed: make Unicode conversions easier to undo [1c7a195]
+
+* 1.4.3 (2024-01-12)
+** Fixed: include semi-colons when decoding multi-selected named entities [08d07ec]
+** Fixed: avoid overwriting multi-selected tags when replacing them from an autocompletion list [203c3a9]
+** Fixed: avoid leaking memory when no valid start tag can be found [8d210c7]
+** Fixed: typing into the Unicode character prefix edit control now overwrites an active selection [f3e8786]
+** Changed: the Unicode prefix edit control now accepts a maximum of six characters [f3e8786]
+
 * 1.4.1 (2023-07-26)
 ** Added: new command to select matching tags [2ee0e5a]
 
@@ -46,6 +59,18 @@ h3. Released Versions
 
 h3. Unreleased, Unstable Versions
 
+* 1.4.2 (2024-01-10)
+** Fixed: (de/en)code multiple stream selections in place [d59daf6]
+** Fixed: correctly measure the target range of rectangular selections and (de/en)code them in place [a9c305c]
+** Fixed: reposition the caret _after_ (not before) automatically replaced Unicode characters, same as entities [7fb8043]
+** Fixed: restore backward compatibility with N++ 8.4.1/2, regressed in 5951d5b, by checking for zero-padded version words [7fb8043]
+** Fixed: restore the About form's dimensions in N++ 8.4.1 thru 8.4.8, regressed in c4d621b [7fb8043]
+** Fixed: don't export functions with mangled names [9ef7a60]
+** Changed: when matching tags are selected, replace both if one of them is autocompleted [bfcf374]
+** Changed: send @SCI_REPLACETARGETMINIMAL@ when replacing Unicode character ranges [7fb8043]
+** Changed: remove some runtime checks to reduce binary size [2478b15]
+** Added: new option to configure the prefix used to detect Unicode escape characters [a2d8d08]
+
 * 1.4.0 (2023-07-18)
 ** Changed: upgrade entity mappings to the HTML 5 specification [fccd1a0]
 ** Changed: keep the entities file in a subfolder of the plugin config directory [34ae163]
@@ -79,6 +104,7 @@ h3. Unreleased, Unstable Versions
 
 
 [db330832]https://github.com/notepad-plus-plus/notepad-plus-plus/commit/db3308329bd23a073b7de6f4ded2a523b282fcc3#diff-8968b5cad4cc8f62c9204894eea9941dac353af428a26be64f52055e99992040
+[7]https://github.com/rdipardo/nppHTMLTag/issues/7
 [cref]https://community.notepad-plus-plus.org/topic/22471/recompile-your-x64-plugins-with-new-header
 [jsDecodeBug]https://community.notepad-plus-plus.org/topic/18488/htmltag-1-1-plugin-broken-since-npp-7-7
 [jsDecodeBugOrig]https://fossil.2of4.net/npp_htmltag/tktview?name=c3c733e21f
