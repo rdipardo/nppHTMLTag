@@ -11,3 +11,5 @@
 *.bat     text   eol=crlf
 *.cmd     text   eol=crlf
 *.rc      text   eol=crlf
+*.cpp     text   eol=crlf
+*.h       text   eol=crlf

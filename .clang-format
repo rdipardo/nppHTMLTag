@@ -1,0 +1,21 @@
+BasedOnStyle: LLVM
+AccessModifierOffset: -8
+AlignAfterOpenBracket: DontAlign
+AlignEscapedNewlines: DontAlign
+AlignOperands: true
+AlignTrailingComments: Always
+AllowShortFunctionsOnASingleLine: InlineOnly
+AllowShortIfStatementsOnASingleLine: Never
+AlwaysBreakTemplateDeclarations: true
+BreakBeforeBinaryOperators: None
+BreakBeforeBraces: Attach
+# BreakTemplateDeclarations: Yes
+ColumnLimit: 120
+Cpp11BracedListStyle: false
+FixNamespaceComments: false
+IndentCaseLabels: true
+IndentWidth: 8
+NamespaceIndentation: Inner
+PackConstructorInitializers: CurrentLine
+SortIncludes: false
+UseTab: Always

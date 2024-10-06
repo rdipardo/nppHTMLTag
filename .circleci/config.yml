@@ -1,20 +1,18 @@
 version: 2.1
 #
-# Copyright (c) 2023 Robert Di Pardo <dipardo.r@gmail.com>
+# Copyright (c) 2023,2024 Robert Di Pardo <dipardo.r@gmail.com>
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at https://mozilla.org/MPL/2.0/.
 #
 orbs:
-  lazarus: rdipardo/lazarus@2
   win: circleci/windows@5
 
 references:
   executor: &executor
     executor:
       name: win/default
-      shell: bash.exe
   development: &development
     filters:
       tags:
@@ -35,23 +33,24 @@ jobs:
   build:
     <<: *executor
     environment:
-      UPX_VER: 4.2.2
+      VisualStudioVersion: '17.0'
     steps:
       - checkout
       - run:
-          name: Clone submodules
+          name: Install CMake
           command: |
-            git reset --hard
-            git submodule sync --recursive
-            git submodule update -f --init --remote --checkout --recursive
+            choco install python -y
+            refreshenv
+            python -m pip install cmake~=3.30.0
+            cmake --version
       - run:
-          name: Install UPX
-          command: |
-            curl -sLO "https://github.com/upx/upx/releases/download/v$UPX_VER/upx-$UPX_VER-win64.zip"
-            7z e upx-$UPX_VER-win64.zip -o"$WINDIR"
-            upx.exe --version
-      - lazarus/install:
-          win32: true
+         name: Install the v141_xp VC toolset
+         command: |
+           cd "C:\Program Files (x86)\Microsoft Visual Studio\Installer"
+           .\vs_installer.exe modify --installPath "C:\Program Files\Microsoft Visual Studio\2022\Community" `
+            --add Microsoft.VisualStudio.Component.VC.v141.x86.x64 `
+            --add Microsoft.VisualStudio.Component.WinXP `
+            --downloadThenInstall --quiet
       - run:
          name: Build and Pack
          command: make_release.cmd
@@ -62,14 +61,24 @@ jobs:
               pattern: 'v.*'
               value:   << pipeline.git.tag >>
           steps:
+            - run:
+               name: Prepare Artifacts
+               command: |
+                 7z a -tzip << pipeline.parameters.plugin-name >>_x64.zip ./dat/*.ini ./out/x64/Release/<< pipeline.parameters.plugin-name >>.dll
+                 7z a -tzip << pipeline.parameters.plugin-name >>_win32.zip ./dat/*.ini ./out/Win32/Release/<< pipeline.parameters.plugin-name >>_unicode.dll
+                 7z a -tzip << pipeline.parameters.plugin-name >>_arm64.zip ./dat/*.ini ./out/ARM64/Release/<< pipeline.parameters.plugin-name >>.dll
             - store_artifacts:
                 name: Upload << pipeline.parameters.plugin-name >>_unicode.dll (x86)
-                path: out/i386-win32/Release/<< pipeline.parameters.plugin-name >>_unicode.dll
-                destination: << pipeline.parameters.plugin-name >>_unicode.dll
+                path: << pipeline.parameters.plugin-name >>_win32.zip
+                destination: << pipeline.parameters.plugin-name >>_win32.zip
             - store_artifacts:
                 name: Upload << pipeline.parameters.plugin-name >>s.dll (x64)
-                path: out/x86_64-win64/Release/<< pipeline.parameters.plugin-name >>.dll
-                destination: << pipeline.parameters.plugin-name >>.dll
+                path: << pipeline.parameters.plugin-name >>_x64.zip
+                destination: << pipeline.parameters.plugin-name >>_x64.zip
+            - store_artifacts:
+                name: Upload << pipeline.parameters.plugin-name >>s.dll (ARM64)
+                path: << pipeline.parameters.plugin-name >>_arm64.zip
+                destination: << pipeline.parameters.plugin-name >>_arm64.zip
       - persist_to_workspace:
           root: .
           paths: out
@@ -88,6 +97,10 @@ jobs:
           name: Upload << pipeline.parameters.plugin-name >>_<< pipeline.git.tag >>_x64.zip
           path: out/<< pipeline.parameters.plugin-name >>_<< pipeline.git.tag >>_x64.zip
           destination: << pipeline.parameters.plugin-name >>_<< pipeline.git.tag >>_x64.zip
+      - store_artifacts:
+          name: Upload << pipeline.parameters.plugin-name >>_<< pipeline.git.tag >>_arm64.zip
+          path: out/<< pipeline.parameters.plugin-name >>_<< pipeline.git.tag >>_arm64.zip
+          destination: << pipeline.parameters.plugin-name >>_<< pipeline.git.tag >>_arm64.zip
       - run:
           name: Create Release
           command: |-
@@ -97,10 +110,11 @@ jobs:
           environment:
             SLUGX86: << pipeline.parameters.plugin-name >>_<< pipeline.git.tag >>.zip
             SLUGX64: << pipeline.parameters.plugin-name >>_<< pipeline.git.tag >>_x64.zip
+            SLUGARM64: << pipeline.parameters.plugin-name >>_<< pipeline.git.tag >>_arm64.zip
             BIN_DIR: out
 
 workflows:
-  lazarus-build:
+  cmake:
     jobs:
       - build:
           <<: *development

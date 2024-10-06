@@ -1,7 +1,0 @@
-[submodule "fpGUI"]
-	path = src/Forms/fpg
-	url = https://github.com/graemeg/fpGUI.git
-	branch = maint
-[submodule "Interface"]
-	path = src/LibNppPlugin
-	url = https://bitbucket.org/rdipardo/delphiplugintemplate.git

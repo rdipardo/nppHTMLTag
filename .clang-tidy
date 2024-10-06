@@ -1,0 +1,18 @@
+Checks: |
+  clang-diagnostic-*,
+  clang-analyzer-*,
+  performance-*,
+  portability-*,
+  bugprone-*,
+  cppcoreguidelines-*,
+  -*avoid-c-arrays,
+  -*avoid-non-const-global-variables,
+  -*constant-array-index,
+  -*easily-swappable-parameters,
+  -*empty-catch,
+  -*pro-type-reinterpret-cast
+WarningsAsErrors: ''
+HeaderFilterRegex: ''
+AnalyzeTemporaryDtors: false
+UseColor : true
+FormatStyle: 'none'

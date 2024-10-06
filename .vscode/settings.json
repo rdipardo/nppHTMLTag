@@ -1,0 +1,14 @@
+{
+	"C_Cpp.intelliSenseEngine": "default",
+	"C_Cpp.default.cppStandard": "c++17",
+	"C_Cpp.default.defines": [
+		"${default}",
+		"NOMINMAX",
+		"_CRT_SECURE_NO_WARNINGS",
+		"_USING_V110_SDK71_",
+		"_WIN32_WINNT=_WIN32_WINNT_WINXP",
+		"NTDDI_VERSION=NTDDI_WINXPSP3"
+	],
+	"C_Cpp.autoAddFileAssociations": false,
+	"C_Cpp.codeAnalysis.runAutomatically": false
+}
