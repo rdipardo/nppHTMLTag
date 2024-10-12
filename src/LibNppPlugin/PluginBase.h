@@ -78,6 +78,7 @@ public:
 	bool openFile(wchar_t *filename, Sci_Position line) const;
 	path_t pluginsHomeDir() const;
 	path_t pluginsConfigDir() const;
+	path_t currentBufferPath(uintptr_t bufferId = 0ULL) const;
 	LangType documentLangType() const;
 	/// @brief @c true if N++ is v8.0 or later
 	bool supportsDarkMode() const noexcept;

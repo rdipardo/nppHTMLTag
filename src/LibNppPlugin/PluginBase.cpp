@@ -126,9 +126,8 @@ path_t PluginBase::pluginsHomeDir() const {
 }
 // --------------------------------------------------------------------------------------
 bool PluginBase::openFile(wchar_t *filename) const {
-	wchar_t s[MAX_WIDE_PATH]{};
+	path_t s = currentBufferPath();
 	// Ask if we are not already opened
-	sendNppMessage(NPPM_GETFULLCURRENTPATH, UNUSEDW, s);
 	if (TextConv::sameText(s, filename))
 		return true;
 	return (sendNppMessage(WM_DOOPEN, UNUSEDW, &filename[0]) == MessageResult::mrFalse);
@@ -139,6 +138,19 @@ bool PluginBase::openFile(wchar_t *filename, Sci_Position line) const {
 	if (!r)
 		::SendMessageW(currentScintilla(), SCI_GOTOLINE, line, UNUSED);
 	return r;
+}
+// --------------------------------------------------------------------------------------
+path_t PluginBase::currentBufferPath(uintptr_t bufferId) const {
+	std::wstring result;
+	wchar_t pathbuf[MAX_WIDE_PATH]{};
+
+	if (bufferId > 0)
+		sendNppMessage(NPPM_GETFULLPATHFROMBUFFERID, bufferId, &pathbuf[0]);
+	else
+		sendNppMessage(NPPM_GETFULLCURRENTPATH, (MAX_WIDE_PATH - 1ULL), &pathbuf[0]);
+
+	result.assign(&pathbuf[0], std::wcslen(&pathbuf[0]));
+	return path_t(result.cbegin(), result.cend(), path_t::format::native_format);
 }
 // --------------------------------------------------------------------------------------
 path_t PluginBase::pluginNameFromModule(HMODULE hInstace) {

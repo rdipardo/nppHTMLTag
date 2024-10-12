@@ -154,6 +154,10 @@ void HtmlTagPlugin::beNotified(SCNotification *scn) {
 				}
 #endif
 				break;
+			case NPPN_FILESAVED:
+				if (sameText(currentBufferPath(scn->nmhdr.idFrom), this->translations))
+					updateMenu();
+				break;
 			case NPPN_NATIVELANGCHANGED:
 				updateMenu();
 				break;
