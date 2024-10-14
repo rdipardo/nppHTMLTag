@@ -1,6 +1,12 @@
-h2. Changes since v1.1
 
 h3. Released Versions
+
+* 1.5.0 (2024-10-14)
+** Fixed: decoding codepoints "between U+010000 and U+10FFFF":cref-2 finally Just Works(tm)
+** Changed: the source code has been rewritten in C++ [0d94837]
+** Added: the command menu follows the user's native language setting (currently limited to 22 languages; "#5":5)
+** Added: changing the editor's native language automatically updates the plugin menu (N++ 8.7 and newer)
+** Added: first release for Windows on ARM64
 
 * 1.4.4 (2024-03-14)
 ** Fixed: don't overwrite active selections when auto decoding is on ("#7":7) [0dd3aa6]
@@ -104,8 +110,10 @@ h3. Unreleased, Unstable Versions
 
 
 [db330832]https://github.com/notepad-plus-plus/notepad-plus-plus/commit/db3308329bd23a073b7de6f4ded2a523b282fcc3#diff-8968b5cad4cc8f62c9204894eea9941dac353af428a26be64f52055e99992040
+[5]https://github.com/rdipardo/nppHTMLTag/issues/5
 [7]https://github.com/rdipardo/nppHTMLTag/issues/7
 [cref]https://community.notepad-plus-plus.org/topic/22471/recompile-your-x64-plugins-with-new-header
+[cref-2]https://community.notepad-plus-plus.org/post/93441
 [jsDecodeBug]https://community.notepad-plus-plus.org/topic/18488/htmltag-1-1-plugin-broken-since-npp-7-7
 [jsDecodeBugOrig]https://fossil.2of4.net/npp_htmltag/tktview?name=c3c733e21f
 [tagFinderHangs]https://community.notepad-plus-plus.org/topic/22503/new-version-of-html-tag/24

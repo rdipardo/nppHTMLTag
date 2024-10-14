@@ -17,11 +17,14 @@ _v1.1.0 was the last release supporting ANSI versions of Notepad++_
 h3. Development builds
 
 * Visit https://circleci.com/gh/rdipardo/nppHTMLTag
-* Look in the "Trigger Event" column to locate the build run you want to see
-* Click "lazarus-build" beside the commit message
+* Locate the build run you want to see
+* In the "Workflow" column, click "cmake"
 * Click on the name of the job (e.g. "build")
 * Click on the "ARTIFACTS" tab
-* Select "HTMLTag.dll" (64-bit), or "HTMLTag_unicode.dll" (32-bit)
+* Select the correct ZIP archive for your Notepad++ version:
+** "HTMLTag_arm64.zip" (64-bit ARM)
+** "HTMLTag_x64.zip" (64-bit Intel)
+** "HTMLTag_win32.zip" (32-bit Intel)
 
 h2. Introduction
 

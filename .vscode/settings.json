@@ -3,6 +3,7 @@
 	"C_Cpp.default.cppStandard": "c++17",
 	"C_Cpp.default.defines": [
 		"${default}",
+		"UNICODE",
 		"NOMINMAX",
 		"_CRT_SECURE_NO_WARNINGS",
 		"_USING_V110_SDK71_",
