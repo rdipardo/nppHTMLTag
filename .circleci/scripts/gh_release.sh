@@ -14,6 +14,7 @@ cd "$BIN_DIR" || exit 0
 printf '#### SHA256 Checksums\\n\\n' > sha256sums.md
 printf '\\t%s\\n' "$(sha256sum ${SLUGX86})" >> sha256sums.md
 printf '\\t%s\\n' "$(sha256sum ${SLUGX64})" >> sha256sums.md
+printf '\\t%s\\n' "$(sha256sum ${SLUGARM64})" >> sha256sums.md
 curl -sL -X POST \
     -H "Accept: application/vnd.github+json" \
     -H "Authorization: Bearer ${GH_API_TOKEN_2024}" \
