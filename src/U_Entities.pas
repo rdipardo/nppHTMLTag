@@ -227,7 +227,7 @@ begin
   CharIndex := Pos('&', Text);
 
   // make sure the selection includes the semicolon
-  if not (Pos(';', Text) > CharIndex) then
+  if not (PosEx(';', Text, CharIndex) > CharIndex) then
     Exit;
 
   MultiSel := (doc.SelectionMode <> smStreamSingle);
