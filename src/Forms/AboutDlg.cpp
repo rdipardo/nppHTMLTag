@@ -95,11 +95,25 @@ INT_PTR CALLBACK AboutDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM lPara
 			}
 
 			std::wstringstream version;
-			version << L"Version " << pluginVersion.str() << L" (" << sizeof(intptr_t) * 8 << L"-bit"
+			wchar_t versionTxt[128]{ L'\0' };
+			::GetDlgItemTextW(_hSelf, ID_PLUGIN_VERSION_TXT, versionTxt, 127);
+			version << versionTxt << L" " << pluginVersion.str() << L" (" << sizeof(intptr_t) * 8 << L"-bit"
 #ifdef _M_ARM
 				<< L" ARM"
 #endif
 				<< L")";
+			POINT pt{};
+			HWND hwnd = ::GetDlgItem(_hSelf, ID_PLUGIN_VERSION_TXT);
+			::MapWindowPoints(hwnd, _hSelf, &pt, 1);
+			int offsetX =
+#ifdef _M_ARM
+			    18;
+#else
+			    0;
+#endif
+			if (pluginVersion.build > 0)
+				offsetX += 4;
+			::SetWindowPos(hwnd, 0, pt.x - offsetX, pt.y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
 			::SetDlgItemTextW(_hSelf, ID_PLUGIN_VERSION_TXT, &(version.str())[0]);
 			result = TRUE;
 			break;
