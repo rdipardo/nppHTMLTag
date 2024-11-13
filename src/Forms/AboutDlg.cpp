@@ -11,6 +11,7 @@
 #include "TextConv.h"
 #include "HtmlTag.h"
 #include "AboutDlg.h"
+#include "dialogs.h"
 
 // Handle static text in default theme mode
 #define WM_CTLCOLORSTATIC_LITE WM_CTLCOLORSTATIC
@@ -27,12 +28,17 @@ struct DialogHyperlink {
 	WNDPROC defWndProc;
 };
 
+struct LocalizedResource {
+	const char *locale;
+	int dialog, modal;
+};
+
 INT_PTR CALLBACK modalDlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK linkCtrlWndProc(HWND hLink, UINT message, WPARAM wParam, LPARAM lParam);
+LocalizedResource getLocalizedResource();
 
 Version pluginVersion;
 HFONT hDefaultFont, hActiveLinkFont;
-bool themeInitialized = false;
 
 DialogHyperlink linkCtrls[] = {
 	{ ID_RELEASE_NOTES_LINK, nullptr },
@@ -45,6 +51,32 @@ DialogHyperlink linkCtrls[] = {
 	{ ID_TINYXML_LINK, nullptr },
 };
 constexpr size_t nbLinkCtrls = ARRAYSIZE(linkCtrls);
+
+constexpr LocalizedResource dialogLocales[] = {
+	{ "arabic", AR_ABOUT_DLG, AR_UNICODE_DLG },
+	{ "catalan", CA_ABOUT_DLG, CA_UNICODE_DLG },
+	{ "chineseSimplified", ZH_ABOUT_DLG, ZH_UNICODE_DLG },
+	{ "dutch", NL_ABOUT_DLG, NL_UNICODE_DLG },
+	{ "farsi", FA_ABOUT_DLG, FA_UNICODE_DLG },
+	{ "french", FR_ABOUT_DLG, FR_UNICODE_DLG },
+	{ "german", DE_ABOUT_DLG, DE_UNICODE_DLG },
+	{ "hebrew", HE_ABOUT_DLG, HE_UNICODE_DLG },
+	{ "hindi", HI_ABOUT_DLG, HI_UNICODE_DLG },
+	{ "italian", IT_ABOUT_DLG, IT_UNICODE_DLG },
+	{ "japanese", JP_ABOUT_DLG, JP_UNICODE_DLG },
+	{ "korean", KO_ABOUT_DLG, KO_UNICODE_DLG },
+	{ "polish", PL_ABOUT_DLG, PL_UNICODE_DLG },
+	{ "portuguese", PT_ABOUT_DLG, PT_UNICODE_DLG },
+	{ "brazilian_portuguese", BR_PT_ABOUT_DLG, BR_PT_UNICODE_DLG },
+	{ "romanian", RO_ABOUT_DLG, RO_UNICODE_DLG },
+	{ "russian", RU_ABOUT_DLG, RU_UNICODE_DLG },
+	{ "sinhala", SI_ABOUT_DLG, SI_UNICODE_DLG },
+	{ "spanish", ES_ABOUT_DLG, ES_UNICODE_DLG },
+	{ "spanish_ar", ES_ABOUT_DLG, ES_UNICODE_DLG },
+	{ "tamil", TA_ABOUT_DLG, TA_UNICODE_DLG },
+	{ "ukrainian", UK_ABOUT_DLG, UK_UNICODE_DLG },
+};
+constexpr size_t nbDialogLocales = ARRAYSIZE(dialogLocales);
 }
 
 // --------------------------------------------------------------------------------------
@@ -57,7 +89,7 @@ AboutDlg::AboutDlg(HINSTANCE hInst, NppData const &data) : StaticDialog() {
 // --------------------------------------------------------------------------------------
 void AboutDlg::show() {
 	if (!isCreated())
-		create(ID_ABOUT_HTML_TAG_DLG);
+		create(getLocalizedResource().dialog);
 
 	goToCenter();
 }
@@ -133,8 +165,8 @@ INT_PTR CALLBACK AboutDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM lPara
 				prefixTxt.append(L"0000");
 				::SetDlgItemTextW(_hSelf, ID_UNICODE_USER_FMT_TXT, &(prefixTxt)[0]);
 			}
-			toggleDarkMode(_hSelf, themeInitialized ? dmfHandleChange : dmfInit);
-			themeInitialized = true;
+			toggleDarkMode(_hSelf, _themeInitialized ? dmfHandleChange : dmfInit);
+			_themeInitialized = true;
 			result = TRUE;
 			break;
 		}
@@ -172,7 +204,7 @@ INT_PTR CALLBACK AboutDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM lPara
 			bool hideOnReturn = true;
 			switch (wParam & 0xffff) {
 				case ID_UNICODE_CONFIG_LINK:
-					::DialogBoxParamW(_hInst, MAKEINTRESOURCE(ID_UNICODE_FMT_CONFIG_DLG), _hSelf,
+					::DialogBoxParamW(_hInst, MAKEINTRESOURCE(getLocalizedResource().modal), _hSelf,
 					    (DLGPROC)modalDlgProc, reinterpret_cast<LPARAM>(this));
 					hideOnReturn = false;
 					break;
@@ -284,5 +316,20 @@ INT_PTR CALLBACK linkCtrlWndProc(HWND hCtrl, UINT message, WPARAM wParam, LPARAM
 		}
 	}
 	return defWndProc(hCtrl, message, wParam, lParam);
+}
+// --------------------------------------------------------------------------------------
+LocalizedResource getLocalizedResource() {
+	LocalizedResource res{
+		LocalizedPlugin::defaultLangId.c_str(),
+		ID_ABOUT_HTML_TAG_DLG,
+		ID_UNICODE_FMT_CONFIG_DLG,
+	};
+	for (size_t i = 0; i < nbDialogLocales; i++) {
+		if (plugin.menuLocale() == dialogLocales[i].locale) {
+			res = dialogLocales[i];
+			break;
+		}
+	}
+	return res;
 }
 }

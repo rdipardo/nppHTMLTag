@@ -10,8 +10,8 @@
 
 #include <windows.h>
 
-#define HTMLTAG_VERSION L"1.5.0.0\0"
-#define HTMLTAG_VERSION_WORDS 1, 5, 0, 0
+#define HTMLTAG_VERSION L"1.5.0.1\0"
+#define HTMLTAG_VERSION_WORDS 1, 5, 0, 1
 
 #define ID_ABOUT_HTML_TAG_DLG 0x1000
 #define ID_UNICODE_FMT_CONFIG_DLG 0x2000
@@ -31,7 +31,7 @@
 #define PLUGIN_AUTHOR_COPYRIGHT L"\251 2007-2020 Martijn Coppoolse (v0.1 - v1.1)"
 
 #define ID_PLUGIN_MAINTAINER_TXT (ID_ABOUT_HTML_TAG_DLG + 0x20)
-#define PLUGIN_MAINTAINER_COPYRIGHT L"\251 2022-2024 Robert Di Pardo (since v1.2)"
+#define PLUGIN_MAINTAINER_COPYRIGHT L"\251 2022-2024 Robert Di Pardo (v1.2 -)"
 
 #define ID_PLUGIN_LICENSE_TXT (ID_ABOUT_HTML_TAG_DLG + 0x40)
 #define PLUGIN_LICENSE L"Licensed under the MPL 2.0"

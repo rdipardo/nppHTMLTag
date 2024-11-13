@@ -105,6 +105,8 @@ CMDMENUPROC toggleLiveUnicodeDecoding() {
 }
 // --------------------------------------------------------------------------------------
 CMDMENUPROC commandAbout() {
+	if (!aboutHtmlTag)
+		aboutHtmlTag = std::make_unique<AboutDlg>(plugin.instance(), plugin.npp());
 	aboutHtmlTag->show();
 }
 
@@ -137,7 +139,6 @@ void HtmlTagPlugin::setInfo(const NppData *data) {
 
 	initMenu();
 	loadOptions();
-	aboutHtmlTag = std::make_unique<AboutDlg>(this->instance(), *data);
 }
 // --------------------------------------------------------------------------------------
 void HtmlTagPlugin::beNotified(SCNotification *scn) {
@@ -160,6 +161,7 @@ void HtmlTagPlugin::beNotified(SCNotification *scn) {
 				break;
 			case NPPN_NATIVELANGCHANGED:
 				updateMenu();
+				aboutHtmlTag.reset();
 				break;
 			case NPPN_SHUTDOWN:
 				finalize();

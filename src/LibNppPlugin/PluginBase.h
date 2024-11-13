@@ -99,6 +99,7 @@ public:
 
 	SciApplication &editor() const noexcept { return *_editor; }
 	HINSTANCE instance() const noexcept { return reinterpret_cast<HINSTANCE>(_hModule); }
+	NppData const &npp() const noexcept { return _data; }
 	Version const &nppVersion() const noexcept { return _nppVersion; }
 	SciApiLevel apiLevel() const;
 	HWND currentScintilla() const;

@@ -21,6 +21,7 @@ public:
 	void show();
 
 private:
+	bool _themeInitialized = false;
 	INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) override;
 };
 #endif // ~ABOUT_DLG_H
