@@ -67,13 +67,15 @@ void TagFinder::findMatchingTag(SelectionOptions options) {
 			*matchingTags = TagPair{ tagName, currentTag };
 			dispose = false;
 			searchDirection = processDirection;
-		} else {
-			if (sameText(tagName.substr(1), matchingTags->name.substr(1))) {
-				if (searchDirection != processDirection)
-					match = *currentTag;
-				matchingTags[1] = TagPair{ tagName, currentTag };
-				dispose = false;
+		} else if (sameText(tagName.substr(1), matchingTags->name.substr(1))) {
+			if (searchDirection != processDirection && !matchingTags[1].tag)
+				match = *currentTag;
+			if (matchingTags[1].tag) {
+				delete matchingTags[1].tag;
+				matchingTags[1].tag = nullptr;
 			}
+			matchingTags[1] = TagPair{ tagName, currentTag };
+			dispose = false;
 		}
 	};
 	// --------------------------------------------------------------------------------------
@@ -169,11 +171,11 @@ void TagFinder::findMatchingTag(SelectionOptions options) {
 			}
 		} while (nextTag && !match);
 
+		if (matchingTags[1].tag)
+			match = *matchingTags[1].tag;
+
 		if (match) {
 			if (matchingTags[1].tag) {
-				if (currentTag)
-					delete currentTag;
-
 				currentTag = matchingTags->tag;
 
 				// Matching tag may be hidden by a fold
@@ -221,9 +223,6 @@ void TagFinder::findMatchingTag(SelectionOptions options) {
 					match.select();
 			}
 		} else if (matchingTags->tag) { // A tag with no match
-			if (currentTag)
-				delete currentTag;
-
 			currentTag = matchingTags->tag;
 
 			if (wantSelection)
@@ -235,6 +234,8 @@ void TagFinder::findMatchingTag(SelectionOptions options) {
 
 		if (matchingTags->tag)
 			delete matchingTags->tag;
+		if (matchingTags[1].tag)
+			delete matchingTags[1].tag;
 
 	} catch (...) {
 	}
@@ -323,6 +324,7 @@ SciTextRange *extractTagName(std::string &tagName, bool &isOpenTag, bool &isEndT
 }
 // --------------------------------------------------------------------------------------
 void selectTags(SciTextRange *startTag, SciTextRange *endTag) {
+	SciActiveDocument doc = plugin.editor().activeDocument();
 	const std::wstring startTagName = startTag->text();
 	size_t tagAttrPos = pos(L" ", startTagName);
 
@@ -337,12 +339,14 @@ void selectTags(SciTextRange *startTag, SciTextRange *endTag) {
 		if (startTag->text().find(L"/>") != std::wstring::npos)
 			startTag->endPos(startTag->endPos() - 1);
 	} else {
-		SciActiveDocument doc = plugin.editor().activeDocument();
+		startTag->startPos(startTag->startPos() + (pos(L"/", startTagName) >> 1) + 1);
+	}
+
+	doc.sendMessage(SCI_SETSELECTION, startTag->startPos(), startTag->endPos() - 1);
+
+	if (endTag) {
 		const std::wstring endTagName = endTag->text();
 		tagAttrPos = pos(L" ", endTagName);
-
-		startTag->startPos(startTag->startPos() + (pos(L"/", startTagName) >> 1) + 1);
-		doc.sendMessage(SCI_SETSELECTION, startTag->startPos(), startTag->endPos() - 1);
 
 		if (tagAttrPos > pos(L"<", endTagName))
 			endTag->endPos(endTag->startPos() + tagAttrPos);
