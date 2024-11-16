@@ -139,8 +139,14 @@ int Entities::decode() {
 			}
 
 			if (isValid) {
-				target = target.substr(0, firstPos - 1) + static_cast<wchar_t>(codePoint) +
-					 target.substr(nextIndex);
+				wchar_t decoded[3]{};
+				if (codePoint >= 0x010000 && codePoint <= 0x10FFFF) {
+					decoded[0] = static_cast<wchar_t>(((codePoint - 0x10000) >> 10) + 0xD800);
+					decoded[1] = static_cast<wchar_t>(((codePoint - 0x10000) & 0x03FF) + 0xDC00);
+				} else {
+					*decoded = static_cast<wchar_t>(codePoint);
+				}
+				target = target.substr(0, firstPos - 1) + decoded + target.substr(nextIndex);
 				++result;
 			}
 
@@ -171,19 +177,32 @@ int doEncode(std::wstring &text, Entities::EntityList &entities, bool includeLin
 
 	try {
 		for (intptr_t chIndex = text.length() - 1; chIndex >= 0; chIndex--) {
-			const std::wint_t charCode = text[chIndex];
+			size_t startPos = chIndex, endPos = chIndex + 1;
+			uint32_t charCode = text[chIndex];
 			std::string entity = entities[std::to_string(charCode)];
 			if (!entity.empty()) {
 				didReplace = true;
 				TextConv::bytesToText(entity.c_str(), encodedEntity);
 			} else if (charCode > 127 || (includeLineBreaks && (charCode == L'\n' || charCode == L'\r'))) {
+				std::wstringstream entityBuf;
+				const size_t chPrevIndex = static_cast<size_t>(std::max(0LL, chIndex - 1LL));
+				const uint32_t chPrevCode = text[chPrevIndex];
+				if (chPrevCode >= 0xD800 && chPrevCode <= 0xDBFF) {
+					charCode = ((chPrevCode & 0x03FFU) << 10) | (charCode & 0x03FFU) | 0x10000U;
+					entityBuf << L"#x" << std::uppercase << std::hex << std::setw(6)
+						  << std::setfill(L'0') << charCode;
+					startPos = chPrevIndex;
+					chIndex--;
+				} else {
+					entityBuf << L"#" << charCode;
+				}
 				didReplace = true;
-				encodedEntity = L"#" + std::to_wstring(charCode);
+				encodedEntity = entityBuf.str();
 			} else
 				didReplace = false;
 
 			if (didReplace) {
-				text = text.substr(0, chIndex) + L'&' + encodedEntity + L';' + text.substr(chIndex + 1);
+				text = text.substr(0, startPos) + L'&' + encodedEntity + L';' + text.substr(endPos);
 				++result;
 			}
 		}

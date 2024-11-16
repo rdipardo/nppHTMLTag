@@ -132,11 +132,20 @@ int doEncode(std::wstring &text, bool multiSel) {
 	TextConv::bytesToText(plugin.options.unicodePrefix.c_str(), prefix, CP_ACP);
 
 	for (intptr_t chIndex = text.length() - 1; chIndex >= 0; chIndex--) {
-		const std::wint_t charCode = text[chIndex];
+		uint32_t charCode = text[chIndex];
 		if (charCode > 127) {
 			std::wstringstream encoded;
-			encoded << text.substr(0, chIndex) << prefix << std::uppercase << std::hex << std::setw(4)
-				<< std::setfill(L'0') << charCode << text.substr(chIndex + 1);
+			size_t startPos = chIndex, endPos = chIndex + 1, nDigits = 4;
+			const size_t chPrevIndex = static_cast<size_t>(std::max(0LL, chIndex - 1LL));
+			const uint32_t chPrevCode = text[chPrevIndex];
+			if (chPrevCode >= 0xD800 && chPrevCode <= 0xDBFF) {
+				charCode = ((chPrevCode & 0x03FFU) << 10) | (charCode & 0x03FFU) | 0x10000U;
+				startPos = chPrevIndex;
+				nDigits = 6;
+				chIndex--;
+			}
+			encoded << text.substr(0, startPos) << prefix << std::uppercase << std::hex
+				<< std::setw(nDigits) << std::setfill(L'0') << charCode << text.substr(endPos);
 			text = encoded.str();
 			++result;
 		}
