@@ -68,14 +68,17 @@ void TagFinder::findMatchingTag(SelectionOptions options) {
 			dispose = false;
 			searchDirection = processDirection;
 		} else if (sameText(tagName.substr(1), matchingTags->name.substr(1))) {
-			if (searchDirection != processDirection && !matchingTags[1].tag)
+			if (searchDirection != processDirection && !matchingTags[1].tag) {
 				match = *currentTag;
-			if (matchingTags[1].tag) {
+				matchingTags[1] = TagPair{ tagName, currentTag };
+				dispose = false;
+			} else if (matchingTags[1].tag) {
 				delete matchingTags[1].tag;
 				matchingTags[1].tag = nullptr;
+			} else if (searchDirection == processDirection) {
+				matchingTags[1] = TagPair{ tagName, currentTag };
+				dispose = false;
 			}
-			matchingTags[1] = TagPair{ tagName, currentTag };
-			dispose = false;
 		}
 	};
 	// --------------------------------------------------------------------------------------
@@ -170,9 +173,6 @@ void TagFinder::findMatchingTag(SelectionOptions options) {
 				currentTag = nullptr;
 			}
 		} while (nextTag && !match);
-
-		if (matchingTags[1].tag)
-			match = *matchingTags[1].tag;
 
 		if (match) {
 			if (matchingTags[1].tag) {
