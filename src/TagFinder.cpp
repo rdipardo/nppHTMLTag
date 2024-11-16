@@ -103,7 +103,7 @@ void TagFinder::findMatchingTag(SelectionOptions options) {
 			if (currentTag && !tagName.empty()) {
 				// HTML void elements are self-closing
 				if (!isXML && isStartTag && !isEndTag) {
-					for (size_t i = 0; i < ARRAYSIZE(voidElements) - 1; i++) {
+					for (size_t i = 0; i < ARRAYSIZE(voidElements); i++) {
 						if (sameText(tagName, voidElements[i])) {
 							isEndTag = true;
 							break;
