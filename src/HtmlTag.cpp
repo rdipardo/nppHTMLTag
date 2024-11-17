@@ -158,6 +158,8 @@ void HtmlTagPlugin::beNotified(SCNotification *scn) {
 			case NPPN_FILESAVED:
 				if (sameText(currentBufferPath(scn->nmhdr.idFrom), this->translations))
 					updateMenu();
+				else if (sameText(currentBufferPath(scn->nmhdr.idFrom), this->entities))
+					_entityMap.clear();
 				break;
 			case NPPN_NATIVELANGCHANGED:
 				updateMenu();
