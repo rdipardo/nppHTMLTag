@@ -326,6 +326,7 @@ void SciTextRange::select() {
 // --------------------------------------------------------------------------------------
 void SciTextRange::clearSelection() {
 	setAnchor(_editor.currentPosition());
+	this->_text.assign(L"");
 }
 
 // --------------------------------------------------------------------------------------
