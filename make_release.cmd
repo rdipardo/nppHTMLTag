@@ -8,7 +8,7 @@
 ::
 SETLOCAL
 
-set "VERSION=1.5.0"
+set "VERSION=1.5.1"
 set "PLUGIN=HTMLTag"
 set "PLUGIN_DLL=out\Win32\Release\%PLUGIN%.dll"
 set "PLUGINX64_DLL=out\x64\Release\%PLUGIN%.dll"
