@@ -22,8 +22,6 @@ path_t getModulePath(HMODULE hInstace);
 // --------------------------------------------------------------------------------------
 PluginBase::~PluginBase() {
 	funcItems.~FuncArray();
-	if (_editor)
-		delete _editor;
 }
 // --------------------------------------------------------------------------------------
 void PluginBase::setInfo(const NppData *data) {
@@ -170,7 +168,7 @@ SciActiveDocument const &SciApplication::getDocument() const {
 // --------------------------------------------------------------------------------------
 void SciApplication::setApiLevel(SciApiLevel api) {
 	SciViewList views = getViews();
-	for (size_t i = 0; i < views.size(); i++)
+	for (size_t i = 0; i < views.size; i++)
 		views[i].setApiLevel(api);
 }
 

@@ -24,17 +24,10 @@ class SciViewList;
 class SciApplication final : public SciWindowedObject {
 
 public:
-	static SciApplication *getApplication(const NppData *data = nullptr) {
-		if (data && !_instance)
-			_instance = new SciApplication(data);
-
-		return _instance;
-	}
-
 	static SciApplication *getApplication(const NppData *data, SciApiLevel api) {
-		SciApplication *app = SciApplication::getApplication(data);
-		app->setApiLevel(api);
-		return app;
+		static SciApplication instance(data);
+		instance.setApiLevel(api);
+		return &instance;
 	}
 
 	SciApplication(const SciApplication &) = delete;
@@ -48,7 +41,6 @@ public:
 	SciActiveDocument const &activeDocument() const { return getDocument(); }
 
 private:
-	static inline SciApplication *_instance = nullptr;
 	std::unique_ptr<SciViewList> _viewList = nullptr;
 	SciActiveDocument const &getDocument() const;
 	explicit SciApplication(const NppData *data)
@@ -119,24 +111,23 @@ private:
 // --------------------------------------------------------------------------------------
 // SciViewList
 // --------------------------------------------------------------------------------------
-typedef std::vector<std::shared_ptr<SciActiveDocument>> ActiveDocuments;
+typedef std::shared_ptr<SciActiveDocument> ActiveDocuments[2];
 
 class SciViewList final {
 
 public:
-	explicit SciViewList(const NppData *data) noexcept
-	    : _views({
-		  std::make_shared<SciActiveDocument>(data->_scintillaMainHandle),
-		  std::make_shared<SciActiveDocument>(data->_scintillaSecondHandle),
-	      }) {}
+	explicit SciViewList(const NppData *data) noexcept {
+		_views[0] = std::make_shared<SciActiveDocument>(data->_scintillaMainHandle);
+		_views[1] = std::make_shared<SciActiveDocument>(data->_scintillaSecondHandle);
+	}
 
 	~SciViewList() noexcept {
-		for (size_t i = 0; i < _views.size(); i++)
+		for (size_t i = 0; i < size; i++)
 			_views[i] = nullptr;
 	}
 
-	size_t size() const noexcept { return _views.size(); }
-	SciActiveDocument &operator[](size_t index) const noexcept { return *_views[index]; }
+	static constexpr size_t size = 2ULL;
+	SciActiveDocument &operator[](size_t index) const noexcept { return *_views[(index > 0)]; }
 
 private:
 	ActiveDocuments _views;

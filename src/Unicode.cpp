@@ -31,7 +31,7 @@ void Unicode::encode(EntityReplacementScope scope) {
 			break;
 		}
 		case EntityReplacementScope::ersAllDocuments: {
-			for (size_t docIndex = 0; docIndex < plugin.editor().getViews().size(); docIndex++) {
+			for (size_t docIndex = 0; docIndex < plugin.editor().getViews().size; docIndex++) {
 				SciActiveDocument doc = plugin.editor().getViews()[docIndex];
 				SciTextRange range = doc.getRange(0, doc.length());
 				doEncode(range);
