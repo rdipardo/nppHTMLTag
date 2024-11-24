@@ -31,6 +31,7 @@ void findAndDecode(const int keyCode, DecodeCmd cmd = dcAuto);
 
 constexpr char defaultUnicodePrefix[] = R"(\u)";
 constexpr wchar_t menuItemSeparator[] = L"-";
+constexpr wchar_t errorMessageDelimiter[] = L"|";
 std::unique_ptr<AboutDlg> aboutHtmlTag = nullptr;
 }
 
@@ -204,16 +205,30 @@ void HtmlTagPlugin::getEntities(EntityList &list) {
 		return;
 	}
 
+	size_t d1 = 0, d2 = 0;
+	std::wstring msgText, msgs[3]{};
 	std::wstringstream errMsg;
 	path_t iniFile = this->entities;
-	errMsg << iniFile.filename() << L" must be saved in folder:\r\n" << iniFile.parent_path().c_str();
 
 	if (!std::filesystem::exists(iniFile)) {
+		msgText = getMessage(L"err_config_msg");
+		d1 = msgText.find_first_of(errorMessageDelimiter);
+		d2 = msgText.find_last_of(errorMessageDelimiter);
+		msgs[0] = (d1 == std::wstring::npos) ? L"must be saved in folder" : msgText.substr(0, d1);
+		errMsg << iniFile.filename() << L" " << msgs[0] << L":\r\n" << iniFile.parent_path().c_str();
 		iniFile = pluginsHomeDir() / _pluginDLLName / (_pluginName + L"-entities.ini");
-		errMsg << L"\r\nor " << iniFile.filename() << L" in folder:\r\n" << iniFile.parent_path().c_str();
 	}
 	if (!std::filesystem::exists(iniFile)) {
-		::MessageBoxW(editor().windowHandle(), &errMsg.str()[0], getMessage(L"err_config"), MB_ICONERROR);
+		const auto rtlLangs = { "arabic", "farsi", "hebrew" };
+		unsigned long mbMask = MB_ICONERROR;
+		if (std::find(rtlLangs.begin(), rtlLangs.end(), menuLocale()) != rtlLangs.end())
+			mbMask |= MB_RTLREADING;
+		msgs[1] = (d2 == std::wstring::npos || d1 >= d2) ? L"or" : msgText.substr(d1 + 1, d2 - d1 - 1);
+		msgs[2] = (d2 == std::wstring::npos) ? L"in folder" : msgText.substr(d2 + 1);
+		errMsg << L"\r\n"
+		       << msgs[1] << L" " << iniFile.filename() << L" " << msgs[2] << L":\r\n"
+		       << iniFile.parent_path().c_str();
+		::MessageBoxW(editor().windowHandle(), &errMsg.str()[0], getMessage(L"err_config"), mbMask);
 		return;
 	}
 
