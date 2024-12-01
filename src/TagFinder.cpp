@@ -326,6 +326,7 @@ SciTextRange *extractTagName(std::string &tagName, bool &isOpenTag, bool &isEndT
 void selectTags(SciTextRange *startTag, SciTextRange *endTag) {
 	SciActiveDocument doc = plugin.editor().activeDocument();
 	const std::wstring startTagName = startTag->text();
+	std::wstring tagNameBuf;
 	size_t tagAttrPos = pos(L" ", startTagName);
 
 	// Trim attributes from tag selection
@@ -339,7 +340,8 @@ void selectTags(SciTextRange *startTag, SciTextRange *endTag) {
 		if (startTag->text().find(L"/>") != std::wstring::npos)
 			startTag->endPos(startTag->endPos() - 1);
 	} else {
-		startTag->startPos(startTag->startPos() + (pos(L"/", startTagName) >> 1) + 1);
+		tagNameBuf = startTagName.substr(0, startTag->length());
+		startTag->startPos(startTag->startPos() + (pos(L"/", tagNameBuf) >> 1) + 1);
 	}
 
 	doc.sendMessage(SCI_SETSELECTION, startTag->startPos(), startTag->endPos() - 1);
@@ -351,8 +353,9 @@ void selectTags(SciTextRange *startTag, SciTextRange *endTag) {
 		if (tagAttrPos > pos(L"<", endTagName))
 			endTag->endPos(endTag->startPos() + tagAttrPos);
 
+		tagNameBuf = endTagName.substr(0, endTag->length());
 		doc.sendMessage(
-		    SCI_ADDSELECTION, endTag->startPos() + (pos(L"/", endTagName) >> 1) + 1, endTag->endPos() - 1);
+		    SCI_ADDSELECTION, endTag->startPos() + (pos(L"/", tagNameBuf) >> 1) + 1, endTag->endPos() - 1);
 	}
 }
 }
