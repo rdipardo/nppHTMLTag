@@ -18,10 +18,11 @@ enum SearchDirection { dirBackward = -1, dirNone, dirForward, dirUnknown };
 
 struct TagPair {
 	std::string name;
-	SciTextRange *tag;
+	std::shared_ptr<SciTextRange> tag;
 };
 
-SciTextRange *extractTagName(std::string &tagName, bool &isOpenTag, bool &isEndTag, Sci_Position tagPos = -1);
+std::shared_ptr<SciTextRange> extractTagName(
+    std::string &tagName, bool &isOpenTag, bool &isEndTag, Sci_Position tagPos = -1);
 void selectTags(SciTextRange *startTag, SciTextRange *endTag = nullptr);
 
 /* https://html.spec.whatwg.org/multipage/syntax.html#void-elements */
@@ -56,28 +57,29 @@ void TagFinder::findMatchingTag(SelectionOptions options) {
 	SearchDirection searchDirection = dirUnknown;
 	SciActiveDocument doc = plugin.editor().activeDocument();
 	SciTextRange match{ doc };
-	SciTextRange *currentTag = nullptr;
-	TagPair matchingTags[2]{ { "", currentTag } };
+	std::shared_ptr<SciTextRange> currentTag = nullptr;
+	std::vector<TagPair> matchingTags;
 	// --------------------------------------------------------------------------------------
 	auto classifyTag = [&matchingTags, &currentTag, &match, &tagName, &searchDirection, &dispose](
 			       SearchDirection processDirection, char prefix) {
 		tagName = prefix + tagName;
 
-		if (!matchingTags->tag) {
-			*matchingTags = TagPair{ tagName, currentTag };
+		if (matchingTags.empty()) {
+			matchingTags.push_back(TagPair{ tagName, currentTag });
 			dispose = false;
 			searchDirection = processDirection;
-		} else if (sameText(tagName.substr(1), matchingTags->name.substr(1))) {
-			if (searchDirection != processDirection && !matchingTags[1].tag) {
-				match = *currentTag;
-				matchingTags[1] = TagPair{ tagName, currentTag };
+		} else if (sameText(tagName.substr(1), matchingTags.front().name.substr(1))) {
+			if (searchDirection == processDirection) {
+				matchingTags.push_back(TagPair{ tagName, currentTag });
 				dispose = false;
-			} else if (matchingTags[1].tag) {
-				delete matchingTags[1].tag;
-				matchingTags[1].tag = nullptr;
-			} else if (searchDirection == processDirection) {
-				matchingTags[1] = TagPair{ tagName, currentTag };
-				dispose = false;
+			} else {
+				if (matchingTags.size() > 1) {
+					matchingTags.pop_back();
+				} else {
+					match = *currentTag;
+					matchingTags.push_back(TagPair{ tagName, currentTag });
+					dispose = false;
+				}
 			}
 		}
 	};
@@ -113,9 +115,9 @@ void TagFinder::findMatchingTag(SelectionOptions options) {
 
 				if (isStartTag && isEndTag) {
 					tagName = '*' + tagName;
-					if (!matchingTags->tag) {
+					if (matchingTags.empty()) {
 						match = *currentTag;
-						*matchingTags = TagPair{ tagName, currentTag };
+						matchingTags.push_back(TagPair{ tagName, currentTag });
 						dispose = false;
 						searchDirection = dirNone;
 					}
@@ -169,14 +171,13 @@ void TagFinder::findMatchingTag(SelectionOptions options) {
 			}
 
 			if (dispose) {
-				delete currentTag;
 				currentTag = nullptr;
 			}
 		} while (nextTag && !match);
 
 		if (match) {
-			if (matchingTags[1].tag) {
-				currentTag = matchingTags->tag;
+			if (matchingTags.size() == 2) {
+				currentTag = matchingTags.front().tag;
 
 				// Matching tag may be hidden by a fold
 				doc.sendMessage(SCI_FOLDLINE, doc.sendMessage(SCI_LINEFROMPOSITION, match.startPos()),
@@ -212,7 +213,7 @@ void TagFinder::findMatchingTag(SelectionOptions options) {
 					}
 					selRange.select();
 				} else if (wantSelection) {
-					selectTags(currentTag, &match);
+					selectTags(currentTag.get(), &match);
 				} else {
 					match.select();
 				}
@@ -222,8 +223,8 @@ void TagFinder::findMatchingTag(SelectionOptions options) {
 				else
 					match.select();
 			}
-		} else if (matchingTags->tag) { // A tag with no match
-			currentTag = matchingTags->tag;
+		} else if (!matchingTags.empty()) { // A tag with no match
+			currentTag = matchingTags.front().tag;
 
 			if (wantSelection)
 				currentTag->select();
@@ -232,10 +233,8 @@ void TagFinder::findMatchingTag(SelectionOptions options) {
 			::MessageBeep(MB_ICONWARNING);
 		}
 
-		if (matchingTags->tag)
-			delete matchingTags->tag;
-		if (matchingTags[1].tag)
-			delete matchingTags[1].tag;
+		while (!matchingTags.empty())
+			matchingTags.pop_back();
 
 	} catch (...) {
 	}
@@ -243,7 +242,8 @@ void TagFinder::findMatchingTag(SelectionOptions options) {
 
 /////////////////////////////////////////////////////////////////////////////////////////
 namespace {
-SciTextRange *extractTagName(std::string &tagName, bool &isOpenTag, bool &isEndTag, Sci_Position tagPos) {
+std::shared_ptr<SciTextRange> extractTagName(
+    std::string &tagName, bool &isOpenTag, bool &isEndTag, Sci_Position tagPos) {
 	SciActiveDocument doc = plugin.editor().activeDocument();
 	bool closureFound = false;
 	isOpenTag = true;
@@ -256,7 +256,7 @@ SciTextRange *extractTagName(std::string &tagName, bool &isOpenTag, bool &isEndT
 			     : doc.currentPosition();
 	}
 
-	SciTextRange *result = new SciTextRange(doc);
+	std::shared_ptr<SciTextRange> result = std::make_shared<SciTextRange>(doc);
 	doc.find(L"<", *result, 0, tagPos, 0);
 	if (result->length() == 0) {
 		doc.find(L"<", *result, 0, tagPos);
