@@ -205,6 +205,8 @@ int doEncode(std::wstring &text, Entities::EntityList &entities, bool includeLin
 				text = text.substr(0, startPos) + L'&' + encodedEntity + L';' + text.substr(endPos);
 				++result;
 			}
+			if (chIndex >= text.length())
+				break;
 		}
 	} catch (...) {
 	}

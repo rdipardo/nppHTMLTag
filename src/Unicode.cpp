@@ -148,6 +148,8 @@ int doEncode(std::wstring &text, bool multiSel) {
 				<< std::setw(nDigits) << std::setfill(L'0') << charCode << text.substr(endPos);
 			text = encoded.str();
 			++result;
+			if (chIndex >= text.length())
+				break;
 		}
 	}
 	return result;
