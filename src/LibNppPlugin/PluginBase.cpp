@@ -26,8 +26,6 @@ PluginBase::~PluginBase() {
 // --------------------------------------------------------------------------------------
 void PluginBase::setInfo(const NppData *data) {
 	_data = *data;
-	_editor = SciApplication::getApplication(data, apiLevel());
-
 	DWORD versionWords = static_cast<DWORD>(sendNppMessage(NPPM_GETNPPVERSION));
 	div_t loWords = ::div((versionWords & 0xffff) * 10, 10);
 	while (loWords.quot > 9) {
@@ -37,10 +35,11 @@ void PluginBase::setInfo(const NppData *data) {
 	_nppVersion.major = ((versionWords >> 0x10) & 0xffff);
 	_nppVersion.minor = loWords.quot;
 	_nppVersion.revision = loWords.rem;
+	_editor = SciApplication::getApplication(data, apiLevel());
 }
 // --------------------------------------------------------------------------------------
 HWND PluginBase::currentScintilla() const {
-	intptr_t index = -1;
+	DWORD_PTR index = 0;
 	sendNppMessage(NPPM_GETCURRENTSCINTILLA, UNUSEDW, &index);
 	return (index > 0) ? _data._scintillaSecondHandle : _data._scintillaMainHandle;
 }
@@ -161,7 +160,7 @@ path_t PluginBase::pluginNameFromModule(HMODULE hInstace) {
 // SciApplication
 // --------------------------------------------------------------------------------------
 SciActiveDocument const &SciApplication::getDocument() const {
-	intptr_t index = -1;
+	DWORD_PTR index = 0;
 	sendMessage(NPPM_GETCURRENTSCINTILLA, UNUSEDW, &index);
 	return getViews()[(index > 0)];
 }
