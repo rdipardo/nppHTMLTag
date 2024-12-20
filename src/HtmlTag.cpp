@@ -467,14 +467,15 @@ bool autoCompleteMatchingTag(const Sci_Position startPos, const char *tagName) {
 // --------------------------------------------------------------------------------------
 void findAndDecode(const int keyCode, DecodeCmd cmd) {
 	using Decoder = int (*)();
+	SciActiveDocument doc = plugin.editor().activeDocument();
 	int ch = keyCode & 0xff;
 
-	if ((cmd == dcAuto) && (!(plugin.options.liveEntityDecoding || plugin.options.liveUnicodeDecoding) ||
+	if ((cmd == dcAuto) && ((ch == 0x0D && doc.sendMessage(SCI_GETEOLMODE) == SC_EOL_CRLF) ||
+				   !(plugin.options.liveEntityDecoding || plugin.options.liveUnicodeDecoding) ||
 				   !((ch >= 0x09 && ch <= 0x0D) || ch == 0x20))) {
 		return;
 	}
 
-	SciActiveDocument doc = plugin.editor().activeDocument();
 	Sci_Position caret = doc.currentPosition(), charOffset = -1, anchor, selStart, nextCaretPos;
 	bool didReplace = false;
 
@@ -492,11 +493,15 @@ void findAndDecode(const int keyCode, DecodeCmd cmd) {
 		int chCurrent = static_cast<int>(doc.sendMessage(SCI_GETCHARAT, anchor));
 		if (chCurrent >= 0 && chCurrent <= 0x20)
 			break;
-		if (chCurrent == '&' && (plugin.options.liveEntityDecoding || cmd == dcEntity)) { // Handle entities
-			didReplace = replace(Entities::decode, anchor, caret);
-			if (!(ch == 0x0A || ch == 0x0D))
-				++charOffset;
-			break;
+		else if (plugin.options.liveEntityDecoding || cmd == dcEntity) {
+			if (anchor == (caret - 1) && chCurrent != ';') // No adjacent entity here
+				break;
+			else if (chCurrent == '&') { // Handle entities
+				didReplace = replace(Entities::decode, anchor, caret);
+				if (!(ch == 0x0A || ch == 0x0D))
+					++charOffset;
+				break;
+			}
 		} else if (chCurrent == plugin.options.unicodePrefix[0] &&
 			   (plugin.options.liveUnicodeDecoding || cmd == dcUnicode)) { // Handle Unicode
 			size_t lenPrefix = plugin.options.unicodePrefix.size();
