@@ -478,6 +478,7 @@ void findAndDecode(const int keyCode, DecodeCmd cmd) {
 
 	Sci_Position caret = doc.currentPosition(), charOffset = -1, anchor, selStart, nextCaretPos;
 	bool didReplace = false;
+	bool skipEntities = false;
 
 	auto replace = [doc](Decoder decoder, Sci_Position start, Sci_Position end) {
 		int nDecoded = 0;
@@ -493,17 +494,18 @@ void findAndDecode(const int keyCode, DecodeCmd cmd) {
 		int chCurrent = static_cast<int>(doc.sendMessage(SCI_GETCHARAT, anchor));
 		if (chCurrent >= 0 && chCurrent <= 0x20)
 			break;
-		else if (plugin.options.liveEntityDecoding || cmd == dcEntity) {
+		if (plugin.options.liveEntityDecoding || cmd == dcEntity) {
 			if (anchor == (caret - 1) && chCurrent != ';') // No adjacent entity here
-				break;
-			else if (chCurrent == '&') { // Handle entities
+				skipEntities = true;
+			if (!skipEntities && chCurrent == '&') { // Handle entities
 				didReplace = replace(Entities::decode, anchor, caret);
 				if (!(ch == 0x0A || ch == 0x0D))
 					++charOffset;
 				break;
 			}
-		} else if (chCurrent == plugin.options.unicodePrefix[0] &&
-			   (plugin.options.liveUnicodeDecoding || cmd == dcUnicode)) { // Handle Unicode
+		}
+		if (chCurrent == plugin.options.unicodePrefix[0] &&
+		    (plugin.options.liveUnicodeDecoding || cmd == dcUnicode)) { // Handle Unicode
 			size_t lenPrefix = plugin.options.unicodePrefix.size();
 			size_t lenCodePt = 4 + lenPrefix;
 			selStart = anchor;
