@@ -123,12 +123,11 @@ if (VC_BUILD)
   if (NOT "${PLATFORM_ID}" MATCHES "arm")
     set_target_properties(${PROJECT_NAME} PROPERTIES
       MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
-      VS_PLATFORM_TOOLSET "v141_xp"
     )
     target_compile_definitions (${PROJECT_NAME} PRIVATE
       _USING_V110_SDK71_
-      _WIN32_WINNT=_WIN32_WINNT_WINXP
-      NTDDI_VERSION=NTDDI_WINXPSP3
+      _WIN32_WINNT=_WIN32_WINNT_VISTA
+      NTDDI_VERSION=NTDDI_VISTASP1
     )
   endif ()
 

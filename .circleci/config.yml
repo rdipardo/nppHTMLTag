@@ -44,14 +44,6 @@ jobs:
             python -m pip install cmake~=3.30.0
             cmake --version
       - run:
-         name: Install the v141_xp VC toolset
-         command: |
-           cd "C:\Program Files (x86)\Microsoft Visual Studio\Installer"
-           .\vs_installer.exe modify --installPath "C:\Program Files\Microsoft Visual Studio\2022\Community" `
-            --add Microsoft.VisualStudio.Component.VC.v141.x86.x64 `
-            --add Microsoft.VisualStudio.Component.WinXP `
-            --downloadThenInstall --quiet
-      - run:
          name: Build and Pack
          command: make_release.cmd
          shell: cmd.exe
