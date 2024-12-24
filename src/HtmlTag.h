@@ -45,7 +45,7 @@ public:
 	void toggleOption(BOOL *, const int);
 
 	PluginOptions options;
-	path_t optionsConfig, entities, translations;
+	path_t optionsConfig, entities, menuTranslations, dlgTranslations;
 	static constexpr wchar_t pluginMenuName[] = L"&HTML Tag";
 
 private:

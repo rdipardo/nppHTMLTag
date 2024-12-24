@@ -26,6 +26,7 @@ namespace {
 enum DecodeCmd { dcAuto = -1, dcEntity, dcUnicode };
 enum CmdMenuPosition { cmpUnicode = 3, cmpEntities };
 
+bool menuLocaleIsRTL() noexcept;
 bool autoCompleteMatchingTag(const Sci_Position startPos, const char *tagName);
 void findAndDecode(const int keyCode, DecodeCmd cmd = dcAuto);
 
@@ -126,17 +127,21 @@ void HtmlTagPlugin::setInfo(const NppData *data) {
 	path_t configPath = pluginsConfigDir() / _pluginName;
 	path_t installationPath = pluginsHomeDir() / _pluginDLLName;
 	path_t defaultEntities = installationPath / (_pluginName + L"-entities.ini");
-	path_t defaulttranslations = installationPath / (_pluginName + L"-translations.ini");
+	path_t defaultMenuTranslations = installationPath / (_pluginName + L"-translations.ini");
+	path_t defaultDlgTranslations = installationPath / (_pluginName + L"-dialogs.ini");
 	entities = configPath / L"entities.ini";
-	translations = configPath / L"localizations.ini";
+	menuTranslations = configPath / L"localizations.ini";
+	dlgTranslations = configPath / L"dialogs.ini";
 	optionsConfig = configPath / L"options.ini";
 	std::error_code result;
 	if (!fs::exists(configPath))
 		fs::create_directory(configPath, result);
 	if (result.value() == 0 && !fs::exists(entities))
 		::CopyFileW(defaultEntities.c_str(), entities.c_str(), TRUE);
-	if (result.value() == 0 && !fs::exists(translations))
-		::CopyFileW(defaulttranslations.c_str(), translations.c_str(), TRUE);
+	if (result.value() == 0 && !fs::exists(menuTranslations))
+		::CopyFileW(defaultMenuTranslations.c_str(), menuTranslations.c_str(), TRUE);
+	if (result.value() == 0 && !fs::exists(dlgTranslations))
+		::CopyFileW(defaultDlgTranslations.c_str(), dlgTranslations.c_str(), TRUE);
 
 	initMenu();
 	loadOptions();
@@ -149,19 +154,26 @@ void HtmlTagPlugin::beNotified(SCNotification *scn) {
 #ifdef _M_X64
 				if (!plugin.supportsBigFiles()) {
 					std::wstringstream caption;
+					unsigned long mbMask = MB_ICONERROR;
+					if (menuLocaleIsRTL())
+						mbMask |= MB_RTLREADING;
 					caption << _pluginName << Version(HTMLTAG_VERSION_WORDS).str() << L" ("
 						<< sizeof(intptr_t) * 8 << L"-bit)";
 					::MessageBoxW(plugin.editor().windowHandle(), getMessage(L"err_compat"),
-					    &caption.str()[0], MB_ICONWARNING);
+					    &caption.str()[0], mbMask);
 				}
 #endif
 				break;
-			case NPPN_FILESAVED:
-				if (sameText(currentBufferPath(scn->nmhdr.idFrom), this->translations))
+			case NPPN_FILESAVED: {
+				path_t const &filePath = currentBufferPath(scn->nmhdr.idFrom);
+				if (sameText(filePath, this->menuTranslations))
 					updateMenu();
-				else if (sameText(currentBufferPath(scn->nmhdr.idFrom), this->entities))
+				else if (sameText(filePath, this->dlgTranslations))
+					aboutHtmlTag.reset();
+				else if (sameText(filePath, this->entities))
 					_entityMap.clear();
 				break;
+			}
 			case NPPN_NATIVELANGCHANGED:
 				updateMenu();
 				aboutHtmlTag.reset();
@@ -219,9 +231,8 @@ void HtmlTagPlugin::getEntities(EntityList &list) {
 		iniFile = pluginsHomeDir() / _pluginDLLName / (_pluginName + L"-entities.ini");
 	}
 	if (!std::filesystem::exists(iniFile)) {
-		const auto rtlLangs = { "arabic", "farsi", "hebrew" };
 		unsigned long mbMask = MB_ICONERROR;
-		if (std::find(rtlLangs.begin(), rtlLangs.end(), menuLocale()) != rtlLangs.end())
+		if (menuLocaleIsRTL())
 			mbMask |= MB_RTLREADING;
 		msgs[1] = (d2 == std::wstring::npos || d1 >= d2) ? L"or" : msgText.substr(d1 + 1, d2 - d1 - 1);
 		msgs[2] = (d2 == std::wstring::npos) ? L"in folder" : msgText.substr(d2 + 1);
@@ -341,13 +352,13 @@ void HtmlTagPlugin::updateMenu() {
 }
 // --------------------------------------------------------------------------------------
 void HtmlTagPlugin::loadTranslations() {
-	if (!fs::exists(translations))
+	if (!fs::exists(menuTranslations))
 		return;
 
 	CSimpleIniW config{ /* IsUtf8 */ true, /* MultiKey */ false, /* MultiLine */ true };
 	config.SetQuotes(true);
 	try {
-		SI_Error err = config.LoadFile(translations.c_str());
+		SI_Error err = config.LoadFile(menuTranslations.c_str());
 		if (err != SI_OK)
 			return;
 
@@ -441,6 +452,11 @@ MenuTitles::MenuTitles() : HashedStringList<std::wstring>() {
 
 /////////////////////////////////////////////////////////////////////////////////////////
 namespace {
+bool menuLocaleIsRTL() noexcept {
+	const auto rtlLangs = { "arabic", "farsi", "hebrew" };
+	return std::find(rtlLangs.begin(), rtlLangs.end(), plugin.menuLocale()) != std::end(rtlLangs);
+}
+// --------------------------------------------------------------------------------------
 bool autoCompleteMatchingTag(const Sci_Position startPos, const char *tagName) {
 	const size_t maxTagLength = 72; // https://www.rfc-editor.org/rfc/rfc1866#section-3.2.3
 	const auto webLangs = { L_HTML, L_XML, L_PHP, L_ASP, L_JSP };

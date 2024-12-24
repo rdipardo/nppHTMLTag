@@ -18,6 +18,10 @@ namespace TextConv {
 void bytesToText(const char *src, std::wstring &dest, UINT cp = CP_UTF8);
 /// @brief Encodes a wide string according to @c cp and stores the result in a character string.
 void textToBytes(const wchar_t *src, std::string &dest, UINT cp = CP_ACP);
+/// @brief @c true if both strings are the same, including case.
+bool sameString(const char *str1, const char *str2);
+/// @copydoc TextConv::sameString(const char *, const char *)
+bool sameString(const wchar_t *str1, const wchar_t *str2);
 /// @brief @c true if both strings are the same, ignoring case.
 bool sameText(std::string lhs, std::string rhs);
 /// @copydoc TextConv::sameText(std::string, std::string)
@@ -25,7 +29,7 @@ bool sameText(std::wstring lhs, std::wstring rhs);
 /// @brief Returns the 1-based index of a substring within a string, or 0 if not found.
 /// @see https://www.freepascal.org/docs-html/rtl/system/pos.html
 size_t pos(const char *subStr, std::string const &str, size_t offSet = 0ULL);
-/// @copydoc TextConv::pos(const char *, const std::string, size_t)
+/// @copydoc TextConv::pos(const char *, std::string const&, size_t)
 size_t pos(const wchar_t *subStr, std::wstring const &wstr, size_t offSet = 0ULL);
 /// @brief Removes all whitespace from a string.
 /// @see https://stackoverflow.com/a/83538

@@ -7,6 +7,7 @@
 */
 #include <windows.h>
 #include <shellapi.h>
+#include "SimpleIni.h"
 #include "VersionInfo.h"
 #include "TextConv.h"
 #include "HtmlTag.h"
@@ -20,6 +21,7 @@
 #define WM_CTLCOLORSTATIC_DARK WM_DRAWITEM
 
 using namespace HtmlTag;
+using namespace TextConv;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 namespace {
@@ -28,14 +30,8 @@ struct DialogHyperlink {
 	WNDPROC defWndProc;
 };
 
-struct LocalizedResource {
-	const char *locale;
-	int dialog, modal;
-};
-
 INT_PTR CALLBACK modalDlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK linkCtrlWndProc(HWND hLink, UINT message, WPARAM wParam, LPARAM lParam);
-LocalizedResource getLocalizedResource();
 
 Version pluginVersion;
 HFONT hDefaultFont, hActiveLinkFont;
@@ -84,12 +80,18 @@ constexpr size_t nbDialogLocales = ARRAYSIZE(dialogLocales);
 // --------------------------------------------------------------------------------------
 AboutDlg::AboutDlg(HINSTANCE hInst, NppData const &data) : StaticDialog() {
 	pluginVersion = Version{ HTMLTAG_VERSION_WORDS };
+	for (size_t i = 0; i < nbDialogLocales; i++) {
+		if (plugin.menuLocale() == dialogLocales[i].locale) {
+			_dialogResource = dialogLocales[i];
+			break;
+		}
+	}
 	Window::init(hInst, data._nppHandle);
 }
 // --------------------------------------------------------------------------------------
 void AboutDlg::show() {
 	if (!isCreated())
-		create(getLocalizedResource().dialog);
+		create(_dialogResource.dialog);
 
 	goToCenter();
 }
@@ -109,6 +111,111 @@ void AboutDlg::toggleDarkMode(HWND hwnd, ULONG dmFlag) {
 	plugin.sendNppMessage(NPPM_DARKMODESUBCLASSANDTHEME, dmFlag, reinterpret_cast<LPARAM>(hwnd));
 }
 // --------------------------------------------------------------------------------------
+void AboutDlg::localize(HWND hwnd) {
+	if (!std::filesystem::exists(plugin.dlgTranslations)) {
+		if (hwnd == _hSelf) { // Restore default text to the About dialog
+			::SetDlgItemTextW(hwnd, ID_PLUGIN_VERSION_TXT, DEFAULT_VERSION_TXT);
+			::SetDlgItemTextW(hwnd, ID_RELEASE_NOTES_LINK, DEFAULT_RELEASE_NOTES_TXT);
+			::SetDlgItemTextW(hwnd, ID_BUG_TRACKER_LINK, DEFAULT_BUG_TRACKER_TXT);
+			::SetDlgItemTextW(hwnd, ID_PLUGIN_REPO_LINK, DEFAULT_REPO_LINK_TXT);
+			::SetDlgItemTextW(hwnd, ID_PLUGIN_LICENSE_TXT, PLUGIN_LICENSE);
+			::SetDlgItemTextW(hwnd, ID_SIMPLEINI_TXT, DEFAULT_ABOUT_3RD_PARTY);
+			::SetDlgItemTextW(hwnd, ID_TINYXML_TXT, DEFAULT_ABOUT_3RD_PARTY_ALSO);
+			::SetDlgItemTextW(hwnd, ID_ENTITIES_FILE_LINK, DEFAULT_ENTITIES_FILE_TXT);
+			::SetDlgItemTextW(hwnd, ID_TRANSLATIONS_FILE_LINK, DEFAULT_L10N_FILE_TXT);
+			::SetDlgItemTextW(hwnd, ID_UNICODE_FMT_LABEL_TXT, DEFAULT_UNICODE_FORMAT_LABEL);
+			::SetDlgItemTextW(hwnd, ID_UNICODE_CONFIG_LINK, DEFAULT_UNICODE_CONFIG_LABEL);
+		} else { // Restore default text to the Unicode format modal dialog
+			::SetDlgItemTextW(hwnd, ID_CONFIG_LABEL_1, DEFAULT_UNICODE_EDIT_LABEL);
+			::SetDlgItemTextW(hwnd, IDOK, DEFAULT_UNICODE_BTN_OK_TXT);
+			::SetDlgItemTextW(hwnd, IDCANCEL, DEFAULT_UNICODE_BTN_CANCEL_TXT);
+			::SetDlgItemTextW(hwnd, IDRETRY, DEFAULT_UNICODE_BTN_RESET_TXT);
+		}
+		return;
+	}
+
+	CSimpleIniW config{ /* IsUtf8 */ true, /* MultiKey */ false, /* MultiLine */ true };
+	config.SetQuotes(true);
+
+	try {
+		SI_Error err = config.LoadFile(plugin.dlgTranslations.c_str());
+		if (err != SI_OK)
+			return;
+
+		std::wstring section(64, L'\0');
+		TextConv::bytesToText(_dialogResource.locale, section, CP_ACP);
+		std::list<CSimpleIniW::Entry> keys;
+		if (!config.GetAllKeys(section.c_str(), keys)) // Unknown language
+			return;
+
+		for (auto &&msgId : keys) {
+			if (hwnd == _hSelf) { // Localize the About dialog
+				if (sameString(msgId.pItem, L"about_caption")) {
+					::SetWindowTextW(
+					    hwnd, config.GetValue(section.c_str(), msgId.pItem, DEFAULT_CAPTION));
+				} else if (sameString(msgId.pItem, L"about_version")) {
+					::SetDlgItemTextW(hwnd, ID_PLUGIN_VERSION_TXT,
+					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_VERSION_TXT));
+				} else if (sameString(msgId.pItem, L"about_rel_notes")) {
+					::SetDlgItemTextW(hwnd, ID_RELEASE_NOTES_LINK,
+					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_RELEASE_NOTES_TXT));
+				} else if (sameString(msgId.pItem, L"about_bugs")) {
+					::SetDlgItemTextW(hwnd, ID_BUG_TRACKER_LINK,
+					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_BUG_TRACKER_TXT));
+				} else if (sameString(msgId.pItem, L"about_downloads")) {
+					::SetDlgItemTextW(hwnd, ID_PLUGIN_REPO_LINK,
+					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_REPO_LINK_TXT));
+				} else if (sameString(msgId.pItem, L"about_license")) {
+					::SetDlgItemTextW(hwnd, ID_PLUGIN_LICENSE_TXT,
+					    config.GetValue(section.c_str(), msgId.pItem, PLUGIN_LICENSE));
+				} else if (sameString(msgId.pItem, L"about_3rd_party")) {
+					::SetDlgItemTextW(hwnd, ID_SIMPLEINI_TXT,
+					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_ABOUT_3RD_PARTY));
+				} else if (sameString(msgId.pItem, L"about_3rd_party_also")) {
+					::SetDlgItemTextW(hwnd, ID_TINYXML_TXT,
+					    config.GetValue(
+						section.c_str(), msgId.pItem, DEFAULT_ABOUT_3RD_PARTY_ALSO));
+				} else if (sameString(msgId.pItem, L"about_entities_file")) {
+					::SetDlgItemTextW(hwnd, ID_ENTITIES_FILE_LINK,
+					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_ENTITIES_FILE_TXT));
+				} else if (sameString(msgId.pItem, L"about_l10n_file")) {
+					::SetDlgItemTextW(hwnd, ID_TRANSLATIONS_FILE_LINK,
+					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_L10N_FILE_TXT));
+				} else if (sameString(msgId.pItem, L"about_unicode_format")) {
+					::SetDlgItemTextW(hwnd, ID_UNICODE_FMT_LABEL_TXT,
+					    config.GetValue(
+						section.c_str(), msgId.pItem, DEFAULT_UNICODE_FORMAT_LABEL));
+				} else if (sameString(msgId.pItem, L"about_unicode_config")) {
+					::SetDlgItemTextW(hwnd, ID_UNICODE_CONFIG_LINK,
+					    config.GetValue(
+						section.c_str(), msgId.pItem, DEFAULT_UNICODE_CONFIG_LABEL));
+				}
+			} else { // Localize the Unicode format modal dialog
+				if (sameString(msgId.pItem, L"unicode_dlg_caption")) {
+					::SetWindowTextW(hwnd, config.GetValue(section.c_str(), msgId.pItem,
+								   DEFAULT_UNICODE_EDIT_CAPTION));
+				} else if (sameString(msgId.pItem, L"unicode_dlg_format")) {
+					::SetDlgItemTextW(hwnd, ID_CONFIG_LABEL_1,
+					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_UNICODE_EDIT_LABEL));
+				} else if (sameString(msgId.pItem, L"unicode_dlg_ok")) {
+					::SetDlgItemTextW(hwnd, IDOK,
+					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_UNICODE_BTN_OK_TXT));
+				} else if (sameString(msgId.pItem, L"unicode_dlg_cancel")) {
+					::SetDlgItemTextW(hwnd, IDCANCEL,
+					    config.GetValue(
+						section.c_str(), msgId.pItem, DEFAULT_UNICODE_BTN_CANCEL_TXT));
+				} else if (sameString(msgId.pItem, L"unicode_dlg_reset")) {
+					::SetDlgItemTextW(hwnd, IDRETRY,
+					    config.GetValue(
+						section.c_str(), msgId.pItem, DEFAULT_UNICODE_BTN_RESET_TXT));
+				}
+			}
+		}
+	} catch (...) {
+		config.~CSimpleIniTempl();
+	}
+}
+// --------------------------------------------------------------------------------------
 INT_PTR CALLBACK AboutDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) {
 	INT_PTR result = FALSE;
 	switch (message) {
@@ -125,6 +232,9 @@ INT_PTR CALLBACK AboutDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM lPara
 				    hCtrl, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(linkCtrlWndProc)));
 				::SendMessageW(hCtrl, WM_SETFONT, reinterpret_cast<WPARAM>(hActiveLinkFont), 0);
 			}
+
+			if (_dialogResource.locale != LocalizedPlugin::defaultLangId)
+				localize(_hSelf);
 
 			std::wstringstream version;
 			wchar_t versionTxt[128]{ L'\0' };
@@ -204,15 +314,16 @@ INT_PTR CALLBACK AboutDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM lPara
 			bool hideOnReturn = true;
 			switch (wParam & 0xffff) {
 				case ID_UNICODE_CONFIG_LINK:
-					::DialogBoxParamW(_hInst, MAKEINTRESOURCE(getLocalizedResource().modal), _hSelf,
+					::DialogBoxParamW(_hInst, MAKEINTRESOURCE(_dialogResource.modal), _hSelf,
 					    (DLGPROC)modalDlgProc, reinterpret_cast<LPARAM>(this));
 					hideOnReturn = false;
 					break;
 				case ID_TRANSLATIONS_FILE_LINK:
-					plugin.openFile((wchar_t *)&plugin.translations.native()[0]);
+					plugin.openFile(&plugin.dlgTranslations.wstring()[0]);
+					plugin.openFile(&plugin.menuTranslations.wstring()[0]);
 					break;
 				case ID_ENTITIES_FILE_LINK:
-					plugin.openFile((wchar_t *)&plugin.entities.native()[0]);
+					plugin.openFile(&plugin.entities.wstring()[0]);
 					break;
 				case ID_RELEASE_NOTES_LINK: {
 					std::wstring url = RELEASE_NOTES_URL;
@@ -266,8 +377,10 @@ INT_PTR CALLBACK modalDlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM 
 	switch (message) {
 		case WM_INITDIALOG: {
 			AboutDlg *aboutDlg = reinterpret_cast<AboutDlg *>(lParam);
-			if (aboutDlg)
+			if (aboutDlg) {
+				aboutDlg->localize(hwndDlg);
 				aboutDlg->toggleDarkMode(hwndDlg);
+			}
 
 			setEditText();
 			result = TRUE;
@@ -316,20 +429,5 @@ INT_PTR CALLBACK linkCtrlWndProc(HWND hCtrl, UINT message, WPARAM wParam, LPARAM
 		}
 	}
 	return defWndProc(hCtrl, message, wParam, lParam);
-}
-// --------------------------------------------------------------------------------------
-LocalizedResource getLocalizedResource() {
-	LocalizedResource res{
-		LocalizedPlugin::defaultLangId.c_str(),
-		ID_ABOUT_HTML_TAG_DLG,
-		ID_UNICODE_FMT_CONFIG_DLG,
-	};
-	for (size_t i = 0; i < nbDialogLocales; i++) {
-		if (plugin.menuLocale() == dialogLocales[i].locale) {
-			res = dialogLocales[i];
-			break;
-		}
-	}
-	return res;
 }
 }

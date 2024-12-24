@@ -14,13 +14,21 @@
 
 using namespace NppDarkMode;
 
+struct LocalizedResource final {
+	const char *locale = LocalizedPlugin::defaultLangId.c_str();
+	int dialog = ID_ABOUT_HTML_TAG_DLG;
+	int modal = ID_UNICODE_FMT_CONFIG_DLG;
+};
+
 class AboutDlg final : public StaticDialog {
 public:
 	explicit AboutDlg(HINSTANCE hInst, NppData const &data);
 	void toggleDarkMode(HWND hwnd, ULONG dmFlag = dmfInit);
+	void localize(HWND hwnd);
 	void show();
 
 private:
+	LocalizedResource _dialogResource;
 	bool _themeInitialized = false;
 	INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) override;
 };

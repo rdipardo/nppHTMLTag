@@ -49,6 +49,14 @@ void TextConv::textToBytes(const wchar_t *src, std::string &dest, UINT cp) {
 	}
 }
 // --------------------------------------------------------------------------------------
+bool TextConv::sameString(const char *str1, const char *str2) {
+	return !(str1 == nullptr || str2 == nullptr) && strcmp(str1, str2) == 0;
+};
+// --------------------------------------------------------------------------------------
+bool TextConv::sameString(const wchar_t *str1, const wchar_t *str2) {
+	return !(str1 == nullptr || str2 == nullptr) && std::wcscmp(str1, str2) == 0;
+};
+// --------------------------------------------------------------------------------------
 bool TextConv::sameText(std::string lhs, std::string rhs) {
 	auto tolower_l = [](uint8_t c) { return std::tolower(c, std::locale()); };
 	std::transform(lhs.begin(), lhs.end(), lhs.begin(), tolower_l);
