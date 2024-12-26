@@ -20,6 +20,7 @@ DEFINE_ENUM_FLAG_OPERATORS(SelectionOptions)
 struct PluginOptions {
 	BOOL liveEntityDecoding;
 	BOOL liveUnicodeDecoding;
+	BOOL entityAutoCompletion;
 	std::string unicodePrefix;
 	std::string unicodeRE;
 };

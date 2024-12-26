@@ -16,6 +16,7 @@
 #include "Unicode.h"
 #include "AboutDlg.h"
 #include "HtmlTag.h"
+#include "XPM.h"
 
 using namespace HtmlTag;
 using namespace TextConv;
@@ -24,12 +25,15 @@ namespace fs = std::filesystem;
 /////////////////////////////////////////////////////////////////////////////////////////
 namespace {
 enum DecodeCmd { dcAuto = -1, dcEntity, dcUnicode };
-enum CmdMenuPosition { cmpUnicode = 3, cmpEntities };
+enum CmdMenuPosition { cmpAcEntities = 3, cmpUnicode, cmpEntities };
 
 bool menuLocaleIsRTL() noexcept;
+bool isWebDocument() noexcept;
 bool autoCompleteMatchingTag(const Sci_Position startPos, const char *tagName);
+void autoCompleteEntity();
 void findAndDecode(const int keyCode, DecodeCmd cmd = dcAuto);
 
+constexpr char acListKey[] = "_autocompletions";
 constexpr char defaultUnicodePrefix[] = R"(\u)";
 constexpr wchar_t menuItemSeparator[] = L"-";
 constexpr wchar_t errorMessageDelimiter[] = L"|";
@@ -104,6 +108,10 @@ CMDMENUPROC toggleLiveEntityecoding() {
 // --------------------------------------------------------------------------------------
 CMDMENUPROC toggleLiveUnicodeDecoding() {
 	plugin.toggleOption(&plugin.options.liveUnicodeDecoding, CmdMenuPosition::cmpUnicode);
+}
+// --------------------------------------------------------------------------------------
+CMDMENUPROC toggleEntityAutoCompletion() {
+	plugin.toggleOption(&plugin.options.entityAutoCompletion, CmdMenuPosition::cmpAcEntities);
 }
 // --------------------------------------------------------------------------------------
 CMDMENUPROC commandAbout() {
@@ -184,21 +192,43 @@ void HtmlTagPlugin::beNotified(SCNotification *scn) {
 		}
 	} else {
 		static bool isAutoCompletionCandidate = false;
+		static intptr_t acInsertMode = SC_MULTIAUTOC_ONCE;
 		switch (scn->nmhdr.code) {
 			case SCN_AUTOCSELECTION:
-				if (isAutoCompletionCandidate && autoCompleteMatchingTag(scn->position, scn->text))
-					plugin.editor().activeDocument().sendMessage(SCI_AUTOCCANCEL);
+				acInsertMode = editor().activeDocument().sendMessage(SCI_AUTOCGETMULTI);
+				if (isAutoCompletionCandidate && autoCompleteMatchingTag(scn->position, scn->text)) {
+					SciViewList views = editor().getViews();
+					for (size_t i = 0; i < views.size; ++i)
+						views[i].sendMessage(SCI_AUTOCSETMULTI, SC_MULTIAUTOC_EACH);
+				}
 				break;
+			case SCN_AUTOCCOMPLETED: {
+				SciViewList views = editor().getViews();
+				for (size_t i = 0; i < views.size; ++i)
+					views[i].sendMessage(SCI_AUTOCSETMULTI, acInsertMode);
+				break;
+			}
 			case SCN_AUTOCSELECTIONCHANGE: // https://www.scintilla.org/ScintillaDoc.html#SCN_AUTOCSELECTIONCHANGE
 				isAutoCompletionCandidate = (scn->listType == 0);
 				break;
 			case SCN_USERLISTSELECTION:
 				isAutoCompletionCandidate = false;
 				break;
+			case SCN_AUTOCCHARDELETED:
+				if (options.entityAutoCompletion && isWebDocument()) {
+					SciActiveDocument doc = editor().activeDocument();
+					if (doc.sendMessage(SCI_GETCHARAT, doc.currentPosition() - 1) == '&') {
+						autoCompleteEntity();
+					}
+				}
+				break;
 			case SCN_CHARADDED:
 				if ((scn->characterSource == SC_CHARACTERSOURCE_DIRECT_INPUT) &&
 				    !plugin.editor().activeDocument().currentSelection()) {
 					findAndDecode(scn->ch);
+				}
+				if (options.entityAutoCompletion && isWebDocument() && (scn->ch == '&')) {
+					autoCompleteEntity();
 				}
 				break;
 		}
@@ -256,14 +286,17 @@ void HtmlTagPlugin::getEntities(EntityList &list) {
 		if (!config.GetAllKeys(listName, charRefs))
 			return;
 
+		std::stringstream acListBuf;
 		for (auto &&entity : charRefs) {
 			std::string codePointStr = config.GetValue(listName, entity.pItem);
 			int codePoint = std::stoi(codePointStr);
 			if (codePoint > 0) {
 				_entityMap[listName].addPair(entity.pItem, std::to_string(codePoint));
 				_entityMap[listName].addPair(std::to_string(codePoint), entity.pItem);
+				acListBuf << entity.pItem << ';' << '?' << XPM::getID() << ' ';
 			}
 		}
+		_entityMap[listName].addPair(acListKey, acListBuf.str());
 		list = _entityMap[listName];
 	} catch (...) {
 		config.~CSimpleIniTempl();
@@ -312,6 +345,7 @@ void HtmlTagPlugin::initMenu() {
 	funcItems.add(menuItemSeparator);
 	funcItems.add(getMessage(L"menu_9"), toggleLiveEntityecoding);
 	funcItems.add(getMessage(L"menu_10"), toggleLiveUnicodeDecoding);
+	funcItems.add(getMessage(L"menu_12"), toggleEntityAutoCompletion);
 	funcItems.add(menuItemSeparator);
 	funcItems.add(getMessage(L"menu_11"), commandAbout);
 }
@@ -322,12 +356,20 @@ void HtmlTagPlugin::updateMenu() {
 
 	setLanguage();
 	loadTranslations();
+
+	constexpr int formerMaxIndex = 11; //< Index of the "About..." menu title before v1.5.2
 	HMENU hMenu = reinterpret_cast<HMENU>(sendNppMessage(NPPM_GETMENUHANDLE, NPPPLUGINMENU, nullptr));
 
 	for (intptr_t i = 0, menuId = 0; i < funcItems.count(); i++, menuId++) {
 		if (std::wcscmp(funcItems[i]._itemName, menuItemSeparator) == 0) {
 			menuId--;
 			continue;
+		} else if (menuId == formerMaxIndex) {
+			std::wstring titleOld = L"menu_" + std::to_wstring(formerMaxIndex);
+			std::wstring titleCurrent = L"menu_" + std::to_wstring(formerMaxIndex + 1);
+			std::wstring tmp(_menuTitles[titleCurrent]);
+			_menuTitles.addPair(titleCurrent, _menuTitles[titleOld]);
+			_menuTitles.addPair(titleOld, tmp);
 		}
 
 		MENUITEMINFOW mii;
@@ -391,6 +433,7 @@ void HtmlTagPlugin::loadOptions() {
 				return;
 			options.liveEntityDecoding = config.GetBoolValue("AUTO_DECODE", "ENTITIES", false);
 			options.liveUnicodeDecoding = config.GetBoolValue("AUTO_DECODE", "UNICODE_ESCAPE_CHARS", false);
+			options.entityAutoCompletion = config.GetBoolValue("AUTO_COMPLETE", "ENTITIES", true);
 			std::string userPrefix =
 			    config.GetValue("FORMAT", "UNICODE_ESCAPE_PREFIX", defaultUnicodePrefix);
 			setUnicodeFormatOption(userPrefix);
@@ -402,8 +445,10 @@ void HtmlTagPlugin::loadOptions() {
 		setUnicodeFormatOption(defaultUnicodePrefix);
 	}
 
+	size_t autoCompleteEntities = funcItems.count() - CmdMenuPosition::cmpAcEntities;
 	size_t autoDecodeJs = funcItems.count() - CmdMenuPosition::cmpUnicode;
 	size_t autoDecodeEntities = funcItems.count() - CmdMenuPosition::cmpEntities;
+	funcItems[autoCompleteEntities]._init2Check = options.entityAutoCompletion;
 	funcItems[autoDecodeJs]._init2Check = options.liveUnicodeDecoding;
 	funcItems[autoDecodeEntities]._init2Check = options.liveEntityDecoding;
 }
@@ -418,6 +463,7 @@ void HtmlTagPlugin::saveOptions() {
 	try {
 		config.SetLongValue("AUTO_DECODE", "ENTITIES", options.liveEntityDecoding);
 		config.SetLongValue("AUTO_DECODE", "UNICODE_ESCAPE_CHARS", options.liveUnicodeDecoding);
+		config.SetLongValue("AUTO_COMPLETE", "ENTITIES", options.entityAutoCompletion);
 		config.SetValue("FORMAT", "UNICODE_ESCAPE_PREFIX", options.unicodePrefix.c_str());
 		config.Save(ofs);
 	} catch (...) {
@@ -431,6 +477,7 @@ void HtmlTagPlugin::saveOptions() {
 // --------------------------------------------------------------------------------------
 MenuTitles::MenuTitles() : HashedStringList<std::wstring>() {
 	std::initializer_list<std::wstring> defaultMenuTitles = {
+		// clang-format off
 		L"menu_0=&Find matching tag",
 		L"menu_1=Select &matching tags",
 		L"menu_2=&Select tag and contents",
@@ -443,9 +490,10 @@ MenuTitles::MenuTitles() : HashedStringList<std::wstring>() {
 		L"menu_9=Automatically decode entities",
 		L"menu_10=Automatically decode Unicode characters",
 		L"menu_11=&About...",
-		L"err_compat=The installed version of HTML Tag requires Notepad++ 8.3 or newer. Plugin commands have "
-		L"been disabled.",
+		L"menu_12=Auto-complete HTML entities",
+		L"err_compat=The installed version of HTML Tag requires Notepad++ 8.3 or newer. Plugin commands have been disabled.",
 		L"err_config=Missing Entities File",
+		// clang-format on
 	};
 	addStrings(defaultMenuTitles);
 };
@@ -457,28 +505,40 @@ bool menuLocaleIsRTL() noexcept {
 	return std::find(rtlLangs.begin(), rtlLangs.end(), plugin.menuLocale()) != std::end(rtlLangs);
 }
 // --------------------------------------------------------------------------------------
-bool autoCompleteMatchingTag(const Sci_Position startPos, const char *tagName) {
-	const size_t maxTagLength = 72; // https://www.rfc-editor.org/rfc/rfc1866#section-3.2.3
+bool isWebDocument() noexcept {
 	const auto webLangs = { L_HTML, L_XML, L_PHP, L_ASP, L_JSP };
-	std::wstring newTag;
-	bytesToText(tagName, newTag, CP_ACP);
+	return std::find(webLangs.begin(), webLangs.end(), plugin.documentLangType()) != std::end(webLangs);
+}
+// --------------------------------------------------------------------------------------
+void autoCompleteEntity() {
+	EntityList entities;
+	plugin.getEntities(entities);
+	SciActiveDocument doc = plugin.editor().activeDocument();
+	std::stringstream delimBuf;
+	delimBuf << static_cast<char>(doc.sendMessage(SCI_AUTOCGETTYPESEPARATOR));
+	delimBuf << XPM::getID();
+	delimBuf << static_cast<char>(doc.sendMessage(SCI_AUTOCGETSEPARATOR));
+	std::string acList = entities[{ acListKey }];
+	if (acList.find(delimBuf.str()) == std::string::npos) {
+		acList = std::regex_replace(acList, std::regex(R"(\?\d+ )"), delimBuf.str());
+		entities.addPair(acListKey, acList);
+	}
+	doc.sendMessage(SCI_REGISTERIMAGE, XPM::getID(), reinterpret_cast<LPARAM>(XPM::getData()));
+	doc.sendMessage(SCI_AUTOCSHOW, UNUSEDW, &acList[0]);
+}
+// --------------------------------------------------------------------------------------
+bool autoCompleteMatchingTag(const Sci_Position startPos, const char *tagName) {
+	constexpr size_t maxTagLength = 72; // https://www.rfc-editor.org/rfc/rfc1866#section-3.2.3
+	SciActiveDocument doc = plugin.editor().activeDocument();
 
-	if (std::find(webLangs.begin(), webLangs.end(), plugin.documentLangType()) != std::end(webLangs) ||
-	    plugin.editor().activeDocument().getSelectionMode() != smStreamMulti || newTag.length() > maxTagLength) {
+	if (!isWebDocument() || doc.getSelectionMode() != smStreamMulti || strlen(tagName) > maxTagLength) {
 		return false;
 	}
 
-	SciActiveDocument doc = plugin.editor().activeDocument();
 	SciTextRange tagEnd{ doc };
 	doc.find(LR"([/>\s])", tagEnd, SCFIND_REGEXP, startPos, startPos + maxTagLength + 1);
 
-	if (tagEnd.length() != 0) {
-		commandSelectMatchingTags();
-		doc.currentSelection() = newTag;
-		return true;
-	}
-
-	return false;
+	return (tagEnd.length() != 0);
 }
 // --------------------------------------------------------------------------------------
 void findAndDecode(const int keyCode, DecodeCmd cmd) {
@@ -522,8 +582,8 @@ void findAndDecode(const int keyCode, DecodeCmd cmd) {
 		}
 		if (chCurrent == plugin.options.unicodePrefix[0] &&
 		    (plugin.options.liveUnicodeDecoding || cmd == dcUnicode)) { // Handle Unicode
-			size_t lenPrefix = plugin.options.unicodePrefix.size();
-			size_t lenCodePt = 4 + lenPrefix;
+			Sci_Position lenPrefix = static_cast<Sci_Position>(plugin.options.unicodePrefix.size());
+			Sci_Position lenCodePt = 4 + lenPrefix;
 			selStart = anchor;
 			// Backtrack to previous codepoint, in case it's part of a surrogate pair
 			chCurrent = static_cast<int>(doc.sendMessage(SCI_GETCHARAT, anchor - lenCodePt));
@@ -536,7 +596,7 @@ void findAndDecode(const int keyCode, DecodeCmd cmd) {
 				}
 			}
 			didReplace = replace(Unicode::decode, selStart, caret);
-			for (size_t i = 0; i < lenPrefix; i++) // Compensate for prefix length
+			for (Sci_Position i = 1; i < lenPrefix; ++i) // Compensate for prefix length
 				++charOffset;
 			break;
 		}
@@ -547,9 +607,11 @@ void findAndDecode(const int keyCode, DecodeCmd cmd) {
 			doc.currentPosition(doc.nextLineStartPosition());
 		} else {
 			nextCaretPos = doc.sendMessage(SCI_POSITIONAFTER, doc.currentPosition());
-			if (nextCaretPos >= doc.nextLineStartPosition()) // Stay in current line if at EOL
+			if (nextCaretPos >= doc.nextLineStartPosition()) { // Stay in current line if at EOL
+				if (cmd == dcAuto) // ...but also stay ahead of the inserted char
+					doc.currentPosition(caret);
 				return;
-
+			}
 			if (cmd > dcAuto) // No inserted char, nothing to offset
 				charOffset = -1;
 

@@ -275,7 +275,7 @@ void SciTextRange::setText(std::wstring const &value) {
 	_editor.sendMessage(SCI_SETTARGETSTART, _startPos);
 	_editor.sendMessage(SCI_SETTARGETEND, _endPos);
 	nReplaced = _editor.sendMessage(sciMsg, txtRng, &chars[0]);
-	_endPos -= (_endPos - _startPos) - nReplaced;
+	_startPos += nReplaced;
 }
 // --------------------------------------------------------------------------------------
 Sci_Position SciTextRange::getStartCol() const {

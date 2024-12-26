@@ -106,13 +106,13 @@ public:
 	virtual Sci_Position length() const { return getLength(); }
 	virtual const std::wstring text();
 
-	virtual SciTextRange operator=(SciTextRange const &other) {
+	SciTextRange &operator=(SciTextRange const &other) {
 		setStart(other.getStart());
 		setEnd(other.getEnd());
 		return *this;
 	}
 
-	virtual SciTextRange operator=(std::wstring const &value) {
+	virtual SciTextRange &operator=(std::wstring const &value) {
 		setText(value);
 		return *this;
 	}
@@ -162,7 +162,7 @@ public:
 	Sci_Position length() const override { return getLength(); }
 	const std::wstring text() override;
 
-	SciTextRange operator=(std::wstring const &value) override {
+	SciSelection &operator=(std::wstring const &value) override {
 		setText(value);
 		return *this;
 	}
