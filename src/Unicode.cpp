@@ -59,12 +59,12 @@ int Unicode::decode() {
 	if (doc.getSelectionMode() != smStreamSingle)
 		return result;
 
-	size_t lenPrefix = plugin.options.unicodePrefix.size();
+	Sci_Position lenPrefix = static_cast<Sci_Position>(plugin.options.unicodePrefix.size());
 	std::wstring pattern(plugin.options.unicodeRE.size() + 1, L'\0');
 	TextConv::bytesToText(plugin.options.unicodeRE.c_str(), pattern, CP_ACP);
 	SciTextRange target(doc, doc.currentSelection().startPos(), doc.currentSelection().endPos());
 	SciTextRange match{ doc };
-	wchar_t mbCharBuf[3]{};
+	std::wstring mbCharBuf(3, L'\0');
 
 	doc.sendMessage(SCI_BEGINUNDOACTION);
 	try {
@@ -82,7 +82,7 @@ int Unicode::decode() {
 					head = ((head - 0x10000) >> 10) + 0xD800;
 					mbCharBuf[0] = static_cast<wchar_t>(head);
 					mbCharBuf[1] = static_cast<wchar_t>(tail);
-					match = &std::wstring(mbCharBuf)[0];
+					match = mbCharBuf;
 				} else if (head >= 0xD800 && head <= 0xDBFF) {
 					SciTextRange matchNext{ doc };
 					doc.find(&pattern[0], matchNext, SCFIND_REGEXP, match.endPos() - lenPrefix,
@@ -93,7 +93,7 @@ int Unicode::decode() {
 							mbCharBuf[0] = static_cast<wchar_t>(head);
 							mbCharBuf[1] = static_cast<wchar_t>(tail);
 							matchNext = L"";
-							match = &std::wstring(mbCharBuf)[0];
+							match = mbCharBuf;
 
 							if (result < 1)
 								doc.currentSelection().startPos(match.startPos());
@@ -102,7 +102,7 @@ int Unicode::decode() {
 				} else {
 					mbCharBuf[0] = static_cast<wchar_t>(head);
 					mbCharBuf[1] = 0;
-					match = &std::wstring(mbCharBuf)[0];
+					match = mbCharBuf;
 				}
 
 				if (result < 1)
@@ -131,7 +131,7 @@ int doEncode(std::wstring &text, bool multiSel) {
 	std::wstring prefix(plugin.options.unicodePrefix.size() + 1, L'\0');
 	TextConv::bytesToText(plugin.options.unicodePrefix.c_str(), prefix, CP_ACP);
 
-	for (intptr_t chIndex = text.length() - 1; chIndex >= 0; chIndex--) {
+	for (intptr_t chIndex = static_cast<intptr_t>(text.length()) - 1; chIndex >= 0; chIndex--) {
 		uint32_t charCode = text[chIndex];
 		if (charCode > 127) {
 			std::wstringstream encoded;

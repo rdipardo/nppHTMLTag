@@ -14,7 +14,7 @@ using namespace HtmlTag;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 namespace {
-int doEncode(std::wstring &text, EntityList &entities, bool includeLineBreaks);
+int doEncode(std::wstring &text, EntityList const &entities, bool includeLineBreaks);
 }
 
 // --------------------------------------------------------------------------------------
@@ -128,7 +128,7 @@ int Entities::decode() {
 				std::string entityCodeStr;
 				std::wstring entityCode = target.substr(firstPos, lastPos - firstPos + 1);
 				TextConv::textToBytes(entityCode.c_str(), entityCodeStr, CP_ACP);
-				std::string entity = entities[entityCodeStr];
+				std::string const &entity = entities[entityCodeStr];
 				if (!entity.empty()) {
 					codePoint = std::stoi(entity);
 					isValid = (codePoint != 0);
@@ -146,7 +146,7 @@ int Entities::decode() {
 				} else {
 					*decoded = static_cast<wchar_t>(codePoint);
 				}
-				target = target.substr(0, firstPos - 1) + decoded + target.substr(nextIndex);
+				target.replace(firstPos - 1, std::wstring::npos, decoded + target.substr(nextIndex));
 				++result;
 			}
 
@@ -165,7 +165,7 @@ int Entities::decode() {
 
 /////////////////////////////////////////////////////////////////////////////////////////
 namespace {
-int doEncode(std::wstring &text, Entities::EntityList &entities, bool includeLineBreaks) {
+int doEncode(std::wstring &text, Entities::EntityList const &entities, bool includeLineBreaks) {
 	int result = 0;
 	SciActiveDocument doc = plugin.editor().activeDocument();
 
@@ -176,7 +176,7 @@ int doEncode(std::wstring &text, Entities::EntityList &entities, bool includeLin
 	bool didReplace = false;
 
 	try {
-		for (intptr_t chIndex = text.length() - 1; chIndex >= 0; chIndex--) {
+		for (intptr_t chIndex = static_cast<intptr_t>(text.length()) - 1; chIndex >= 0; chIndex--) {
 			size_t startPos = chIndex, endPos = chIndex + 1;
 			uint32_t charCode = text[chIndex];
 			std::string entity = entities[std::to_string(charCode)];
@@ -202,7 +202,7 @@ int doEncode(std::wstring &text, Entities::EntityList &entities, bool includeLin
 				didReplace = false;
 
 			if (didReplace) {
-				text = text.substr(0, startPos) + L'&' + encodedEntity + L';' + text.substr(endPos);
+				text.replace(startPos, endPos - startPos, L'&' + encodedEntity + L';');
 				++result;
 			}
 			if (chIndex >= static_cast<intptr_t>(text.length()))

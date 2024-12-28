@@ -6,13 +6,23 @@ Checks: |
   bugprone-*,
   cppcoreguidelines-*,
   -*avoid-c-arrays,
+  -*avoid-do-while,
+  -*magic-numbers,
   -*avoid-non-const-global-variables,
   -*constant-array-index,
   -*easily-swappable-parameters,
   -*empty-catch,
-  -*pro-type-reinterpret-cast
+  -*enum-size,
+  -*no-int-to-ptr,
+  -*non-private-member-variables-in-classes,
+  -*optin.core.EnumCastOutOfRange,
+  -*pro-bounds-array-to-pointer-decay,
+  -*pro-type-reinterpret-cast,
+  -*switch-missing-default-case
+CheckOptions:
+  - key: bugprone-non-zero-enum-to-bool-conversion.EnumIgnoreList
+    value: 'HtmlTag::SelectionOptions'
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
-AnalyzeTemporaryDtors: false
 UseColor : true
 FormatStyle: 'none'
