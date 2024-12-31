@@ -1,6 +1,18 @@
 
 h3. Released Versions
 
+* 1.5.2 (2024-12-31)
+** Fixed: don't auto-decode entities farther back in the current line when the @ENTER@ key is pressed ("#12":12) [55d5d22], [6e3800c]
+** Fixed: calling a plugin command in the second Scintilla view will affect only that view, regressed in v1.5.0/1 ("#11":11) [6b9fb52]
+** Fixed: more regressions with tag matching ("#10":10) [5939c09] and tag selection [e0194fd]
+** Changed: dialog translation strings are now saved in a @dialogs.ini@ file[^1^] located in @{%AppData%\Notepad++,$(PORTABLE_NPP_DIR)}\Config\plugins\HTMLTag@ [0a4c16e]
+** Changed: Windows XP is no longer supported [f8bfd81]. Note that Notepad++ requires at least Windows 7 since "version 8.4.7":compat
+** Added: new option[^2^] to show an autocompletion list of entities when editing XML or HTML-based files [97d783e]
+
+bq. [^1.^] Edits to @dialogs.ini@ are applied immediately. However, changing the window position of translation text is not possible without editing the language's "RC script":rcs and "$":rebuilding the plugin. The main purpose of editable dialog text is to help future translators preview their work.
+
+bq. [^2.^] If you are upgrading, note that new menu items will _not_ be translated until you delete or rename the @localizations.ini@ file in @{%AppData%\Notepad++,$(PORTABLE_NPP_DIR)}\Config\plugins\HTMLTag@
+
 * 1.5.1 (2024-11-17)
 ** Fixed: the tag matcher can distinguish parent elements from child ones, regressed in v1.5.0 ("#9":9) [31eca02], [4438502]
 ** Fixed: the command menu follows the native language of non-portable N++ users, as well as portable ones [88dfaf6]
@@ -17,7 +29,7 @@ h3. Released Versions
 ** Added: first release for Windows on ARM64
 
 * 1.4.4 (2024-03-14)
-** Fixed: don't overwrite active selections when auto decoding is on ("#7":7) [0dd3aa6]
+** Fixed: don't overwrite active selections when auto decoding is on ("#6":6) [0dd3aa6]
 ** Fixed: position caret one space after auto-decoded entities [af8a88f], regressed by decrementing the initial value of @charOffset@ in [d59daf6]
 ** Changed: roll back most of [a9c305c] and [d59daf6] to prevent overwriting multiple stream and rectangular selections [bf7a02d]
 ** Changed: make Unicode conversions easier to undo [1c7a195]
@@ -119,12 +131,18 @@ h3. Unreleased, Unstable Versions
 
 [db330832]https://github.com/notepad-plus-plus/notepad-plus-plus/commit/db3308329bd23a073b7de6f4ded2a523b282fcc3#diff-8968b5cad4cc8f62c9204894eea9941dac353af428a26be64f52055e99992040
 [5]https://github.com/rdipardo/nppHTMLTag/issues/5
-[7]https://github.com/rdipardo/nppHTMLTag/issues/7
+[6]https://github.com/rdipardo/nppHTMLTag/issues/6
 [9]https://github.com/rdipardo/nppHTMLTag/issues/9
+[10]https://github.com/rdipardo/nppHTMLTag/issues/10
+[11]https://github.com/rdipardo/nppHTMLTag/issues/11
+[12]https://github.com/rdipardo/nppHTMLTag/issues/12
 [cref]https://community.notepad-plus-plus.org/topic/22471/recompile-your-x64-plugins-with-new-header
 [cref-2]https://community.notepad-plus-plus.org/post/93441
 [jsDecodeBug]https://community.notepad-plus-plus.org/topic/18488/htmltag-1-1-plugin-broken-since-npp-7-7
 [jsDecodeBugOrig]https://fossil.2of4.net/npp_htmltag/tktview?name=c3c733e21f
+[compat]https://github.com/notepad-plus-plus/notepad-plus-plus/blob/master/SUPPORTED_SYSTEM.md#supported-os-table
+[rcs]https://bitbucket.org/rdipardo/htmltag/src/default/src/Forms/localizations
+[rebuilding]https://github.com/rdipardo/nppHTMLTag/wiki/build
 [tagFinderHangs]https://community.notepad-plus-plus.org/topic/22503/new-version-of-html-tag/24
 [fossil]https://fossil.2of4.net/npp_htmltag
 [mirror]https://github.com/rdipardo/nppHTMLTag/releases

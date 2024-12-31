@@ -101,6 +101,6 @@ h3. To do
 * -drop down a list of attributes on space after a tag-
   Notepad++ can "auto-complete":autocomplete many (X/HT)ML keywords
 
-[autoclose]https://npp-user-manual.org/docs/preferences/#auto-completion
+[autoclose]https://npp-user-manual.org/docs/auto-completion/#auto-insertion
 [autocomplete]https://npp-user-manual.org/docs/auto-completion/#how-to-make-it-work
 [pl-admin]https://npp-user-manual.org/docs/plugins/#install-using-plugins-admin

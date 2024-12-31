@@ -8,7 +8,7 @@
 ::
 SETLOCAL
 
-set "VERSION=1.5.1"
+set "VERSION=1.5.2"
 set "PLUGIN=HTMLTag"
 set "PLUGIN_DLL=out\Win32\Release\%PLUGIN%.dll"
 set "PLUGINX64_DLL=out\x64\Release\%PLUGIN%.dll"
@@ -28,8 +28,8 @@ xcopy /DIY *.textile "out\Doc"
 
 :: https://fossil.2of4.net/npp_htmltag/doc/trunk/doc/HTMLTag-readme.txt
 echo F | xcopy /DV ".\%PLUGIN_DLL%" ".\%PLUGIN_LEGACY_DLL%"
-7z a -tzip "%SLUG%" ".\%PLUGIN_LEGACY_DLL%" ".\dat\*entities.ini" ".\dat\*translations.ini" ".\out\Doc" -y
-7z a -tzip "%SLUGX64%" ".\%PLUGINX64_DLL%" ".\dat\*entities.ini" ".\dat\*translations.ini" ".\out\Doc" -y
-7z a -tzip "%SLUGarm64%" ".\%PLUGINarm64_DLL%" ".\dat\*entities.ini" ".\dat\*translations.ini" ".\out\Doc" -y
+7z a -tzip "%SLUG%" ".\%PLUGIN_LEGACY_DLL%" ".\dat\*.ini" ".\out\Doc" -y
+7z a -tzip "%SLUGX64%" ".\%PLUGINX64_DLL%" ".\dat\*.ini" ".\out\Doc" -y
+7z a -tzip "%SLUGarm64%" ".\%PLUGINarm64_DLL%" ".\dat\*.ini" ".\out\Doc" -y
 
 ENDLOCAL
