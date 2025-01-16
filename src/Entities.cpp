@@ -8,7 +8,6 @@
 */
 #include "TextConv.h"
 #include "HtmlTag.h"
-#include "Entities.h"
 
 using namespace HtmlTag;
 

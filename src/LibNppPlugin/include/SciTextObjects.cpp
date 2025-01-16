@@ -324,6 +324,12 @@ void SciTextRange::select() {
 	_editor.sendMessage(SCI_SCROLLCARET);
 }
 // --------------------------------------------------------------------------------------
+void SciTextRange::clearRange() {
+	_startPos = 0;
+	_endPos = 0;
+	this->_text.assign(L"");
+}
+// --------------------------------------------------------------------------------------
 void SciTextRange::clearSelection() {
 	setAnchor(_editor.currentPosition());
 	this->_text.assign(L"");

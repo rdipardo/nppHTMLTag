@@ -18,9 +18,9 @@ enum SelectionOptions { soNone = 0x1, soTags = 0x2, soContents = 0x4 };
 DEFINE_ENUM_FLAG_OPERATORS(SelectionOptions)
 
 struct PluginOptions {
-	BOOL liveEntityDecoding;
-	BOOL liveUnicodeDecoding;
-	BOOL entityAutoCompletion;
+	BOOL liveEntityDecoding = FALSE;
+	BOOL liveUnicodeDecoding = FALSE;
+	BOOL entityAutoCompletion = TRUE;
 	std::string unicodePrefix;
 	std::string unicodeRE;
 };
@@ -32,9 +32,7 @@ struct MenuTitles final : HashedStringList<std::wstring> {
 class HtmlTagPlugin final : public LocalizedPlugin {
 
 public:
-	explicit HtmlTagPlugin() noexcept : LocalizedPlugin() {
-		_entityMap = { { "XML", EntityList{} }, { "HTML 5", EntityList{} } };
-	}
+	explicit HtmlTagPlugin() noexcept : LocalizedPlugin() {}
 
 	void initialize(HMODULE);
 	void setInfo(const NppData *) override;

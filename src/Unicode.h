@@ -8,7 +8,9 @@
 #ifndef HTMLTAG_UNICODE_H
 #define HTMLTAG_UNICODE_H
 
-#include "HtmlTag.h"
+#include "Entities.h"
+
+using namespace HtmlTag::Entities;
 
 namespace HtmlTag {
 namespace Unicode {

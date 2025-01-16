@@ -5,6 +5,7 @@
 
   Copyright (c) 2024 Robert Di Pardo <dipardo.r@gmail.com>
 */
+#include <algorithm>
 #include <locale>
 #include "TextConv.h"
 

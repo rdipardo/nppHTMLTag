@@ -8,6 +8,7 @@
 #ifndef FUNC_ARRAY_H
 #define FUNC_ARRAY_H
 
+#include <memory>
 #include "PluginInterface.h"
 
 /// Manager of FuncItem objects
@@ -17,8 +18,8 @@ public:
 	~FuncArray();
 	FuncArray(const FuncArray &) = delete;
 	FuncArray(FuncArray &&) = delete;
-	void operator=(const FuncArray &) = delete;
-	void operator=(FuncArray &&) = delete;
+	FuncArray &operator=(FuncArray const &) = delete;
+	FuncArray &operator=(FuncArray &&) = delete;
 
 	operator bool() const noexcept { return !_funcs.empty(); }
 	FuncItem *operator&() const noexcept { return &_funcs[0]; }
@@ -33,10 +34,11 @@ public:
 	/// @param sk Define a shortcut to trigger this command
 	/// @param checkOnInit Make this menu item be checked visually
 	/// @return The new size of this @c FuncArray
-	size_t add(const wchar_t *cmdName, PFUNCPLUGINCMD pFunc = nullptr, ShortcutKey *sk = nullptr,
-	    bool checkOnInit = false);
+	size_t add(const wchar_t *cmdName, PFUNCPLUGINCMD pFunc = nullptr,
+	    std::shared_ptr<ShortcutKey> const & = nullptr, bool checkOnInit = false);
 
 private:
 	mutable std::vector<FuncItem> _funcs;
+	std::vector<std::shared_ptr<ShortcutKey>> _keyStore;
 };
 #endif // ~FUNC_ARRAY_H

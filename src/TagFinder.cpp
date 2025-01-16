@@ -53,7 +53,7 @@ constexpr int ncHighlightTimeout = 1000;
 // --------------------------------------------------------------------------------------
 void TagFinder::findMatchingTag(SelectionOptions options) {
 	std::string tagName;
-	bool dispose;
+	bool dispose = false;
 	SearchDirection searchDirection = dirUnknown;
 	SciActiveDocument doc = plugin.editor().activeDocument();
 	SciTextRange match{ doc };
@@ -85,7 +85,7 @@ void TagFinder::findMatchingTag(SelectionOptions options) {
 	};
 	// --------------------------------------------------------------------------------------
 	SciTextRange nextTag{ doc };
-	bool isStartTag, isEndTag;
+	bool isStartTag = false, isEndTag = false;
 	bool isXML = (plugin.documentLangType() == L_XML);
 	bool wantSelection = !(options & soNone);
 	bool contentsOnly = wantSelection && !(options & soTags);
@@ -99,7 +99,7 @@ void TagFinder::findMatchingTag(SelectionOptions options) {
 				currentTag = extractTagName(tagName, isStartTag, isEndTag);
 			} else {
 				currentTag = extractTagName(tagName, isStartTag, isEndTag, nextTag.startPos() + 1);
-				nextTag = doc.getRange();
+				nextTag.clearRange();
 			}
 
 			if (currentTag && !tagName.empty()) {
@@ -133,23 +133,23 @@ void TagFinder::findMatchingTag(SelectionOptions options) {
 			// Find the next tag in the search direction
 			switch (searchDirection) {
 				case dirForward: { // Look forward for corresponding closing tag
-					nextTag = doc.getRange();
+					nextTag.clearRange();
 					doc.find(LR"(<[^%\\?])", nextTag, SCFIND_REGEXP | SCFIND_POSIX,
 					    currentTag->endPos());
 					if (nextTag.length() != 0)
 						nextTag.endPos(nextTag.endPos() - 1);
 					else
-						nextTag = doc.getRange();
+						nextTag.clearRange();
 					break;
 				}
 				case dirBackward: { // Look backward for corresponding opening tag
 					Sci_Position initPos = currentTag->startPos();
 					do {
-						nextTag = doc.getRange();
+						nextTag.clearRange();
 						doc.find(L">", nextTag, 0, initPos, 0);
 						if (nextTag.length() != 0) {
 							if (nextTag.startPos() == 0) {
-								nextTag = doc.getRange();
+								nextTag.clearRange();
 								break;
 							}
 							nextTag.startPos(nextTag.startPos() - 1);
@@ -161,12 +161,12 @@ void TagFinder::findMatchingTag(SelectionOptions options) {
 								break;
 							}
 						} else
-							nextTag = doc.getRange();
+							nextTag.clearRange();
 					} while (nextTag);
 					break;
 				}
 				default: // dirUnknown, dirNone
-					nextTag = doc.getRange();
+					nextTag.clearRange();
 					break;
 			}
 
@@ -186,15 +186,21 @@ void TagFinder::findMatchingTag(SelectionOptions options) {
 				if (wantSelection && !tagsOnly) {
 					SciTextRange selRange{ doc }, selRangeNoSpaces{ doc };
 					if (currentTag->startPos() < match.startPos()) {
-						if (contentsOnly)
-							selRange = doc.getRange(currentTag->endPos(), match.startPos());
-						else
-							selRange = doc.getRange(currentTag->startPos(), match.endPos());
+						if (contentsOnly) {
+							selRange.startPos(currentTag->endPos());
+							selRange.endPos(match.startPos());
+						} else {
+							selRange.startPos(currentTag->startPos());
+							selRange.endPos(match.endPos());
+						}
 					} else {
-						if (contentsOnly)
-							selRange = doc.getRange(match.endPos(), currentTag->startPos());
-						else
-							selRange = doc.getRange(match.startPos(), currentTag->endPos());
+						if (contentsOnly) {
+							selRange.startPos(match.endPos());
+							selRange.endPos(currentTag->startPos());
+						} else {
+							selRange.startPos(match.startPos());
+							selRange.endPos(currentTag->endPos());
+						}
 					}
 					// TODO: make optional, read setting from .ini ([MatchTag] SkipWhitespace=1)
 					if (contentsOnly) {

@@ -328,20 +328,22 @@ void HtmlTagPlugin::toggleOption(BOOL *pOption, const int menuPos) {
 // --------------------------------------------------------------------------------------
 void HtmlTagPlugin::initMenu() {
 	using sk = ShortcutKey;
+	using pSk = std::shared_ptr<sk>;
 	setLanguage();
 	if (menuLocale() != LocalizedPlugin::defaultLangId)
 		loadTranslations();
-	funcItems.add(getMessage(L"menu_0"), commandFindMatchingTag, new sk{ false, true, false, 'T' });
-	funcItems.add(getMessage(L"menu_1"), commandSelectMatchingTags, new sk{ false, true, false, 113U });
-	funcItems.add(getMessage(L"menu_2"), commandSelectTagContents, new sk{ false, true, true, 'T' });
-	funcItems.add(getMessage(L"menu_3"), commandSelectTagContentsOnly, new sk{ true, true, false, 'T' });
+	funcItems.add(getMessage(L"menu_0"), commandFindMatchingTag, pSk(new sk{ false, true, false, 'T' }));
+	funcItems.add(getMessage(L"menu_1"), commandSelectMatchingTags, pSk(new sk{ false, true, false, 113U }));
+	funcItems.add(getMessage(L"menu_2"), commandSelectTagContents, pSk(new sk{ false, true, true, 'T' }));
+	funcItems.add(getMessage(L"menu_3"), commandSelectTagContentsOnly, pSk(new sk{ true, true, false, 'T' }));
 	funcItems.add(menuItemSeparator);
-	funcItems.add(getMessage(L"menu_4"), commandEncodeEntities, new sk{ true, false, false, 'E' });
-	funcItems.add(getMessage(L"menu_5"), commandEncodeEntitiesInclLineBreaks, new sk{ true, true, false, 'E' });
-	funcItems.add(getMessage(L"menu_6"), commandDecodeEntities, new sk{ true, false, true, 'E' });
+	funcItems.add(getMessage(L"menu_4"), commandEncodeEntities, pSk(new sk{ true, false, false, 'E' }));
+	funcItems.add(
+	    getMessage(L"menu_5"), commandEncodeEntitiesInclLineBreaks, pSk(new sk{ true, true, false, 'E' }));
+	funcItems.add(getMessage(L"menu_6"), commandDecodeEntities, pSk(new sk{ true, false, true, 'E' }));
 	funcItems.add(menuItemSeparator);
-	funcItems.add(getMessage(L"menu_7"), commandEncodeJS, new sk{ false, true, false, 'J' });
-	funcItems.add(getMessage(L"menu_8"), commandDecodeJS, new sk{ false, true, true, 'J' });
+	funcItems.add(getMessage(L"menu_7"), commandEncodeJS, pSk(new sk{ false, true, false, 'J' }));
+	funcItems.add(getMessage(L"menu_8"), commandDecodeJS, pSk(new sk{ false, true, true, 'J' }));
 	funcItems.add(menuItemSeparator);
 	funcItems.add(getMessage(L"menu_9"), toggleLiveEntityecoding);
 	funcItems.add(getMessage(L"menu_10"), toggleLiveUnicodeDecoding);
@@ -412,7 +414,7 @@ void HtmlTagPlugin::loadTranslations() {
 			return;
 		}
 
-		MenuTitles defaultMsgs = MenuTitles{};
+		MenuTitles defaultMsgs{};
 		for (auto &&msgId : keys) {
 			const wchar_t *defMsg = defaultMsgs[{ msgId.pItem }].c_str();
 			_menuTitles.addPair(msgId.pItem, config.GetValue(section.c_str(), msgId.pItem, defMsg));
@@ -552,7 +554,7 @@ void findAndDecode(const int keyCode, DecodeCmd cmd) {
 		return;
 	}
 
-	Sci_Position caret = doc.currentPosition(), charOffset = -1, anchor, selStart, nextCaretPos;
+	Sci_Position caret = doc.currentPosition(), charOffset = -1, anchor = 0, selStart = 0, nextCaretPos = 0;
 	bool didReplace = false;
 	bool skipEntities = false;
 

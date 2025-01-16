@@ -10,7 +10,6 @@
 
 #include <windows.h>
 #include <string>
-#include <algorithm>
 
 /// String conversion utilities
 namespace TextConv {

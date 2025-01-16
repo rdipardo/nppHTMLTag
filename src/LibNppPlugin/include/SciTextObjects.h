@@ -37,8 +37,13 @@ class SciSelection;
 class SciWindowedObject {
 
 public:
-	SciWindowedObject(HWND hWnd) : _windowHandle(hWnd), _apiLevel(SciApiLevel::sciApi_GTE_541) {}
+	explicit SciWindowedObject(HWND hWnd) : _windowHandle(hWnd), _apiLevel(SciApiLevel::sciApi_GTE_541) {}
 	virtual ~SciWindowedObject() = default;
+	SciWindowedObject(SciWindowedObject const &) = default;
+	SciWindowedObject(SciWindowedObject &&) = delete;
+	SciWindowedObject &operator=(SciWindowedObject const &) = delete;
+	SciWindowedObject &operator=(SciWindowedObject &&) = delete;
+
 	virtual LRESULT sendMessage(const UINT msg, WPARAM wParam = UNUSEDW, LPARAM lParam = UNUSED) const;
 	virtual LRESULT sendMessage(const UINT msg, WPARAM wParam, void *lParam) const;
 	virtual void postMessage(const UINT msg, WPARAM wParam = UNUSEDW, LPARAM lParam = UNUSED) const;
@@ -58,7 +63,9 @@ class SciActiveDocument : public SciWindowedObject {
 	friend SciTextRange;
 
 public:
-	SciActiveDocument(HWND hWnd) : SciWindowedObject(hWnd) { _selection = std::make_shared<SciSelection>(*this); }
+	explicit SciActiveDocument(HWND hWnd) : SciWindowedObject(hWnd) {
+		_selection = std::make_shared<SciSelection>(*this);
+	}
 	SciTextRange getRange(const Sci_Position startPos = 0, const Sci_Position endPos = 0) const;
 	SciTextRange getLines(const Sci_Position startLine, const Sci_Position count = 1) const;
 	SelectionMode getSelectionMode() const;
@@ -99,6 +106,10 @@ class SciTextRange {
 public:
 	explicit SciTextRange(SciActiveDocument const &editor_, Sci_Position startPos = 0, Sci_Position endPos = 0);
 	virtual ~SciTextRange() = default;
+	SciTextRange(SciTextRange const &) = delete;
+	SciTextRange(SciTextRange &&) = delete;
+	SciTextRange &operator=(SciTextRange &&) = delete;
+
 	virtual Sci_Position startPos(const Sci_Position value);
 	virtual Sci_Position startPos() const { return getStart(); }
 	virtual Sci_Position endPos(const Sci_Position value);
@@ -120,6 +131,7 @@ public:
 	virtual operator bool() const noexcept { return getLength() > 0; }
 
 	void select();
+	void clearRange();
 	void clearSelection();
 	void indent(const int levels = 1);
 	void mark(const int style, const unsigned timeoutMSecs = 0);
@@ -184,12 +196,17 @@ private:
 // --------------------------------------------------------------------------------------
 // SciTextRangeMark
 // --------------------------------------------------------------------------------------
-class SciTextRangeMark {
+class SciTextRangeMark final {
 
 public:
 	SciTextRangeMark(SciTextRange &range, unsigned timeoutMSecs);
 	~SciTextRangeMark();
-	const uintptr_t timer() { return _timerID; }
+	SciTextRangeMark(SciTextRangeMark const &) = delete;
+	SciTextRangeMark(SciTextRangeMark &&) = delete;
+	SciTextRangeMark &operator=(SciTextRangeMark const &) = delete;
+	SciTextRangeMark &operator=(SciTextRangeMark &&) = delete;
+
+	const uintptr_t &timer() { return _timerID; }
 
 private:
 	SciActiveDocument _editor;

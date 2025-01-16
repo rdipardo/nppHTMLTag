@@ -16,7 +16,11 @@
 /// @see https://www.freepascal.org/docs-html/fcl/inifiles/thashedstringlist.html
 template <typename Str_T = std::string>
 struct HashedStringList {
-	explicit HashedStringList() noexcept { nameValueSeparator = "="; }
+	explicit HashedStringList() noexcept : nameValueSeparator("=") {}
+	virtual ~HashedStringList() = default;
+	HashedStringList(HashedStringList const &) = delete;
+	HashedStringList(HashedStringList &&) = delete;
+	HashedStringList &operator=(HashedStringList &&) = delete;
 
 	void addStrings(std::initializer_list<Str_T> source, bool clearFirst = false) {
 		if (clearFirst)
@@ -27,7 +31,7 @@ struct HashedStringList {
 		}
 	}
 
-	HashedStringList operator=(HashedStringList<Str_T> const &source) {
+	HashedStringList &operator=(HashedStringList<Str_T> const &source) {
 		if (source)
 			_strings.clear();
 		for (auto &&pair : source._strings)
@@ -41,7 +45,11 @@ struct HashedStringList {
 	}
 
 	operator bool() const noexcept { return !_strings.empty(); }
-	Str_T &addPair(Str_T const &key, Str_T const &val) { return _strings[key] = val; }
+
+	Str_T const &addPair(Str_T const &key, Str_T const &val) {
+		auto [item, _] = _strings.insert_or_assign(key, val);
+		return item->second;
+	}
 
 	Str_T nameValueSeparator;
 
@@ -51,7 +59,5 @@ private:
 };
 
 template <>
-inline HashedStringList<std::wstring>::HashedStringList() noexcept {
-	nameValueSeparator = L"=";
-}
+inline HashedStringList<std::wstring>::HashedStringList() noexcept : nameValueSeparator(L"="){};
 #endif // ~HASHED_STRING_LIST_H

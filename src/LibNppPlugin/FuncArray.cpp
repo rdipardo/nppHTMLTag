@@ -11,19 +11,19 @@
 // FuncArray
 // --------------------------------------------------------------------------------------
 FuncArray::~FuncArray() {
-	for (size_t i = 0; i < _funcs.size(); i++) {
-		if (_funcs[i]._pShKey != nullptr)
-			delete (_funcs[i]._pShKey);
-	}
+	while (!_keyStore.empty())
+		_keyStore.pop_back();
 }
 // --------------------------------------------------------------------------------------
-size_t FuncArray::add(const wchar_t *cmdName, PFUNCPLUGINCMD pFunc, ShortcutKey *sk, bool checkOnInit) {
+size_t FuncArray::add(
+    const wchar_t *cmdName, PFUNCPLUGINCMD pFunc, std::shared_ptr<ShortcutKey> const &sk, bool checkOnInit) {
 	FuncItem item{};
 	size_t index = _funcs.size();
 	_funcs.push_back(item);
+	_keyStore.push_back(sk);
 	wmemcpy(_funcs[index]._itemName, cmdName, menuItemSize - 1);
 	_funcs[index]._pFunc = pFunc;
-	_funcs[index]._pShKey = sk;
+	_funcs[index]._pShKey = _keyStore.back().get();
 	_funcs[index]._init2Check = checkOnInit;
 	return index;
 }

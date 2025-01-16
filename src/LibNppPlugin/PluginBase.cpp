@@ -5,7 +5,6 @@
 
   Copyright (c) 2024 Robert Di Pardo <dipardo.r@gmail.com>
 */
-#include <cmath>
 #include "Internal.h"
 #include "TextConv.h"
 #include "PluginBase.h"
@@ -111,7 +110,7 @@ path_t PluginBase::pluginsConfigDir() const {
 }
 // --------------------------------------------------------------------------------------
 LangType PluginBase::documentLangType() const {
-	int typeInt;
+	int typeInt = 0;
 	sendNppMessage(NPPM_GETCURRENTLANGTYPE, 0, &typeInt);
 	return static_cast<LangType>(typeInt);
 }
@@ -127,7 +126,7 @@ bool PluginBase::openFile(wchar_t *filename) const {
 	// Ask if we are not already opened
 	if (TextConv::sameText(s, filename))
 		return true;
-	return (sendNppMessage(WM_DOOPEN, UNUSEDW, &filename[0]) == MessageResult::mrFalse);
+	return (sendNppMessage(WM_DOOPEN, UNUSEDW, filename) == MessageResult::mrFalse);
 }
 // --------------------------------------------------------------------------------------
 bool PluginBase::openFile(wchar_t *filename, Sci_Position line) const {
@@ -174,7 +173,7 @@ void SciApplication::setApiLevel(SciApiLevel api) {
 /////////////////////////////////////////////////////////////////////////////////////////
 namespace {
 path_t getModulePath(HMODULE hInstace) {
-	uintptr_t iResult, iError, iSize = MAX_WIDE_PATH;
+	uintptr_t iResult = 0, iError = 0, iSize = MAX_WIDE_PATH;
 	std::wstring result(iSize, L'\0');
 
 	do {

@@ -32,8 +32,8 @@ public:
 
 	SciApplication(const SciApplication &) = delete;
 	SciApplication(SciApplication &&) = delete;
-	void operator=(const SciApplication &) = delete;
-	void operator=(SciApplication &&) = delete;
+	SciApplication &operator=(SciApplication const &) = delete;
+	SciApplication &operator=(SciApplication &&) = delete;
 
 	void setApiLevel(SciApiLevel api) override;
 	HWND const &windowHandle() const noexcept { return _windowHandle; }
@@ -46,6 +46,7 @@ private:
 	explicit SciApplication(const NppData *data)
 	    : SciWindowedObject(data->_nppHandle),
 	      _viewList(std::make_unique<SciViewList>(data)) {}
+	~SciApplication() override = default;
 };
 
 /// Default plugin implementation
@@ -53,7 +54,7 @@ class PluginBase {
 
 public:
 	explicit PluginBase() noexcept {}
-	~PluginBase();
+	virtual ~PluginBase();
 	PluginBase(const PluginBase &) = delete;
 	PluginBase(PluginBase &&) = delete;
 	PluginBase &operator=(const PluginBase &) = delete;
@@ -102,7 +103,7 @@ protected:
 	path_t pluginNameFromModule(HMODULE hInstace);
 
 private:
-	HMODULE _hModule;
+	HMODULE _hModule = nullptr;
 	NppData _data;
 	Version _nppVersion;
 	SciApplication *_editor = nullptr;
@@ -125,6 +126,11 @@ public:
 		for (size_t i = 0; i < size; i++)
 			_views[i] = nullptr;
 	}
+
+	SciViewList(SciViewList const &) = default;
+	SciViewList(SciViewList &&) = delete;
+	SciViewList &operator=(SciViewList const &) = delete;
+	SciViewList &operator=(SciViewList &&) = delete;
 
 	static constexpr size_t size = 2ULL;
 	SciActiveDocument &operator[](size_t index) const noexcept { return *_views[(index > 0)]; }

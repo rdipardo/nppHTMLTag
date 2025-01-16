@@ -8,6 +8,7 @@
 */
 #include <iomanip>
 #include "TextConv.h"
+#include "HtmlTag.h"
 #include "Unicode.h"
 
 using namespace HtmlTag;
@@ -75,7 +76,7 @@ int Unicode::decode() {
 				target.startPos(match.startPos() + 1);
 
 				// Check if code point belongs to a multi-byte glyph
-				int head, tail;
+				int head = 0, tail = 0;
 				head = std::stoi(match.text().substr(lenPrefix, 6), nullptr, 16);
 				if (head >= 0x010000 && head <= 0x10FFFF) {
 					tail = ((head - 0x10000) & 0x03FF) + 0xDC00;
@@ -135,7 +136,8 @@ int doEncode(std::wstring &text, bool multiSel) {
 		uint32_t charCode = text[chIndex];
 		if (charCode > 127) {
 			std::wstringstream encoded;
-			size_t startPos = chIndex, endPos = chIndex + 1, nDigits = 4;
+			std::streamsize nDigits = 4;
+			size_t startPos = chIndex, endPos = chIndex + 1;
 			const size_t chPrevIndex = static_cast<size_t>(std::max(0LL, chIndex - 1LL));
 			const uint32_t chPrevCode = text[chPrevIndex];
 			if (chPrevCode >= 0xD800 && chPrevCode <= 0xDBFF) {
