@@ -5,6 +5,11 @@
 
   Copyright (c) 2024 Robert Di Pardo <dipardo.r@gmail.com>
 */
+#ifndef HTMLTAG_XPM_H
+#define HTMLTAG_XPM_H
+
+#include "HtmlTag.h"
+
 namespace HtmlTag {
 namespace Entities {
 	namespace XPM {
@@ -17,7 +22,7 @@ namespace Entities {
 			"z c None",
 			/* pixels */
 			"zzzzzzzzzzzzzzzz",
-			"zzzzzz z zzzzzzz",
+			"zzzzzzzzzzzzzzzz",
 			"zzzzz      zzzzz",
 			"zzzz   z   zzzzz",
 			"zzzz   zz  zzzzz",
@@ -40,7 +45,7 @@ namespace Entities {
 			"z c None",
 			/* pixels */
 			"zzzzzzzzzzzzzzzz",
-			"zzzzzz z zzzzzzz",
+			"zzzzzzzzzzzzzzzz",
 			"zzzzz      zzzzz",
 			"zzzz   z   zzzzz",
 			"zzzz   zz  zzzzz",
@@ -65,3 +70,4 @@ namespace Entities {
 	}
 }
 }
+#endif // ~HTMLTAG_XPM_H

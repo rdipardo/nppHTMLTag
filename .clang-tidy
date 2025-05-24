@@ -20,6 +20,10 @@ Checks: |
   -*pro-type-reinterpret-cast,
   -*switch-missing-default-case
 CheckOptions:
+  - key: bugprone-narrowing-conversions.IgnoreConversionFromTypes
+    value: 'size_t;ptrdiff_t;streamsize;int'
+  - key: cppcoreguidelines-narrowing-conversions.IgnoreConversionFromTypes
+    value: 'size_t;ptrdiff_t;streamsize;int'
   - key: bugprone-non-zero-enum-to-bool-conversion.EnumIgnoreList
     value: 'HtmlTag::SelectionOptions'
 WarningsAsErrors: ''

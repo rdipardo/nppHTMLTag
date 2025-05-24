@@ -10,6 +10,7 @@
 #include "TagFinder.h"
 
 using namespace HtmlTag;
+using namespace SciTextObjects;
 using namespace TextConv;
 
 /////////////////////////////////////////////////////////////////////////////////////////

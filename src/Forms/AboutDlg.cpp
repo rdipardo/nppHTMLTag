@@ -22,6 +22,7 @@
 
 using namespace HtmlTag;
 using namespace TextConv;
+using namespace NppDarkMode;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 namespace {
@@ -289,7 +290,7 @@ INT_PTR CALLBACK AboutDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM lPara
 					break;
 				}
 			}
-			return reinterpret_cast<INT_PTR>(::GetSysColorBrush(::GetBkColor(hdc)));
+			return reinterpret_cast<INT_PTR>(::GetSysColorBrush(static_cast<int>(::GetBkColor(hdc))));
 		}
 		case WM_CTLCOLORSTATIC_DARK: {
 			LPDRAWITEMSTRUCT lpdi = reinterpret_cast<LPDRAWITEMSTRUCT>(lParam);
@@ -398,7 +399,7 @@ INT_PTR CALLBACK modalDlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM 
 					[[fallthrough]];
 				}
 				case IDCANCEL:
-					::EndDialog(hwndDlg, wParam);
+					::EndDialog(hwndDlg, static_cast<INT_PTR>(wParam));
 					break;
 				case IDRETRY:
 					setEditText();

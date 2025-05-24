@@ -19,6 +19,8 @@
 #include "XPM.h"
 
 using namespace HtmlTag;
+using namespace HtmlTag::Entities;
+using namespace SciTextObjects;
 using namespace TextConv;
 namespace fs = std::filesystem;
 

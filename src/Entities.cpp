@@ -10,6 +10,8 @@
 #include "HtmlTag.h"
 
 using namespace HtmlTag;
+using namespace HtmlTag::Entities;
+using namespace SciTextObjects;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 namespace {

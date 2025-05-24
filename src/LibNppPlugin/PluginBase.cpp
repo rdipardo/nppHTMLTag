@@ -9,7 +9,9 @@
 #include "TextConv.h"
 #include "PluginBase.h"
 
-#define MAX_WIDE_PATH 0x7fffULL
+constexpr uintptr_t MAX_WIDE_PATH = 0x7fffULL;
+
+using namespace SciTextObjects;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 namespace {
@@ -25,7 +27,7 @@ PluginBase::~PluginBase() {
 // --------------------------------------------------------------------------------------
 void PluginBase::setInfo(const NppData *data) {
 	_data = *data;
-	DWORD versionWords = static_cast<DWORD>(sendNppMessage(NPPM_GETNPPVERSION));
+	int versionWords = static_cast<int>(sendNppMessage(NPPM_GETNPPVERSION));
 	div_t loWords = ::div((versionWords & 0xffff) * 10, 10);
 	while (loWords.quot > 9) {
 		_nppVersion.build = loWords.rem;

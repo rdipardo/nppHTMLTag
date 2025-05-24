@@ -8,11 +8,11 @@
 #ifndef ABOUT_DLG_H
 #define ABOUT_DLG_H
 
-#include "PluginInterface.h"
+#include "LocalizedPlugin.h"
 #include "StaticDialog.h"
 #include "resource.h"
 
-using namespace NppDarkMode;
+using NppDarkMode::dmfInit;
 
 struct LocalizedResource final {
 	const char *locale = LocalizedPlugin::defaultLangId.c_str();

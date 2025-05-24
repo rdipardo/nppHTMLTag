@@ -14,7 +14,8 @@
 #include "FuncArray.h"
 #include "VersionInfo.h"
 
-using namespace SciTextObjects;
+using SciTextObjects::SciWindowedObject;
+using SciTextObjects::SciActiveDocument;
 using path_t = std::filesystem::path;
 
 /// Manager of Scintilla edit views

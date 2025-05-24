@@ -9,16 +9,6 @@
 #include <locale>
 #include "TextConv.h"
 
-/////////////////////////////////////////////////////////////////////////////////////////
-#ifndef WC_ERR_INVALID_CHARS
-#include "HtmlTag.h"
-namespace {
-// Must be 0 for WinXP, or 128 if WINVER >= 0x0600
-unsigned WC_ERR_INVALID_CHARS =
-    (HtmlTag::plugin.sendNppMessage(NPPM_GETWINDOWSVERSION) < winVer::WV_VISTA) ? 0x00000000 : 0x00000080;
-}
-#endif
-
 // --------------------------------------------------------------------------------------
 // TextConv
 // --------------------------------------------------------------------------------------
@@ -59,14 +49,14 @@ bool TextConv::sameString(const wchar_t *str1, const wchar_t *str2) {
 };
 // --------------------------------------------------------------------------------------
 bool TextConv::sameText(std::string lhs, std::string rhs) {
-	auto tolower_l = [](uint8_t c) { return std::tolower(c, std::locale()); };
+	auto tolower_l = [](char c) { return std::tolower(c, std::locale()); };
 	std::transform(lhs.begin(), lhs.end(), lhs.begin(), tolower_l);
 	std::transform(rhs.begin(), rhs.end(), rhs.begin(), tolower_l);
 	return lhs == rhs;
 }
 // --------------------------------------------------------------------------------------
 bool TextConv::sameText(std::wstring lhs, std::wstring rhs) {
-	auto towlower_l = [](std::wint_t wc) { return std::tolower(wc, std::locale()); };
+	auto towlower_l = [](wchar_t wc) { return std::tolower(wc, std::locale()); };
 	std::transform(lhs.begin(), lhs.end(), lhs.begin(), towlower_l);
 	std::transform(rhs.begin(), rhs.end(), rhs.begin(), towlower_l);
 	return lhs == rhs;

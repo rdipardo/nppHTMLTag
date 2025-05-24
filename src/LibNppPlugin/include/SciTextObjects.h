@@ -37,7 +37,7 @@ class SciSelection;
 class SciWindowedObject {
 
 public:
-	explicit SciWindowedObject(HWND hWnd) : _windowHandle(hWnd), _apiLevel(SciApiLevel::sciApi_GTE_541) {}
+	explicit SciWindowedObject(HWND hWnd) : _windowHandle(hWnd) {}
 	virtual ~SciWindowedObject() = default;
 	SciWindowedObject(SciWindowedObject const &) = default;
 	SciWindowedObject(SciWindowedObject &&) = delete;
@@ -52,7 +52,7 @@ public:
 
 protected:
 	HWND _windowHandle;
-	SciApiLevel _apiLevel;
+	SciApiLevel _apiLevel = SciApiLevel::sciApi_GTE_541;
 	virtual void setApiLevel(SciApiLevel api) { _apiLevel = api; }
 };
 

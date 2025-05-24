@@ -10,12 +10,10 @@
 
 #include "Entities.h"
 
-using namespace HtmlTag::Entities;
-
 namespace HtmlTag {
 namespace Unicode {
 	int decode();
-	void encode(EntityReplacementScope scope = ersSelection);
+	void encode(Entities::EntityReplacementScope scope = Entities::ersSelection);
 }
 }
 #endif // ~HTMLTAG_UNICODE_H
