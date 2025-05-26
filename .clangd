@@ -1,0 +1,12 @@
+CompileFlags:
+  CompilationDatabase: '.\build\x64\Debug'
+Index:
+  StandardLibrary: No
+InlayHints:
+  DeducedTypes: Yes
+  Designators: No
+  Enabled: Yes
+  ParameterNames: No
+Diagnostics:
+  Suppress:  # ineffective, for now: https://github.com/clangd/clangd/issues/1142
+    - note_drv_t_option_is_global

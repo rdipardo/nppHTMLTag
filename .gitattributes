@@ -1,4 +1,6 @@
 * text=auto
+.*        text   eol=lf
+.*/*      text   eol=lf
 *.diff    text   eol=lf
 *.sh      text   eol=lf
 *.dpr     text   eol=crlf
@@ -13,3 +15,4 @@
 *.rc      text   eol=crlf
 *.cpp     text   eol=crlf
 *.h       text   eol=crlf
+*.ico     binary

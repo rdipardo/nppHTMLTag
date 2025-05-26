@@ -31,6 +31,7 @@ if /I "%4"=="clang" (
 if "%NMAKE_BUILD%" NEQ "" (
   set "CMAKE_GENERATOR=NMake Makefiles"
   set "CMAKE_GENERATOR_PLATFORM=%VSCMD_ARG_TGT_ARCH%"
+  set "CONFIG_PARAMS=-DCMAKE_EXPORT_COMPILE_COMMANDS=1"
   echo :: ===================================================
   echo :: NOTE: This environment only supports %VSCMD_ARG_TGT_ARCH% targets
   echo :: ===================================================
