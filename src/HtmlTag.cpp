@@ -314,7 +314,7 @@ void HtmlTagPlugin::setUnicodeFormatOption(std::string const &userPrefix) {
 	if (!userPrefix.empty()) {
 		std::string reStr = std::regex_replace(userPrefix, std::regex(R"([\.*+?^${}()[\]|])"), R"(\$&)");
 		reStr = std::regex_replace(reStr, std::regex(R"(\\[[:alpha:]])"), R"(\\$&)");
-		reStr += R"([0-9A-F]{4,6})";
+		reStr += R"(((00[7-9A-F][0-9A-F])|[0-9A-F]{6}|[0-9A-F]{4}))";
 		options.unicodePrefix = userPrefix;
 		options.unicodeRE = reStr;
 	} else if (options.unicodePrefix.empty()) {
