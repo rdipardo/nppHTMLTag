@@ -88,15 +88,13 @@ int Entities::decode() {
 						isNumeric = true;
 						allowedChars << L"x" << scDigits;
 					} else
-						allowedChars << scLetters << L";";
+						allowedChars << scLetters << scDigits;
 				} else if (i == 2) {
-					if (isNumeric) {
-						if (target[firstPos + 1] == L'x') {
-							isHex = true;
-							allowedChars << scHexLetters << L";";
-						} else
-							allowedChars << scDigits << L";";
+					if (isNumeric && target[firstPos + 1] == L'x') {
+						isHex = true;
+						allowedChars << scHexLetters;
 					}
+					allowedChars << L";";
 				}
 
 				if (allowedChars.str().find(target[firstPos + i]) == std::wstring::npos) {
