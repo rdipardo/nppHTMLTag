@@ -15,6 +15,8 @@ namespace Entities {
 	namespace XPM {
 		constexpr int decorationID = 0x7f;
 		constexpr int decorationDarkID = decorationID << 0x1;
+		constexpr int gitHubID = decorationID << 0x2;
+		constexpr int gitHubDarkID = decorationID << 0x3;
 		constexpr const char *decoration[] = {
 			/* columns rows colors chars-per-pixel */
 			"16 16 2 1 ",
@@ -61,11 +63,65 @@ namespace Entities {
 			"zzzzzzzzzzzz zzz",
 			"zzzzzzzzzzzzzzzz",
 		};
+		constexpr const char *gitHubDecoration[] = {
+			/* columns rows colors chars-per-pixel */
+			"16 16 4 1 ",
+			"  c None",
+			". c #131112",
+			"X c #171516",
+			"o c #BCBCBC",
+			/* pixels */
+			"     XXXXXX     ",
+			"   XXXXXXXXXX   ",
+			"  XXXXXXXXXXXX  ",
+			" XXX.XXXXXX.XXX ",
+			" XXX        XXX ",
+			"XXXX        XXXX",
+			"XXX          XXX",
+			"XXX          XXX",
+			"XXX          XXX",
+			"XXX          XXX",
+			"XXXX        XXXX",
+			" XXXXX    XXXXX ",
+			" XX XX    XXXXX ",
+			"  XX      XXXX  ",
+			"   XXX    XXX   ",
+			"     o    o     ",
+		};
+		constexpr const char *gitHubDecorationDark[] = {
+			/* columns rows colors chars-per-pixel */
+			"16 16 2 1 ",
+			"  c None",
+			". c #FEFEFE",
+			/* pixels */
+			"     ......     ",
+			"   ..........   ",
+			"  ............  ",
+			" ... ...... ... ",
+			" ...        ... ",
+			"....        ....",
+			"...          ...",
+			"...          ...",
+			"...          ...",
+			"...          ...",
+			"....        ....",
+			" .....    ..... ",
+			" ..  .    ..... ",
+			"  ..      ....  ",
+			"   ...    ...   ",
+			"                ",
+		};
 		inline int getID() {
 			return HtmlTag::plugin.isDarkModeEnabled() ? decorationDarkID : decorationID;
 		}
+		inline int getGitHubID() {
+			return HtmlTag::plugin.isDarkModeEnabled() ? gitHubDarkID : gitHubID;
+		}
 		inline const char *const *getData() {
 			return HtmlTag::plugin.isDarkModeEnabled() ? decorationDark : decoration;
+		}
+		inline const char *const *getGitHubData() {
+			return HtmlTag::plugin.isDarkModeEnabled() ? gitHubDecorationDark : gitHubDecoration;
 		}
 	}
 }

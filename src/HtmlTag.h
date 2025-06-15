@@ -39,7 +39,7 @@ public:
 	void setInfo(const NppData *) override;
 	void beNotified(SCNotification *) override;
 	void finalize();
-	void getEntities(EntityList &);
+	void getEntities(EntityList &, bool preferEmoji = false);
 	const wchar_t *getMessage(std::wstring const &) override;
 	void setUnicodeFormatOption(std::string const &);
 	void toggleOption(BOOL *, const int);

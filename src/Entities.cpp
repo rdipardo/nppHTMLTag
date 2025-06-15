@@ -61,18 +61,34 @@ void Entities::encode(EntityReplacementScope scope, bool includeLineBreaks) {
 int Entities::decode() {
 	int result = 0;
 	SciActiveDocument doc = plugin.editor().activeDocument();
-	EntityList entities{};
-	plugin.getEntities(entities);
 
-	if (!entities || doc.getSelectionMode() != smStreamSingle)
+	if (doc.getSelectionMode() != smStreamSingle)
 		return result;
 
+	wchar_t chStart = amp, chEnd = semi, chInvalid = colon;
 	std::wstring target{ doc.currentSelection().text() };
-	size_t charIndex = target.find(L'&');
+	size_t charIndex = target.find(chStart); // Try to match an entity
 
-	// Make sure the selection includes the semicolon
-	if (target.find(L';', charIndex) == std::wstring::npos)
+	if (charIndex == std::wstring::npos) {
+		chStart = colon;
+		charIndex = target.find(chStart); // Try to match an emoji
+		if (charIndex != std::wstring::npos) {
+			chInvalid = semi;
+			chEnd = chStart;
+		} else
+			return result;
+	}
+
+	// Disallow `:` inside entities, and `;` inside emoji
+	if ((target.find(chInvalid, charIndex) != std::wstring::npos) ||
+	    // Make sure the selection includes the terminating char
+	    (target.find(chEnd, charIndex) == std::wstring::npos)) {
 		return result;
+	}
+
+	EntityList entities{};
+	bool preferEmoji = (chStart == colon);
+	plugin.getEntities(entities, preferEmoji);
 
 	try {
 		while (charIndex != std::string::npos) {
@@ -84,17 +100,20 @@ int Entities::decode() {
 
 			for (size_t i = 1; i < target.length() - firstPos; i++) {
 				if (i == 1) {
-					if (target[firstPos] == L'#') {
+					if (!preferEmoji && target[firstPos] == L'#') {
 						isNumeric = true;
 						allowedChars << L"x" << scDigits;
-					} else
+					} else {
 						allowedChars << scLetters << scDigits;
+						if (preferEmoji)
+							allowedChars << L"+_-";
+					}
 				} else if (i == 2) {
 					if (isNumeric && target[firstPos + 1] == L'x') {
 						isHex = true;
 						allowedChars << scHexLetters;
 					}
-					allowedChars << L";";
+					allowedChars << chEnd;
 				}
 
 				if (allowedChars.str().find(target[firstPos + i]) == std::wstring::npos) {
@@ -102,7 +121,7 @@ int Entities::decode() {
 					lastPos = firstPos + i - 1;
 					nextIndex = firstPos + i;
 					break;
-				} else if (target[firstPos + i] == L';') {
+				} else if (target[firstPos + i] == chEnd) {
 					// End found
 					lastPos = firstPos + i - 1;
 					nextIndex = firstPos + i + 1;
@@ -149,7 +168,7 @@ int Entities::decode() {
 				++result;
 			}
 
-			charIndex = target.find(L'&', firstPos);
+			charIndex = target.find(chStart, firstPos);
 		}
 	} catch (...) {
 	}

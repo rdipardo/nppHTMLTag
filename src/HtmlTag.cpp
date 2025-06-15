@@ -32,9 +32,15 @@ enum CmdMenuPosition { cmpAcEntities = 3, cmpUnicode, cmpEntities };
 bool menuLocaleIsRTL() noexcept;
 bool isWebDocument() noexcept;
 bool autoCompleteMatchingTag(const Sci_Position startPos, const char *tagName);
-void autoCompleteEntity();
+void autoCompleteEntity(bool preferEmoji);
 void findAndDecode(const int keyCode, DecodeCmd cmd = dcAuto);
 
+constexpr bool isStartOfEntity(const int &ch) noexcept {
+	return ch == Entities::amp || ch == Entities::colon;
+}
+constexpr bool isEndOfEntity(const int &ch) noexcept {
+	return ch == Entities::semi || ch == Entities::colon;
+}
 constexpr char acListKey[] = "_autocompletions";
 constexpr char defaultUnicodePrefix[] = R"(\u)";
 constexpr wchar_t menuItemSeparator[] = L"-";
@@ -219,8 +225,10 @@ void HtmlTagPlugin::beNotified(SCNotification *scn) {
 			case SCN_AUTOCCHARDELETED:
 				if (options.entityAutoCompletion && isWebDocument()) {
 					SciActiveDocument doc = editor().activeDocument();
-					if (doc.sendMessage(SCI_GETCHARAT, doc.currentPosition() - 1) == '&') {
-						autoCompleteEntity();
+					Sci_Position pos = doc.currentPosition();
+					int ch = static_cast<int>(doc.sendMessage(SCI_GETCHARAT, pos - 1));
+					if (isStartOfEntity(ch)) {
+						autoCompleteEntity(ch == Entities::colon);
 					}
 				}
 				break;
@@ -229,8 +237,8 @@ void HtmlTagPlugin::beNotified(SCNotification *scn) {
 				    !plugin.editor().activeDocument().currentSelection()) {
 					findAndDecode(scn->ch);
 				}
-				if (options.entityAutoCompletion && isWebDocument() && (scn->ch == '&')) {
-					autoCompleteEntity();
+				if (options.entityAutoCompletion && isStartOfEntity(scn->ch) && isWebDocument()) {
+					autoCompleteEntity(scn->ch == Entities::colon);
 				}
 				break;
 		}
@@ -241,8 +249,8 @@ void HtmlTagPlugin::finalize() {
 	saveOptions();
 }
 // --------------------------------------------------------------------------------------
-void HtmlTagPlugin::getEntities(EntityList &list) {
-	const char *listName = documentLangType() == L_XML ? "XML" : "HTML 5";
+void HtmlTagPlugin::getEntities(EntityList &list, bool preferEmoji) {
+	const char *listName = documentLangType() == L_XML ? "XML" : (preferEmoji ? "Emoji" : "HTML 5");
 	auto it = _entityMap.find(listName);
 	if (it != _entityMap.end() && it->second) {
 		list = it->second;
@@ -294,8 +302,14 @@ void HtmlTagPlugin::getEntities(EntityList &list) {
 			int codePoint = std::stoi(codePointStr);
 			if (codePoint > 0) {
 				_entityMap[listName].addPair(entity.pItem, std::to_string(codePoint));
-				_entityMap[listName].addPair(std::to_string(codePoint), entity.pItem);
-				acListBuf << entity.pItem << ';' << '?' << XPM::getID() << ' ';
+				acListBuf << entity.pItem;
+				if (!preferEmoji) {
+					_entityMap[listName].addPair(std::to_string(codePoint), entity.pItem);
+					acListBuf << Entities::semi << '?' << XPM::getID();
+				} else {
+					acListBuf << Entities::colon << '?' << XPM::getGitHubID();
+				}
+				acListBuf << ' ';
 			}
 		}
 		_entityMap[listName].addPair(acListKey, acListBuf.str());
@@ -511,23 +525,58 @@ bool menuLocaleIsRTL() noexcept {
 // --------------------------------------------------------------------------------------
 bool isWebDocument() noexcept {
 	const auto webLangs = { L_HTML, L_XML, L_PHP, L_ASP, L_JSP };
-	return std::find(webLangs.begin(), webLangs.end(), plugin.documentLangType()) != std::end(webLangs);
+	if (std::find(webLangs.begin(), webLangs.end(), plugin.documentLangType()) != std::end(webLangs))
+		return true;
+
+	const auto ftypes = {
+		L".adoc",
+		L".asciidoc",
+		L".creole",
+		L".markdown",
+		L".md",
+		L".mdoc",
+		L".mdown",
+		L".mdtext",
+		L".mdtxt",
+		L".mdwn",
+		L".mediawiki",
+		L".mkd",
+		L".mkdn",
+		L".org",
+		L".pod",
+		L".rdoc",
+		L".rst",
+		L".textile",
+		L".wiki",
+	};
+
+	std::wstring docExt;
+	wchar_t extBuf[MAX_PATH]{ L'\0' };
+	if (!plugin.sendNppMessage(NPPM_GETEXTPART, MAX_PATH - 1, &extBuf[0]))
+		return false;
+
+	docExt.assign(&extBuf[0], std::wcslen(&extBuf[0]));
+
+	return (std::find_if(ftypes.begin(), ftypes.end(),
+		   [&docExt](const std::wstring &&ext) { return sameText(docExt, ext); })) != std::end(ftypes);
 }
 // --------------------------------------------------------------------------------------
-void autoCompleteEntity() {
+void autoCompleteEntity(bool preferEmoji) {
 	EntityList entities;
-	plugin.getEntities(entities);
+	plugin.getEntities(entities, preferEmoji);
 	SciActiveDocument doc = plugin.editor().activeDocument();
+	int xpmId = preferEmoji ? XPM::getGitHubID() : XPM::getID();
 	std::stringstream delimBuf;
 	delimBuf << static_cast<char>(doc.sendMessage(SCI_AUTOCGETTYPESEPARATOR));
-	delimBuf << XPM::getID();
+	delimBuf << xpmId;
 	delimBuf << static_cast<char>(doc.sendMessage(SCI_AUTOCGETSEPARATOR));
 	std::string acList = entities[{ acListKey }];
 	if (acList.find(delimBuf.str()) == std::string::npos) {
 		acList = std::regex_replace(acList, std::regex(R"(\?\d+ )"), delimBuf.str());
 		entities.addPair(acListKey, acList);
 	}
-	doc.sendMessage(SCI_REGISTERIMAGE, XPM::getID(), reinterpret_cast<LPARAM>(XPM::getData()));
+	const LPARAM xmpData = reinterpret_cast<LPARAM>(preferEmoji ? XPM::getGitHubData() : XPM::getData());
+	doc.sendMessage(SCI_REGISTERIMAGE, xpmId, xmpData);
 	doc.sendMessage(SCI_AUTOCSHOW, UNUSEDW, &acList[0]);
 }
 // --------------------------------------------------------------------------------------
@@ -570,14 +619,15 @@ void findAndDecode(const int keyCode, DecodeCmd cmd) {
 	if (cmd == dcAuto)
 		caret = doc.sendMessage(SCI_POSITIONBEFORE, doc.currentPosition());
 
-	for (anchor = caret - 1; anchor >= 0; anchor--) {
+	Sci_Position startPos = caret - 1;
+	for (anchor = startPos; anchor >= 0; anchor--) {
 		int chCurrent = static_cast<int>(doc.sendMessage(SCI_GETCHARAT, anchor));
 		if (chCurrent >= 0 && chCurrent <= 0x20)
 			break;
 		if (plugin.options.liveEntityDecoding || cmd == dcEntity) {
-			if (anchor == (caret - 1) && chCurrent != ';') // No adjacent entity here
-				skipEntities = true;
-			if (!skipEntities && chCurrent == '&') { // Handle entities
+			if (anchor == startPos)
+				skipEntities = !isEndOfEntity(chCurrent); // No adjacent entity here
+			else if (anchor < startPos && !skipEntities && isStartOfEntity(chCurrent)) { // Handle entities
 				didReplace = replace(Entities::decode, anchor, caret);
 				if (!(ch == 0x0A || ch == 0x0D))
 					++charOffset;

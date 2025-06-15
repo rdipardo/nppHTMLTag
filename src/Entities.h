@@ -18,6 +18,9 @@ namespace Entities {
 
 	enum EntityReplacementScope { ersSelection, ersDocument, ersAllDocuments };
 
+	constexpr char amp = '&';
+	constexpr char semi = ';';
+	constexpr char colon = ':';
 	constexpr wchar_t scDigits[] = L"0123456789";
 	constexpr wchar_t scHexLetters[] = L"ABCDEFabcdef";
 	constexpr wchar_t scLetters[] = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
