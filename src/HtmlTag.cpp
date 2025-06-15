@@ -257,30 +257,30 @@ void HtmlTagPlugin::getEntities(EntityList &list, bool preferEmoji) {
 		return;
 	}
 
-	size_t d1 = 0, d2 = 0;
-	std::wstring msgText, msgs[3]{};
-	std::wstringstream errMsg;
 	path_t iniFile = this->entities;
 
 	if (!std::filesystem::exists(iniFile)) {
+		size_t d1 = 0, d2 = 0;
+		std::wstring msgText, msgs[3]{};
+		std::wstringstream errMsg;
 		msgText = getMessage(L"err_config_msg");
 		d1 = msgText.find_first_of(errorMessageDelimiter);
 		d2 = msgText.find_last_of(errorMessageDelimiter);
 		msgs[0] = (d1 == std::wstring::npos) ? L"must be saved in folder" : msgText.substr(0, d1);
 		errMsg << iniFile.filename() << L" " << msgs[0] << L":\r\n" << iniFile.parent_path().c_str();
 		iniFile = pluginsHomeDir() / _pluginDLLName / (_pluginName + L"-entities.ini");
-	}
-	if (!std::filesystem::exists(iniFile)) {
-		unsigned long mbMask = MB_ICONERROR;
-		if (menuLocaleIsRTL())
-			mbMask |= MB_RTLREADING;
-		msgs[1] = (d2 == std::wstring::npos || d1 >= d2) ? L"or" : msgText.substr(d1 + 1, d2 - d1 - 1);
-		msgs[2] = (d2 == std::wstring::npos) ? L"in folder" : msgText.substr(d2 + 1);
-		errMsg << L"\r\n"
-		       << msgs[1] << L" " << iniFile.filename() << L" " << msgs[2] << L":\r\n"
-		       << iniFile.parent_path().c_str();
-		::MessageBoxW(editor().windowHandle(), &errMsg.str()[0], getMessage(L"err_config"), mbMask);
-		return;
+		if (!std::filesystem::exists(iniFile)) {
+			unsigned long mbMask = MB_ICONERROR;
+			if (menuLocaleIsRTL())
+				mbMask |= MB_RTLREADING;
+			msgs[1] = (d2 == std::wstring::npos || d1 >= d2) ? L"or" : msgText.substr(d1 + 1, d2 - d1 - 1);
+			msgs[2] = (d2 == std::wstring::npos) ? L"in folder" : msgText.substr(d2 + 1);
+			errMsg << L"\r\n"
+			       << msgs[1] << L" " << iniFile.filename() << L" " << msgs[2] << L":\r\n"
+			       << iniFile.parent_path().c_str();
+			::MessageBoxW(editor().windowHandle(), &errMsg.str()[0], getMessage(L"err_config"), mbMask);
+			return;
+		}
 	}
 
 	CSimpleIniCaseA config;
