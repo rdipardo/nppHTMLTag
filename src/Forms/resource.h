@@ -10,8 +10,8 @@
 
 #include <windows.h>
 
-#define HTMLTAG_VERSION L"1.5.2.3\0"
-#define HTMLTAG_VERSION_WORDS 1, 5, 2, 3
+#define HTMLTAG_VERSION L"1.5.3.0\0"
+#define HTMLTAG_VERSION_WORDS 1, 5, 3, 0
 
 #define ID_ABOUT_HTML_TAG_DLG 0x1000
 #define ID_UNICODE_FMT_CONFIG_DLG 0x2000

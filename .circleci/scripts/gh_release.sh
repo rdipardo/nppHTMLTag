@@ -1,28 +1,43 @@
 #!/usr/bin/bash
 #
-# Copyright (c) 2022 Robert Di Pardo
+# Copyright (c) 2022,2025 Robert Di Pardo
 # License: https://github.com/rdipardo/nppFSIPlugin/blob/master/Copyright.txt
 #
-test -z "$GH_API_TOKEN_2024" && exit 0
+test -z "$GH_API_TOKEN_2025" && exit 0
 
 # https://discuss.circleci.com/t/circle-branch-and-pipeline-git-branch-are-empty/44317/3
-COMMIT=$(git rev-parse ${CIRCLE_TAG}) \
+COMMIT=$(git rev-parse "${CIRCLE_TAG:-'@'}") \
   && TMP=$(git branch -a --contains $COMMIT) \
-  && BRANCH="${TMP##*/}"
+  && BRANCH="${TMP##*[ /]}"
 
 cd "$BIN_DIR" || exit 0
+ASSETS=("${SLUGX86}" "${SLUGX64}" "${SLUGARM64}")
+test -z "$CIRCLE_TAG" && TAG_NAME=$(git describe --always '@') || TAG_NAME="$CIRCLE_TAG"
+test -z "$CIRCLE_TAG" && PRE_RELEASE=true || PRE_RELEASE=false
 printf '#### SHA256 Checksums\\n\\n' > sha256sums.md
-printf '\\t%s\\n' "$(sha256sum ${SLUGX86})" >> sha256sums.md
-printf '\\t%s\\n' "$(sha256sum ${SLUGX64})" >> sha256sums.md
-printf '\\t%s\\n' "$(sha256sum ${SLUGARM64})" >> sha256sums.md
+for slug in "${ASSETS[@]}"; do printf '\\t%s\\n' "$(sha256sum "$slug")" >> sha256sums.md; done
 curl -sL -X POST \
     -H "Accept: application/vnd.github+json" \
-    -H "Authorization: Bearer ${GH_API_TOKEN_2024}" \
+    -H "Authorization: Bearer ${GH_API_TOKEN_2025}" \
         "https://api.github.com/repos/${CIRCLE_USERNAME}/nppHTMLTag/releases" \
     -d "{\"tag_name\":\"${CIRCLE_TAG}\",
         \"target_commitish\":\"${BRANCH}\",
-        \"name\":\"${CIRCLE_TAG}\",
+        \"name\":\"${TAG_NAME}\",
         \"body\":\"$(cat sha256sums.md)\",
-        \"draft\":true,
-        \"prerelease\":false,
-        \"generate_release_notes\":false}"
+        \"draft\":false,
+        \"prerelease\":${PRE_RELEASE},
+        \"generate_release_notes\":false}" > response.json
+
+RELEASE_ID=$(jq -Mcr '.id // ""' < response.json)
+test -z "$RELEASE_ID" && exit 0
+
+for slug in "${ASSETS[@]}"
+do
+    curl -sL -X POST \
+      -H "Accept: application/vnd.github+json" \
+      -H "Authorization: Bearer ${GH_API_TOKEN_2025}" \
+      -H "X-GitHub-Api-Version: 2022-11-28" \
+      -H "Content-Type: application/octet-stream" \
+      "https://uploads.github.com/repos/${CIRCLE_USERNAME}/nppHTMLTag/releases/${RELEASE_ID}/assets?name=${slug}" \
+      --data-binary "@${slug}" >/dev/null 2>&1
+done

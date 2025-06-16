@@ -18,6 +18,7 @@ references:
       tags:
         only: /v.*/
   production: &production
+    context: gh-release-authoring
     filters:
       branches:
         ignore: /.*/
