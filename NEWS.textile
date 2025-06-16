@@ -1,7 +1,7 @@
 
 h3. Released Versions
 
-* 1.5.3 (2026-06-16)
+* 1.5.3 (2025-06-16)
 ** Fixed: text containing 4-digit Unicode escapes will decode as expected, regressed in v1.5.0/2 ("#13":13) [6a27eb9]
 ** Fixed: alphanumeric entities like @&sup1;@ will decode as expected, also regressed in v1.5.0/2 [0c67848]
 ** Added: "GitHub emoji":https://gist.github.com/rxaviers/7360908 can be decoded by the 'Decode entities' command[^1^] and inserted when entity autocompletion is enabled [139908f]
