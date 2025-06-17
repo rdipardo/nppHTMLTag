@@ -79,10 +79,11 @@ int Entities::decode() {
 			return result;
 	}
 
-	// Disallow `:` inside entities, and `;` inside emoji
-	if ((target.find(chInvalid, charIndex) != std::wstring::npos) ||
-	    // Make sure the selection includes the terminating char
-	    (target.find(chEnd, charIndex) == std::wstring::npos)) {
+	size_t endPos = target.find(chEnd, charIndex);
+	// Make sure the selection includes the terminating char
+	if ((endPos == std::wstring::npos) ||
+	    // Disallow `:` inside entities, and `;` inside emoji
+	    (target.find(chInvalid, charIndex) < endPos)) {
 		return result;
 	}
 

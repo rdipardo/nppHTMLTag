@@ -626,7 +626,11 @@ void findAndDecode(const int keyCode, DecodeCmd cmd) {
 			break;
 		if (plugin.options.liveEntityDecoding || cmd == dcEntity) {
 			if (anchor == startPos)
-				skipEntities = !isEndOfEntity(chCurrent); // No adjacent entity here
+				skipEntities =
+				    // No adjacent entity here
+				    !isEndOfEntity(chCurrent) ||
+				    // Do nothing if current text is `:;`, `;:`, `;;` or `::`
+				    isEndOfEntity(static_cast<int>(doc.sendMessage(SCI_GETCHARAT, anchor - 1)));
 			else if (anchor < startPos && !skipEntities && isStartOfEntity(chCurrent)) { // Handle entities
 				didReplace = replace(Entities::decode, anchor, caret);
 				if (!(ch == 0x0A || ch == 0x0D))
