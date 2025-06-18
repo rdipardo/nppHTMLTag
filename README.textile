@@ -18,8 +18,10 @@ h2. Introduction
 
 This plugin provides the following core functions (see the full list of commands "below":#usage):
 * HTML and XML tag jumping, synchronized tag renaming, and selection of tags with or without contents
-* HTML entity encoding/decoding (example: @é@ to @&eacute;@)
-* JS character encoding/decoding (example: @é@ to @\u00E9@)
+* HTML entity encoding/decoding (example: @é@ to @＆eacute;@)
+* Unicode character encoding/decoding (example: @é@ to @\u00E9@)
+* GitHub emoji decoding (example: @:clown_face:@ to 🤡)
+* autocompletion of HTML entities and GitHub emoji
 
 Visit "the wiki":https://github.com/rdipardo/nppHTMLTag/wiki for more detailed information and illustrations.
 
@@ -64,9 +66,9 @@ h2. Usage
 | Ctrl+Alt+T | to select only the contents between tags |
 | Ctrl+E | to encode all selected non-ASCII characters to their HTML entities |
 | Ctrl+Alt+E | same as Ctrl+E, but encodes line breaks as well |
-| Ctrl+Shift+E | to dEcode all selected HTML entities |
-| Alt+J | to encode all selected non-ASCII character to their Javascript entities |
-| Alt+Shift+J | to dEcode all selected JS entities |
+| Ctrl+Shift+E | to _decode_ all selected HTML entities or GitHub emoji |
+| Alt+J | to encode all selected non-ASCII characters to their Unicode code point values |
+| Alt+Shift+J | to _decode_ all selected Unicode escape sequences |
 | | *Hint:* to decode entities when nothing is selected, position the caret after the target text and execute one of the commands above. |
 
 All commands are available under the Plugins menu item 'HTML Tag'; the shortcut keys can be adjusted
@@ -83,9 +85,9 @@ h3. To do
   Added in "1.4.1":https://bitbucket.org/rdipardo/htmltag/src/v1.4.1/NEWS.textile
 * Make it play nice(r) with PHP & ASP tags (either highlight those separately or ignore them)
 * -Add option to encode entities 'as-you-type'- Added in "1.4.0":https://bitbucket.org/rdipardo/htmltag/src/v1.4.0/NEWS.textile
-* -Add option to close tags 'as-you-type' (type '&lt;/' and the rest will be inserted automagically)-
+* -Add option to close tags 'as-you-type' (type '</' and the rest will be inserted automagically)-
   Not needed if "tag auto-closing":autoclose is enabled in Notepad++
-* -drop down a list of tags after '&lt;'-
+* -drop down a list of tags after '<'-
 * -drop down a list of attributes on space after a tag-
   Notepad++ can "auto-complete":autocomplete many (X/HT)ML keywords
 
