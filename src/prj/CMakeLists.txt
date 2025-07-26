@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024 Robert Di Pardo <dipardo.r@gmail.com>
+# Copyright (c) 2024,2025 Robert Di Pardo <dipardo.r@gmail.com>
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
@@ -100,7 +100,21 @@ target_compile_definitions (${PROJECT_NAME} PUBLIC
   _UNICODE
   _WINDOWS
   _USRDLL
+  NOATOM
+  NOGDICAPMASKS
+  NOMETAFILE
   NOMINMAX
+  NOMSG
+  NOOPENFILE
+  NORASTEROPS
+  NOSCROLL
+  NOSOUND
+  NOTEXTMETRIC
+  NOWH
+  NOCOMM
+  NOKANJI
+  NOCRYPT
+  NOMCX
   WIN32_LEAN_AND_MEAN
   SCI_DISABLE_PROVISIONAL
 )
@@ -120,10 +134,10 @@ if (VC_BUILD)
   set (CMAKE_CXX_FLAGS_RELWITHDEBINFO CACHE STRING "" FORCE)
   set (CMAKE_CXX_FLAGS_MINSIZEREL CACHE STRING "" FORCE)
 
-  if (NOT "${PLATFORM_ID}" MATCHES "arm")
     set_target_properties(${PROJECT_NAME} PROPERTIES
       MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
     )
+  if (NOT "${PLATFORM_ID}" MATCHES "arm")
     target_compile_definitions (${PROJECT_NAME} PRIVATE
       _USING_V110_SDK71_
       _WIN32_WINNT=_WIN32_WINNT_VISTA
@@ -132,7 +146,6 @@ if (VC_BUILD)
   endif ()
 
   target_compile_definitions (${PROJECT_NAME} PUBLIC
-    NOMINMAX
     _CRT_SECURE_NO_WARNINGS
   )
 
@@ -143,7 +156,6 @@ if (VC_BUILD)
     /permissive-
     /Zc:__cplusplus,inline
     /EHsc
-    /TP
     /MP
     /W4
   )
@@ -157,16 +169,12 @@ if (VC_BUILD)
 
   if ("${CMAKE_BUILD_TYPE}" MATCHES "[dD]eb(ug)?")
     target_compile_options (${PROJECT_NAME} PRIVATE -Zi -Od -D_DEBUG)
-    if ("${PLATFORM_ID}" MATCHES "arm")
-      target_compile_options (${PROJECT_NAME} PRIVATE -MTd)
-    endif()
     if (NMAKE_BUILD)
       set (LINK_FLAGS "${LINK_FLAGS};/LTCG:INCREMENTAL")
     endif ()
   else ()
     target_compile_options (${PROJECT_NAME} PRIVATE -Gw -GL -GR- -O1 -WX)
     if ("${PLATFORM_ID}" MATCHES "arm")
-      target_compile_options (${PROJECT_NAME} PRIVATE -MT)
       set (LINK_FLAGS "${LINK_FLAGS};/OPT:REF;/LTCG:INCREMENTAL")
     else()
       set (LINK_FLAGS "${LINK_FLAGS};/OPT:REF,ICF;/LTCG")
