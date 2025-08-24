@@ -164,6 +164,7 @@ void HtmlTagPlugin::setInfo(const NppData *data) {
 }
 // --------------------------------------------------------------------------------------
 void HtmlTagPlugin::beNotified(SCNotification *scn) {
+	static bool isWebDoc = false;
 	if (scn->nmhdr.hwndFrom == plugin.editor().windowHandle()) {
 		switch (scn->nmhdr.code) {
 			case NPPN_READY:
@@ -179,6 +180,9 @@ void HtmlTagPlugin::beNotified(SCNotification *scn) {
 					    &caption.str()[0], mbMask);
 				}
 #endif
+				break;
+			case NPPN_BUFFERACTIVATED:
+				isWebDoc = ::isWebDocument();
 				break;
 			case NPPN_FILESAVED: {
 				path_t const &filePath = currentBufferPath(scn->nmhdr.idFrom);
@@ -204,7 +208,8 @@ void HtmlTagPlugin::beNotified(SCNotification *scn) {
 		switch (scn->nmhdr.code) {
 			case SCN_AUTOCSELECTION:
 				acInsertMode = editor().activeDocument().sendMessage(SCI_AUTOCGETMULTI);
-				if (isAutoCompletionCandidate && autoCompleteMatchingTag(scn->position, scn->text)) {
+				if (isWebDoc && isAutoCompletionCandidate &&
+				    autoCompleteMatchingTag(scn->position, scn->text)) {
 					SciViewList views = editor().getViews();
 					for (size_t i = 0; i < views.size; ++i)
 						views[i].sendMessage(SCI_AUTOCSETMULTI, SC_MULTIAUTOC_EACH);
@@ -223,7 +228,7 @@ void HtmlTagPlugin::beNotified(SCNotification *scn) {
 				isAutoCompletionCandidate = false;
 				break;
 			case SCN_AUTOCCHARDELETED:
-				if (options.entityAutoCompletion && isWebDocument()) {
+				if (options.entityAutoCompletion && isWebDoc) {
 					SciActiveDocument doc = editor().activeDocument();
 					Sci_Position pos = doc.currentPosition();
 					int ch = static_cast<int>(doc.sendMessage(SCI_GETCHARAT, pos - 1));
@@ -237,7 +242,7 @@ void HtmlTagPlugin::beNotified(SCNotification *scn) {
 				    !plugin.editor().activeDocument().currentSelection()) {
 					findAndDecode(scn->ch);
 				}
-				if (options.entityAutoCompletion && isStartOfEntity(scn->ch) && isWebDocument()) {
+				if (options.entityAutoCompletion && isStartOfEntity(scn->ch) && isWebDoc) {
 					autoCompleteEntity(scn->ch == Entities::colon);
 				}
 				break;
@@ -584,7 +589,7 @@ bool autoCompleteMatchingTag(const Sci_Position startPos, const char *tagName) {
 	constexpr size_t maxTagLength = 72; // https://www.rfc-editor.org/rfc/rfc1866#section-3.2.3
 	SciActiveDocument doc = plugin.editor().activeDocument();
 
-	if (!isWebDocument() || doc.getSelectionMode() != smStreamMulti || strlen(tagName) > maxTagLength) {
+	if (doc.getSelectionMode() != smStreamMulti || strlen(tagName) > maxTagLength) {
 		return false;
 	}
 
