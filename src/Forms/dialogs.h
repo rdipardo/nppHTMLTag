@@ -115,5 +115,15 @@
 #define UK_UNICODE_DLG 0x0860
 #define UK_ABOUT_CAPTION "Плагін HTML Tag для Notepad++"
 #define UK_UNICODE_DLG_CAPTION "Змінити префікс символів Unicode"
+/* serbian */
+#define SR_LATN_ABOUT_DLG 0x0470
+#define SR_LATN_UNICODE_DLG 0x0870
+#define SR_LATN_ABOUT_CAPTION "HTML Tag dodatak za Notepad++"
+#define SR_LATN_UNICODE_DLG_CAPTION "Promeni prefiks Unicode karaktera"
+/* serbianCyrillic */
+#define SR_CYRL_ABOUT_DLG 0x0480
+#define SR_CYRL_UNICODE_DLG 0x0880
+#define SR_CYRL_ABOUT_CAPTION "HTML Tag додатак за Notepad++"
+#define SR_CYRL_UNICODE_DLG_CAPTION "Промени префикс Unicode карактера"
 
 #endif /* ~HTMLTAG_DIALOGS_H */
