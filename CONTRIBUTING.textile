@@ -1,0 +1,125 @@
+
+bq. For all contributions, please start by reading "the guide":1 to building the plugin.
+
+h2. Bug fixes and new features
+
+Test your changes and "open a pull request":3.
+
+Raising an issue beforehand is encouraged but not required.
+
+h2. Translations
+
+*Note*
+_In the examples below, replace @<language_name>@ with the **same name** as the "XML localization file":2 used by Notepad++, **without** the file extension._
+
+h3. New menu localizations
+
+To translate the command menu found at @Plugins > HTML Tag@
+
+* Open "dat/HTMLTag-translations.ini":https://github.com/rdipardo/nppHTMLTag/tree/default/dat/HTMLTag-translations.ini and create a section like the following:
+
+bc[ini]. [<language_name>]
+menu_0  = ; translation of the "Find matching tag" command
+menu_1  = ; translation of the "Select matching tags" command
+menu_2  = ; translation of the "Select tag and contents" command
+menu_3  = ; translation of the "Select tag contents only" command
+menu_4  = ; translation of the "Encode HTML entities" command
+menu_5  = ; translation of the "Encode HTML entities (incl. line breaks)" command
+menu_6  = ; translation of the "Decode HTML entities" command
+menu_7  = ; translation of the "Encode Unicode characters" command
+menu_8  = ; translation of the "Decode Unicode characters" command
+menu_9  = ; translation of the "Automatically decode entities" option
+menu_10 = ; translation of the "Automatically decode Unicode characters" option
+menu_11 = ; translation of the "(Information) About" command
+menu_12 = ; translation of the "Auto-complete HTML entities" option
+err_compat = ; error message saying the current Notepad++ version is not compatible with (64-bit) HTML Tag
+err_config = ; error message saying that no HTML entities file (entities.ini) was found
+err_config_msg = ; translation of these 3 phrases:
+                 ; "must be in the (file) folder", "or", "in the (file) folder"
+                 ; each phrase separated by "|"
+
+
+h3. New dialog localizations
+
+To translate the About dialog (see @Plugins > HTML Tag > About...@):
+
+* Open "src/Forms/dialogs.h":https://github.com/rdipardo/nppHTMLTag/blob/default/src/Forms/dialogs.h
+
+* Add the following definitions, using the 2- or 3-letter "international code":https://wikipedia.org/wiki/List_of_ISO_639_language_codes for your language (or some other unique prefix, e.g., @XYZ@):
+
+bc[c]. /* <language_name> */
+#define XYZ_ABOUT_DLG /* unique id number */
+#define XYZ_UNICODE_DLG /* another unique id number */
+#define XYZ_ABOUT_CAPTION "translation of the About dialog title caption"
+#define XYZ_UNICODE_DLG_CAPTION "translation of the Unicode format input dialog title caption"
+
+* Open  "src/Forms/AboutDlg.cpp":https://github.com/rdipardo/nppHTMLTag/blob/default/src/Forms/AboutDlg.cpp
+
+* Add your new language identifiers, using the definitions from @dialogs.h@:
+
+bc[cpp]. constexpr LocalizedResource dialogLocales[] = {
+//...
+	{ "<language_name>", XYZ_ABOUT_DLG, XYZ_UNICODE_DLG },
+};
+
+* Create a new "resource (RC) file":4 in the "src/Forms/localizations":https://github.com/rdipardo/nppHTMLTag/tree/default/src/Forms/localizations path
+
+* Fill out the RC file, again using your new definitions from @dialogs.h@:
+
+bc[c]. #pragma code_page(65001)
+#include "dialogs.h"
+// Copyright <year> <your_name> <email>
+// ...
+XYZ_ABOUT_DLG DIALOGEX 30, 30, 232, 170
+STYLE DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_DLGMODALFRAME | WS_EX_RTLREADING
+CAPTION XYZ_ABOUT_CAPTION
+FONT 8, "Tahoma", 0, 0, 0
+BEGIN
+/*
+  Configure the order and position of the About dialog's controls; leave translated labels blank ("")
+  IMPORTANT: give untranslated controls *the same* identifier as in the other RC files;
+             look for the ID_ prefix and copy it verbatim, e.g., ID_PLUGIN_VERSION_TXT
+*/
+END
+// ...
+XYZ_UNICODE_DLG DIALOGEX 30, 60, 200, 52
+STYLE DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_DLGMODALFRAME | WS_EX_TOPMOST | WS_EX_RTLREADING
+CAPTION XYZ_UNICODE_DLG_CAPTION
+FONT 8, "Tahoma", 0, 0, 0
+BEGIN
+/*
+  Configure the order and position of the Unicode format input dialog's controls; leave translated labels blank ("")
+  IMPORTANT: give untranslated controls *the same* identifier as in the other RC files;
+             look for the ID_ prefix and copy it verbatim, e.g., ID_PLUGIN_VERSION_TXT
+*/
+END
+
+*Note*
+_You must "rebuild":1 the plugin to preview changes to the RC file._
+
+* Finally, open "dat/HTMLTag-dialogs.ini":https://github.com/rdipardo/nppHTMLTag/tree/default/dat/HTMLTag-dialogs.ini and create a section like the following:
+
+bc[ini]. [<language_name>]
+about_version = ; translation of the "Version" label
+about_rel_notes = ; translation of the "Release notes" label
+about_bugs = ; translation of the "Bug tracker" label
+about_downloads = ; translation of the "Downloads" label
+about_license = ; translation of the "Licensed under the MPL 2.0" label
+about_3rd_party = ; translation of the "Using (i.e., 3rd-party software)" label
+about_3rd_party_also = ; translation of the "Also using (i.e., 3rd-party software)" label
+about_entities_file = ; translation of the "HTML entities file" label
+about_l10n_file = ; translation of the "Localizations file(s)" label
+about_unicode_format = ; translation of the "Unicode character format" label
+about_unicode_config = ; translation of the "Configure (imperative)" label
+unicode_dlg_format = ; translation of the input dialog's "Format" label
+unicode_dlg_ok = ; translation of the input dialog's "OK" button label
+unicode_dlg_cancel = ; translation of the input dialog's "Cancel" button label
+unicode_dlg_reset = ; translation of the input dialog's "Reset" button label
+
+
+[1]https://github.com/rdipardo/npphtmltag/wiki/build
+[2]https://github.com/notepad-plus-plus/notepad-plus-plus/tree/master/PowerEditor/installer/nativeLang
+[3]https://docs.github.com/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork
+[4]https://learn.microsoft.com/windows/win32/menurc/about-resource-files
