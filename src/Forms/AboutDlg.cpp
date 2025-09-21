@@ -67,6 +67,8 @@ constexpr LocalizedResource dialogLocales[] = {
 	{ "brazilian_portuguese", BR_PT_ABOUT_DLG, BR_PT_UNICODE_DLG },
 	{ "romanian", RO_ABOUT_DLG, RO_UNICODE_DLG },
 	{ "russian", RU_ABOUT_DLG, RU_UNICODE_DLG },
+	{ "serbian", SR_LATN_ABOUT_DLG, SR_LATN_UNICODE_DLG },
+	{ "serbianCyrillic", SR_CYRL_ABOUT_DLG, SR_CYRL_UNICODE_DLG },
 	{ "sinhala", SI_ABOUT_DLG, SI_UNICODE_DLG },
 	{ "spanish", ES_ABOUT_DLG, ES_UNICODE_DLG },
 	{ "spanish_ar", ES_ABOUT_DLG, ES_UNICODE_DLG },
