@@ -268,7 +268,7 @@ begin
           dirForward: begin
             // look forward for corresponding closing tag
             NextTag := TTextRange.Create(doc);
-            doc.Find('<[^%\?]', NextTag, SCFIND_REGEXP or SCFIND_POSIX, Tag.EndPos);
+            doc.Find('<[^%\?\r\n\t 0-9]', NextTag, SCFIND_REGEXP or SCFIND_POSIX, Tag.EndPos);
             if NextTag.Length <> 0 then
               NextTag.EndPos := NextTag.EndPos - 1
             else FreeAndNil(NextTag);
