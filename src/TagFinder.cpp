@@ -135,7 +135,7 @@ void TagFinder::findMatchingTag(SelectionOptions options) {
 			switch (searchDirection) {
 				case dirForward: { // Look forward for corresponding closing tag
 					nextTag.clearRange();
-					doc.find(LR"(<[^%\\?])", nextTag, SCFIND_REGEXP | SCFIND_POSIX,
+					doc.find(LR"(<[^%\?\r\n\t 0-9])", nextTag, SCFIND_REGEXP | SCFIND_POSIX,
 					    currentTag->endPos());
 					if (nextTag.length() != 0)
 						nextTag.endPos(nextTag.endPos() - 1);
