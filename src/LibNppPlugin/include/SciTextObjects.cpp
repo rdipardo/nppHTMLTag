@@ -112,13 +112,6 @@ void SciActiveDocument::selectColumns(const Sci_Position startPos, const Sci_Pos
 		sendMessage(SCI_SETSELECTIONMODE, SelMode);
 }
 // --------------------------------------------------------------------------------------
-void SciActiveDocument::find(std::wstring const &text, SciTextRange &target, const int options) const {
-	if (options != 0)
-		find(text, target, options, target.getStart(), target.getEnd());
-	else
-		find(text, target);
-}
-// --------------------------------------------------------------------------------------
 void SciActiveDocument::find(std::wstring const &text, SciTextRange &target, const int options,
     const Sci_Position startPos, Sci_Position endPos) const {
 	UINT sciMsg = (this->_apiLevel < SciApiLevel::sciApi_GTE_523) ? SCI_FINDTEXT : SCI_FINDTEXTFULL;

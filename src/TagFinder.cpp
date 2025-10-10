@@ -258,14 +258,16 @@ std::shared_ptr<SciTextRange> extractTagName(
 	tagName.clear();
 
 	if (tagPos < 0) {
-		tagPos = (doc.currentPosition() <= doc.sendMessage(SCI_GETANCHOR)) // Make sure we search forwards
-			     ? doc.currentPosition() + 1
-			     : doc.currentPosition();
+		const Sci_Position &caret = doc.currentPosition();
+		// Make sure the default search direction is forward
+		tagPos = (caret <= doc.sendMessage(SCI_GETANCHOR)) ? caret + 1 : caret;
 	}
 
 	std::shared_ptr<SciTextRange> result = std::make_shared<SciTextRange>(doc);
+	// Search backward -- i.e, endPos(0) < startPos(tagPos) -- in case the nearest tag is *before* the caret
 	doc.find(L"<", *result, 0, tagPos, 0);
 	if (result->length() == 0) {
+		// Try searching forward, in case the nearest tag is *after* the caret
 		doc.find(L"<", *result, 0, tagPos);
 		if (result->length() == 0)
 			return result;

@@ -30,7 +30,7 @@ endif ()
 # ==================================================
 # Add source files, libraries, resources
 # ==================================================
-CPMAddPackage ("gh:npp-plugins/plugintemplate@4.4")
+CPMAddPackage ("gh:npp-plugins/plugintemplate@2025_September_30.23.1")
 CPMAddPackage ("gh:brofield/simpleini@4.22")
 CPMAddPackage ("gh:leethomason/tinyxml2@10.0.0")
 

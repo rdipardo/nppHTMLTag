@@ -75,7 +75,6 @@ public:
 	void selectColumns(const Sci_Position startPos, const Sci_Position endPos = INVALID_POSITION) const;
 	void find(std::wstring const &text, SciTextRange &target, const int options = 0,
 	    const Sci_Position startPos = INVALID_POSITION, Sci_Position endPos = INVALID_POSITION) const;
-	void find(std::wstring const &text, SciTextRange &target, const int options) const;
 	SciSelection &currentSelection() const { return getSelection(); }
 	Sci_Position currentPosition() const { return getCurrentPos(); }
 	Sci_Position currentPosition(const Sci_Position value) const;

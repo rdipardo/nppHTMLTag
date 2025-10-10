@@ -44,7 +44,17 @@ void LocalizedPlugin::setLanguage() {
 // --------------------------------------------------------------------------------------
 path_t LocalizedPlugin::getNativeLangFile() const {
 	path_t path;
-	if (editor().windowHandle() != 0)
+	if (editor().windowHandle() == 0)
+		return path;
+
+	const Version target{ 8, 8, 6 };
+	if (nppVersion() >= target) {
+		intptr_t pathLen = sendNppMessage(NPPM_GETNPPSETTINGSDIRPATH);
+		std::wstring dirPath(++pathLen, 0);
+		sendNppMessage(NPPM_GETNPPSETTINGSDIRPATH, pathLen, dirPath.data());
+		path = path_t(dirPath.c_str(), path_t::format::native_format) / path_t(L"nativeLang.xml");
+	}
+	if (!std::filesystem::exists(path))
 		// portable installation ?
 		path = pluginsHomeDir().parent_path() / path_t(L"nativeLang.xml");
 	if (!std::filesystem::exists(path))

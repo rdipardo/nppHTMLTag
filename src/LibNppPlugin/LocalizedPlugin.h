@@ -10,14 +10,6 @@
 
 #include "PluginBase.h"
 
-#ifndef NPPM_GETNATIVELANGFILENAME
-#define NPPM_GETNATIVELANGFILENAME (NPPMSG + 116)
-#endif
-
-#ifndef NPPN_NATIVELANGCHANGED
-#define NPPN_NATIVELANGCHANGED (NPPN_FIRST + 31)
-#endif
-
 class LocalizedPlugin : public PluginBase {
 
 public:
