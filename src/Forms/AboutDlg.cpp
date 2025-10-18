@@ -3,7 +3,7 @@
   License, v. 2.0. If a copy of the MPL was not distributed with this file,
   You can obtain one at https://mozilla.org/MPL/2.0/.
 
-  Copyright (c) 2024 Robert Di Pardo <dipardo.r@gmail.com>
+  Copyright (c) 2024,2025 Robert Di Pardo <dipardo.r@gmail.com>
 */
 #include <windows.h>
 #include <shellapi.h>
@@ -12,7 +12,6 @@
 #include "TextConv.h"
 #include "HtmlTag.h"
 #include "AboutDlg.h"
-#include "dialogs.h"
 
 // Handle static text in default theme mode
 #define WM_CTLCOLORSTATIC_LITE WM_CTLCOLORSTATIC
@@ -31,11 +30,14 @@ struct DialogHyperlink {
 	WNDPROC defWndProc;
 };
 
+enum TextDirection { RTL = -1, NONE, LTR };
+
 INT_PTR CALLBACK modalDlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK linkCtrlWndProc(HWND hLink, UINT message, WPARAM wParam, LPARAM lParam);
 
 Version pluginVersion;
 HFONT hDefaultFont, hActiveLinkFont;
+bool hasWin11Dims;
 
 DialogHyperlink linkCtrls[] = {
 	{ ID_RELEASE_NOTES_LINK, nullptr },
@@ -48,54 +50,34 @@ DialogHyperlink linkCtrls[] = {
 	{ ID_TINYXML_LINK, nullptr },
 };
 constexpr size_t nbLinkCtrls = ARRAYSIZE(linkCtrls);
-
-constexpr LocalizedResource dialogLocales[] = {
-	{ "arabic", AR_ABOUT_DLG, AR_UNICODE_DLG },
-	{ "catalan", CA_ABOUT_DLG, CA_UNICODE_DLG },
-	{ "chineseSimplified", ZH_ABOUT_DLG, ZH_UNICODE_DLG },
-	{ "dutch", NL_ABOUT_DLG, NL_UNICODE_DLG },
-	{ "farsi", FA_ABOUT_DLG, FA_UNICODE_DLG },
-	{ "french", FR_ABOUT_DLG, FR_UNICODE_DLG },
-	{ "german", DE_ABOUT_DLG, DE_UNICODE_DLG },
-	{ "hebrew", HE_ABOUT_DLG, HE_UNICODE_DLG },
-	{ "hindi", HI_ABOUT_DLG, HI_UNICODE_DLG },
-	{ "italian", IT_ABOUT_DLG, IT_UNICODE_DLG },
-	{ "japanese", JP_ABOUT_DLG, JP_UNICODE_DLG },
-	{ "korean", KO_ABOUT_DLG, KO_UNICODE_DLG },
-	{ "polish", PL_ABOUT_DLG, PL_UNICODE_DLG },
-	{ "portuguese", PT_ABOUT_DLG, PT_UNICODE_DLG },
-	{ "brazilian_portuguese", BR_PT_ABOUT_DLG, BR_PT_UNICODE_DLG },
-	{ "romanian", RO_ABOUT_DLG, RO_UNICODE_DLG },
-	{ "russian", RU_ABOUT_DLG, RU_UNICODE_DLG },
-	{ "serbian", SR_LATN_ABOUT_DLG, SR_LATN_UNICODE_DLG },
-	{ "serbianCyrillic", SR_CYRL_ABOUT_DLG, SR_CYRL_UNICODE_DLG },
-	{ "sinhala", SI_ABOUT_DLG, SI_UNICODE_DLG },
-	{ "spanish", ES_ABOUT_DLG, ES_UNICODE_DLG },
-	{ "spanish_ar", ES_ABOUT_DLG, ES_UNICODE_DLG },
-	{ "tamil", TA_ABOUT_DLG, TA_UNICODE_DLG },
-	{ "ukrainian", UK_ABOUT_DLG, UK_UNICODE_DLG },
-};
-constexpr size_t nbDialogLocales = ARRAYSIZE(dialogLocales);
+constexpr HWND nullDC = static_cast<HWND>(0ULL);
+constexpr unsigned defaultFlags = SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE;
+constexpr int win11BorderPadding = 0x6;
 }
 
 // --------------------------------------------------------------------------------------
 // AboutDlg
 // --------------------------------------------------------------------------------------
 AboutDlg::AboutDlg(HINSTANCE hInst, NppData const &data) : StaticDialog() {
+	hasWin11Dims = (::GetSystemMetrics(SM_CXPADDEDBORDER) >= win11BorderPadding);
 	pluginVersion = Version{ HTMLTAG_VERSION_WORDS };
-	for (size_t i = 0; i < nbDialogLocales; i++) {
-		if (plugin.menuLocale() == dialogLocales[i].locale) {
-			_dialogResource = dialogLocales[i];
-			break;
-		}
-	}
 	Window::init(hInst, data._nppHandle);
 }
 // --------------------------------------------------------------------------------------
 void AboutDlg::show() {
-	if (!isCreated())
-		create(_dialogResource.dialog);
-
+	if (!isCreated()) {
+		_isRTL = plugin.menuLocaleIsRTL();
+		_isCJK = plugin.menuLocaleIsCJK();
+		_isBrahmic = plugin.menuLocaleIsBrahmic();
+		_isCyrillic = plugin.menuLocaleIsCyrillic();
+		_isNonLatin = (_isCJK || _isBrahmic || _isCyrillic);
+		int dlgRes = ID_ABOUT_HTML_TAG_DLG;
+		if (_isRTL)
+			dlgRes = ID_ABOUT_HTML_TAG_DLG_RTL;
+		else if (_isCJK)
+			dlgRes = ID_ABOUT_HTML_TAG_DLG_CJK;
+		create(dlgRes);
+	}
 	goToCenter();
 }
 // --------------------------------------------------------------------------------------
@@ -117,6 +99,7 @@ void AboutDlg::toggleDarkMode(HWND hwnd, ULONG dmFlag) {
 void AboutDlg::localize(HWND hwnd) {
 	if (!std::filesystem::exists(plugin.dlgTranslations)) {
 		if (hwnd == _hSelf) { // Restore default text to the About dialog
+			::SetWindowTextW(hwnd, DEFAULT_CAPTION);
 			::SetDlgItemTextW(hwnd, ID_PLUGIN_VERSION_TXT, DEFAULT_VERSION_TXT);
 			::SetDlgItemTextW(hwnd, ID_RELEASE_NOTES_LINK, DEFAULT_RELEASE_NOTES_TXT);
 			::SetDlgItemTextW(hwnd, ID_BUG_TRACKER_LINK, DEFAULT_BUG_TRACKER_TXT);
@@ -129,6 +112,7 @@ void AboutDlg::localize(HWND hwnd) {
 			::SetDlgItemTextW(hwnd, ID_UNICODE_FMT_LABEL_TXT, DEFAULT_UNICODE_FORMAT_LABEL);
 			::SetDlgItemTextW(hwnd, ID_UNICODE_CONFIG_LINK, DEFAULT_UNICODE_CONFIG_LABEL);
 		} else { // Restore default text to the Unicode format modal dialog
+			::SetWindowTextW(hwnd, DEFAULT_UNICODE_EDIT_CAPTION);
 			::SetDlgItemTextW(hwnd, ID_CONFIG_LABEL_1, DEFAULT_UNICODE_EDIT_LABEL);
 			::SetDlgItemTextW(hwnd, IDOK, DEFAULT_UNICODE_BTN_OK_TXT);
 			::SetDlgItemTextW(hwnd, IDCANCEL, DEFAULT_UNICODE_BTN_CANCEL_TXT);
@@ -146,7 +130,8 @@ void AboutDlg::localize(HWND hwnd) {
 			return;
 
 		std::wstring section(64, L'\0');
-		TextConv::bytesToText(_dialogResource.locale, section, CP_ACP);
+		std::wstring relNotes, bugs, repo, simpleIni, tinyXml, entities, l10ns, fmtLbl, cfgLbl, cfgDlgLbl;
+		TextConv::bytesToText(plugin.menuLocale().c_str(), section, CP_ACP);
 		std::list<CSimpleIniW::Entry> keys;
 		if (!config.GetAllKeys(section.c_str(), keys)) // Unknown language
 			return;
@@ -160,46 +145,50 @@ void AboutDlg::localize(HWND hwnd) {
 					::SetDlgItemTextW(hwnd, ID_PLUGIN_VERSION_TXT,
 					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_VERSION_TXT));
 				} else if (sameString(msgId.pItem, L"about_rel_notes")) {
-					::SetDlgItemTextW(hwnd, ID_RELEASE_NOTES_LINK,
-					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_RELEASE_NOTES_TXT));
+					relNotes =
+					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_RELEASE_NOTES_TXT);
+					::SetDlgItemTextW(hwnd, ID_RELEASE_NOTES_LINK, relNotes.c_str());
 				} else if (sameString(msgId.pItem, L"about_bugs")) {
-					::SetDlgItemTextW(hwnd, ID_BUG_TRACKER_LINK,
-					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_BUG_TRACKER_TXT));
+					bugs = config.GetValue(section.c_str(), msgId.pItem, DEFAULT_BUG_TRACKER_TXT);
+					::SetDlgItemTextW(hwnd, ID_BUG_TRACKER_LINK, bugs.c_str());
 				} else if (sameString(msgId.pItem, L"about_downloads")) {
-					::SetDlgItemTextW(hwnd, ID_PLUGIN_REPO_LINK,
-					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_REPO_LINK_TXT));
+					repo = config.GetValue(section.c_str(), msgId.pItem, DEFAULT_REPO_LINK_TXT);
+					::SetDlgItemTextW(hwnd, ID_PLUGIN_REPO_LINK, repo.c_str());
 				} else if (sameString(msgId.pItem, L"about_license")) {
 					::SetDlgItemTextW(hwnd, ID_PLUGIN_LICENSE_TXT,
 					    config.GetValue(section.c_str(), msgId.pItem, PLUGIN_LICENSE));
 				} else if (sameString(msgId.pItem, L"about_3rd_party")) {
-					::SetDlgItemTextW(hwnd, ID_SIMPLEINI_TXT,
-					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_ABOUT_3RD_PARTY));
+					simpleIni =
+					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_ABOUT_3RD_PARTY);
+					::SetDlgItemTextW(hwnd, ID_SIMPLEINI_TXT, simpleIni.c_str());
 				} else if (sameString(msgId.pItem, L"about_3rd_party_also")) {
-					::SetDlgItemTextW(hwnd, ID_TINYXML_TXT,
-					    config.GetValue(
-						section.c_str(), msgId.pItem, DEFAULT_ABOUT_3RD_PARTY_ALSO));
+					tinyXml =
+					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_ABOUT_3RD_PARTY_ALSO);
+					::SetDlgItemTextW(hwnd, ID_TINYXML_TXT, tinyXml.c_str());
 				} else if (sameString(msgId.pItem, L"about_entities_file")) {
-					::SetDlgItemTextW(hwnd, ID_ENTITIES_FILE_LINK,
-					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_ENTITIES_FILE_TXT));
+					entities =
+					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_ENTITIES_FILE_TXT);
+					::SetDlgItemTextW(hwnd, ID_ENTITIES_FILE_LINK, entities.c_str());
 				} else if (sameString(msgId.pItem, L"about_l10n_file")) {
-					::SetDlgItemTextW(hwnd, ID_TRANSLATIONS_FILE_LINK,
-					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_L10N_FILE_TXT));
+					l10ns = config.GetValue(section.c_str(), msgId.pItem, DEFAULT_L10N_FILE_TXT);
+					::SetDlgItemTextW(hwnd, ID_TRANSLATIONS_FILE_LINK, l10ns.c_str());
 				} else if (sameString(msgId.pItem, L"about_unicode_format")) {
-					::SetDlgItemTextW(hwnd, ID_UNICODE_FMT_LABEL_TXT,
-					    config.GetValue(
-						section.c_str(), msgId.pItem, DEFAULT_UNICODE_FORMAT_LABEL));
+					fmtLbl =
+					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_UNICODE_FORMAT_LABEL);
+					::SetDlgItemTextW(hwnd, ID_UNICODE_FMT_LABEL_TXT, fmtLbl.c_str());
 				} else if (sameString(msgId.pItem, L"about_unicode_config")) {
-					::SetDlgItemTextW(hwnd, ID_UNICODE_CONFIG_LINK,
-					    config.GetValue(
-						section.c_str(), msgId.pItem, DEFAULT_UNICODE_CONFIG_LABEL));
+					cfgLbl =
+					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_UNICODE_CONFIG_LABEL);
+					::SetDlgItemTextW(hwnd, ID_UNICODE_CONFIG_LINK, cfgLbl.c_str());
 				}
 			} else { // Localize the Unicode format modal dialog
 				if (sameString(msgId.pItem, L"unicode_dlg_caption")) {
 					::SetWindowTextW(hwnd, config.GetValue(section.c_str(), msgId.pItem,
 								   DEFAULT_UNICODE_EDIT_CAPTION));
 				} else if (sameString(msgId.pItem, L"unicode_dlg_format")) {
-					::SetDlgItemTextW(hwnd, ID_CONFIG_LABEL_1,
-					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_UNICODE_EDIT_LABEL));
+					cfgDlgLbl =
+					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_UNICODE_EDIT_LABEL);
+					::SetDlgItemTextW(hwnd, ID_CONFIG_LABEL_1, cfgDlgLbl.c_str());
 				} else if (sameString(msgId.pItem, L"unicode_dlg_ok")) {
 					::SetDlgItemTextW(hwnd, IDOK,
 					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_UNICODE_BTN_OK_TXT));
@@ -214,9 +203,225 @@ void AboutDlg::localize(HWND hwnd) {
 				}
 			}
 		}
+
+		/* Customize the position and alignment of localized text items */
+		RECT bounds;
+		HDC hHDC = ::GetDC(nullDC);
+		::GetWindowRect(hwnd, &bounds);
+		if (hwnd == _hSelf) {
+			alignText(hwnd, ID_RELEASE_NOTES_LINK, relNotes, hHDC, bounds);
+			alignText(hwnd, ID_BUG_TRACKER_LINK, bugs, hHDC, bounds);
+			alignText(hwnd, ID_PLUGIN_REPO_LINK, repo, hHDC, bounds);
+
+			HWND dlgItem = ::GetDlgItem(hwnd, ID_PLUGIN_LICENSE_TXT);
+			LONG_PTR wstyle = static_cast<LONG_PTR>(::GetWindowLongPtrW(dlgItem, GWL_STYLE));
+			::SetWindowLongPtr(dlgItem, GWL_STYLE, wstyle | SS_CENTER);
+
+			alignText(hwnd, ID_SIMPLEINI_TXT, simpleIni, hHDC, bounds);
+			alignText(hwnd, ID_TINYXML_TXT, tinyXml, hHDC, bounds);
+			alignText(hwnd, ID_ENTITIES_FILE_LINK, entities, hHDC, bounds);
+			alignText(hwnd, ID_TRANSLATIONS_FILE_LINK, l10ns, hHDC, bounds);
+			alignText(hwnd, ID_UNICODE_FMT_LABEL_TXT, fmtLbl, hHDC, bounds);
+			alignText(hwnd, ID_UNICODE_CONFIG_LINK, cfgLbl, hHDC, bounds);
+		} else {
+			alignText(hwnd, ID_CONFIG_LABEL_1, cfgDlgLbl, hHDC, bounds);
+		}
+		::ReleaseDC(nullDC, hHDC);
 	} catch (...) {
 		config.~CSimpleIniTempl();
 	}
+}
+// --------------------------------------------------------------------------------------
+void AboutDlg::alignText(HWND hwndDlg, int id, std::wstring const &text, HDC const &hHDC, RECT const &rc) {
+	POINT pt;
+	SIZE sz;
+	TextDirection dir = (_isRTL ? TextDirection::RTL : TextDirection::LTR);
+	bool isHindi = plugin.menuLocale() == "hindi";
+	bool isSerbCyrl = plugin.menuLocale() == "serbianCyrillic";
+	bool isUkr = plugin.menuLocale() == "ukrainian";
+
+	int textLen = static_cast<int>(std::wcslen(text.c_str()));
+	::GetTextExtentPoint32W(hHDC, text.c_str(), textLen, &sz);
+
+	int charWidth = sz.cx / textLen;
+	double charSpacing = 1.25;
+	if ((hasWin11Dims && isHindi) || _isRTL)
+		charWidth *= 2 * dir;
+	if (_isBrahmic || (_isCyrillic))
+		charSpacing = 1.67;
+
+	HWND item = ::GetDlgItem(hwndDlg, id);
+	int scale = ::MapWindowPoints(item, hwndDlg, &pt, 1);
+	int offsetY = (scale >> 16) & 0xffff;
+	int cx = static_cast<int>(std::ceil(sz.cx * charSpacing));
+	int bias = static_cast<int>(std::ceil(charSpacing * charWidth));
+	double percentage = 1.0;
+
+	switch (id) {
+		case ID_PLUGIN_VERSION_TXT: {
+#ifdef _M_ARM
+			if (!(_isBrahmic || _isCyrillic))
+				charSpacing = 1;
+#else
+			if (_isBrahmic && hasWin11Dims)
+				charSpacing = 1.34;
+#endif
+			dir = TextDirection::LTR;
+			cx = static_cast<int>(std::ceil(sz.cx * charSpacing));
+
+			if (hasWin11Dims) {
+				if (_isBrahmic) {
+					percentage =
+#ifdef _M_ARM
+					    0.112;
+#else
+					    0.167;
+#endif
+					bias = static_cast<int>(std::ceil(cx * percentage));
+				} else if (isSerbCyrl || plugin.menuLocale() == "japanese") {
+					/* do nothing */
+				} else if (!(plugin.menuLocale() == LocalizedPlugin::defaultLangId || _isNonLatin)) {
+					bias = static_cast<int>(std::ceil(cx * 0.0315));
+				} else {
+					percentage = (isUkr ? 0.05 : 0.0834);
+#ifdef _M_ARM
+					if (_isCyrillic)
+						percentage = 0.05;
+#endif
+					bias = static_cast<int>(std::floor(cx * percentage));
+				}
+			} else {
+				if (_isBrahmic) {
+					percentage = ((isHindi || plugin.menuLocale() == "sinhala") ? 0.136 : 0.04175);
+#ifdef _M_ARM
+					if (isHindi || plugin.menuLocale() == "sinhala")
+						percentage = 0.0834;
+#endif
+					bias = static_cast<int>(std::ceil(cx * percentage));
+				} else if (!(plugin.menuLocale() == LocalizedPlugin::defaultLangId || _isNonLatin)) {
+					bias = static_cast<int>(std::ceil(cx * -0.10425));
+				} else {
+					percentage =
+#ifdef _M_ARM
+					    _isCyrillic ? (plugin.menuLocale() == "russian" ? 0 : -0.01752) : -0.0365;
+#else
+					    _isCyrillic ? 0.0209 : -0.0209;
+#endif
+					bias = static_cast<int>(std::floor(cx * percentage));
+				}
+			}
+			break;
+		}
+		case ID_RELEASE_NOTES_LINK:
+			if (isSerbCyrl)
+				bias += static_cast<int>(std::floor((rc.right - rc.left) * 0.015625));
+			else if (_isBrahmic || _isCyrillic) {
+				percentage = (hasWin11Dims ? (isUkr ? 0.0417 : 0.06255) : 0.07143);
+				bias += static_cast<int>(std::floor((rc.right - rc.left) * percentage));
+			}
+			break;
+		case ID_BUG_TRACKER_LINK:
+			[[fallthrough]];
+		case ID_PLUGIN_REPO_LINK:
+			[[fallthrough]];
+		case ID_ENTITIES_FILE_LINK:
+			[[fallthrough]];
+		case ID_TRANSLATIONS_FILE_LINK:
+			[[fallthrough]];
+		case ID_UNICODE_CONFIG_LINK:
+			if (id == ID_BUG_TRACKER_LINK && (hasWin11Dims && !(_isNonLatin || _isRTL))) {
+				bias += static_cast<int>(std::ceil(cx * 0.0625));
+				break;
+			} else if (id == ID_PLUGIN_REPO_LINK && _isCyrillic) {
+				percentage = (hasWin11Dims ? 0.03125 : 0.05);
+				bias += static_cast<int>(std::floor((rc.right - rc.left) * percentage));
+				break;
+			}
+
+			if (id != ID_BUG_TRACKER_LINK || !isSerbCyrl) {
+				if (isHindi)
+					bias += (rc.right - rc.left) >> (hasWin11Dims ? 5 : 4);
+				else if (_isBrahmic || _isCyrillic) {
+					percentage = (hasWin11Dims ? 0.0417 : 0.0625);
+					if (isUkr)
+						percentage *= 0.7;
+					bias += static_cast<int>(std::floor((rc.right - rc.left) * percentage));
+				}
+			}
+			break;
+		case ID_UNICODE_FMT_LABEL_TXT:
+			bias += static_cast<int>(std::ceil((rc.right - rc.left) * (_isBrahmic ? 0.225 : 0.125)));
+			break;
+		case ID_CONFIG_LABEL_1: {
+			RECT rc2;
+			::GetClientRect(::GetDlgItem(hwndDlg, id), &rc2);
+			bias += static_cast<int>(std::ceil(((cx >> 1) + rc2.right - rc2.left) * (_isCJK ? 0.4 : 0.7)));
+			break;
+		}
+		case ID_SIMPLEINI_TXT:
+			[[fallthrough]];
+		case ID_TINYXML_TXT: {
+			SIZE sz2;
+			int linkId = (id == ID_SIMPLEINI_TXT ? ID_SIMPLEINI_LINK : ID_TINYXML_LINK);
+			int textId = (id == ID_SIMPLEINI_TXT ? ID_SIMPLEINI_LICENSE_TXT : ID_TINYXML_LICENSE_TXT);
+			HWND hLink = ::GetDlgItem(_hSelf, linkId);
+			HWND hText = ::GetDlgItem(_hSelf, textId);
+			std::wstring dlgText(0x200, 0);
+			::GetDlgItemTextW(_hSelf, linkId, dlgText.data(), static_cast<int>(dlgText.size() - 1ULL));
+			int dlgTextLen = static_cast<int>(std::wcslen(dlgText.c_str()));
+			::GetTextExtentPoint32W(hHDC, dlgText.c_str(), dlgTextLen, &sz2);
+
+			int fraction = (_isCyrillic ? (hasWin11Dims ? 2 : 1) : (_isBrahmic ? 1 : 3));
+			bias += (this->getWidth() >> 2) + (sz.cx >> fraction);
+			int startPos = (this->getWidth() >> 1) - (sz.cx >> 1) - bias + charWidth;
+			if (_isBrahmic || _isCyrillic)
+				startPos += charWidth;
+
+			double displacement = 0.85;
+			if (!(hasWin11Dims || isSerbCyrl) && _isCyrillic)
+				displacement = 0.7;
+			else if (_isCJK || (hasWin11Dims && _isCyrillic))
+				displacement = 0.75;
+			else if (_isBrahmic || _isCyrillic)
+				displacement = 1;
+
+			bool isFarsi = plugin.menuLocale() == "farsi";
+			bool isHebrew = plugin.menuLocale() == "hebrew";
+
+			if (id == ID_SIMPLEINI_TXT) {
+				if (isFarsi)
+					displacement = (hasWin11Dims ? 1.34 : 0.85);
+				else if (!hasWin11Dims && _isRTL)
+					displacement = (isHebrew ? 1.34 : 1.25);
+				else if (_isRTL)
+					displacement = 1.8;
+			} else if (id == ID_TINYXML_TXT) {
+				if (isFarsi)
+					displacement = (hasWin11Dims ? 0.42 : 0.25);
+				else if (!hasWin11Dims && _isRTL)
+					displacement = (isHebrew ? 1 : 0.8);
+				else if (isHebrew)
+					displacement = 1.34;
+				else if (_isRTL)
+					displacement = 1.125;
+			}
+
+			int linkStart = (dir * startPos) + static_cast<int>(std::ceil(cx * displacement));
+			int linkStartAfter = (hasWin11Dims ? sz2.cx : static_cast<int>(std::ceil(sz2.cx * 0.75)));
+			if (!(hasWin11Dims || isSerbCyrl) && _isCyrillic)
+				linkStart += (linkStart >> 2);
+			int textStart = linkStart + linkStartAfter;
+			::SetWindowPos(hLink, HWND_TOP, linkStart, offsetY, sz2.cx, sz2.cy, defaultFlags);
+			::SetWindowPos(hText, HWND_TOP, textStart, offsetY, 0, 0, defaultFlags | SWP_NOSIZE);
+			break;
+		}
+		default:
+			break;
+	}
+	int offsetX = ((rc.right - rc.left) >> 1) - (sz.cx >> 1) - (dir * bias);
+	if (!(id == ID_PLUGIN_VERSION_TXT || hasWin11Dims || _isCyrillic || _isBrahmic))
+		offsetX += static_cast<int>(std::ceil(cx * 0.125));
+	::SetWindowPos(item, HWND_TOP, offsetX, offsetY, cx, sz.cy, defaultFlags);
 }
 // --------------------------------------------------------------------------------------
 INT_PTR CALLBACK AboutDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) {
@@ -236,7 +441,7 @@ INT_PTR CALLBACK AboutDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM lPara
 				::SendMessageW(hCtrl, WM_SETFONT, reinterpret_cast<WPARAM>(hActiveLinkFont), 0);
 			}
 
-			if (_dialogResource.locale != LocalizedPlugin::defaultLangId)
+			if (plugin.menuLocale() != LocalizedPlugin::defaultLangId)
 				localize(_hSelf);
 
 			std::wstringstream version;
@@ -247,19 +452,12 @@ INT_PTR CALLBACK AboutDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM lPara
 				<< L" ARM"
 #endif
 				<< L")";
-			POINT pt{};
-			HWND hwnd = ::GetDlgItem(_hSelf, ID_PLUGIN_VERSION_TXT);
-			::MapWindowPoints(hwnd, _hSelf, &pt, 1);
-			int offsetX =
-#ifdef _M_ARM
-			    18;
-#else
-			    0;
-#endif
-			if (pluginVersion.build > 0)
-				offsetX += 4;
-			::SetWindowPos(hwnd, 0, pt.x - offsetX, pt.y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
-			::SetDlgItemTextW(_hSelf, ID_PLUGIN_VERSION_TXT, &(version.str())[0]);
+			RECT rc;
+			HDC hHDC = ::GetDC(nullDC);
+			this->getClientRect(rc);
+			::SetDlgItemTextW(_hSelf, ID_PLUGIN_VERSION_TXT, version.str().c_str());
+			alignText(_hSelf, ID_PLUGIN_VERSION_TXT, version.str(), hHDC, rc);
+			::ReleaseDC(nullDC, hHDC);
 			result = TRUE;
 			break;
 		}
@@ -316,11 +514,17 @@ INT_PTR CALLBACK AboutDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM lPara
 			std::wstring targetURL;
 			bool hideOnReturn = true;
 			switch (wParam & 0xffff) {
-				case ID_UNICODE_CONFIG_LINK:
-					::DialogBoxParamW(_hInst, MAKEINTRESOURCE(_dialogResource.modal), _hSelf,
+				case ID_UNICODE_CONFIG_LINK: {
+					int dlgRes = ID_UNICODE_FMT_CONFIG_DLG;
+					if (_isRTL)
+						dlgRes = ID_UNICODE_FMT_CONFIG_DLG_RTL;
+					else if (_isCJK)
+						dlgRes = ID_UNICODE_FMT_CONFIG_DLG_CJK;
+					::DialogBoxParamW(_hInst, MAKEINTRESOURCE(dlgRes), _hSelf,
 					    (DLGPROC)modalDlgProc, reinterpret_cast<LPARAM>(this));
 					hideOnReturn = false;
 					break;
+				}
 				case ID_TRANSLATIONS_FILE_LINK:
 					plugin.openFile(&plugin.dlgTranslations.wstring()[0]);
 					plugin.openFile(&plugin.menuTranslations.wstring()[0]);

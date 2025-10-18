@@ -19,6 +19,22 @@ public:
 		return (_nativeLangId.find("english") != std::string::npos) ? defaultLangId : _nativeLangId;
 	}
 
+	bool menuLocaleIsRTL() const noexcept {
+		return std::find(rtlLangs.begin(), rtlLangs.end(), menuLocale()) != std::end(rtlLangs);
+	}
+
+	bool menuLocaleIsBrahmic() const noexcept {
+		return std::find(brahmicLangs.begin(), brahmicLangs.end(), menuLocale()) != std::end(brahmicLangs);
+	}
+
+	bool menuLocaleIsCyrillic() const noexcept {
+		return std::find(cyrillicLangs.begin(), cyrillicLangs.end(), menuLocale()) != std::end(cyrillicLangs);
+	}
+
+	bool menuLocaleIsCJK() const noexcept {
+		return std::find(cjkLangs.begin(), cjkLangs.end(), menuLocale()) != std::end(cjkLangs);
+	}
+
 	static inline std::string const &defaultLangId = "default";
 
 protected:
@@ -30,5 +46,11 @@ private:
 	path_t getNativeLangFile() const;
 	/// @brief @c true if N++ is v8.7 or later
 	bool supportsLocalizedPluginMenus() const noexcept;
+
+	/// TODO: Add all applicable Notepad++ localization identifiers to these lists
+	static inline const auto rtlLangs = { "arabic", "farsi", "hebrew" };
+	static inline const auto brahmicLangs = { "hindi", "sinhala", "tamil" };
+	static inline const auto cyrillicLangs = { "russian", "serbianCyrillic", "ukrainian" };
+	static inline const auto cjkLangs = { "chineseSimplified", "japanese", "korean" };
 };
 #endif // ~LOCALIZED_PLUGIN_H

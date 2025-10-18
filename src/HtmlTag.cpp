@@ -29,7 +29,6 @@ namespace {
 enum DecodeCmd { dcAuto = -1, dcEntity, dcUnicode };
 enum CmdMenuPosition { cmpAcEntities = 3, cmpUnicode, cmpEntities };
 
-bool menuLocaleIsRTL() noexcept;
 bool isWebDocument() noexcept;
 bool autoCompleteMatchingTag(const Sci_Position startPos, const char *tagName);
 void autoCompleteEntity(bool preferEmoji);
@@ -523,11 +522,6 @@ MenuTitles::MenuTitles() : HashedStringList<std::wstring>() {
 
 /////////////////////////////////////////////////////////////////////////////////////////
 namespace {
-bool menuLocaleIsRTL() noexcept {
-	const auto rtlLangs = { "arabic", "farsi", "hebrew" };
-	return std::find(rtlLangs.begin(), rtlLangs.end(), plugin.menuLocale()) != std::end(rtlLangs);
-}
-// --------------------------------------------------------------------------------------
 bool isWebDocument() noexcept {
 	const auto webLangs = { L_HTML, L_XML, L_PHP, L_ASP, L_JSP };
 	if (std::find(webLangs.begin(), webLangs.end(), plugin.documentLangType()) != std::end(webLangs))

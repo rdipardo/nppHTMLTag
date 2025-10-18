@@ -89,8 +89,7 @@ set (WINAPI_LIBS
 )
 
 target_link_libraries (${PROJECT_NAME} PRIVATE ${WINAPI_LIBS})
-file(GLOB LOCALIZED_DIALOGS "${CMAKE_SOURCE_DIR}/../Forms/localizations/*.rc")
-target_sources (${PROJECT_NAME} PRIVATE ${PROJECT_NAME}.rc ${LOCALIZED_DIALOGS})
+target_sources (${PROJECT_NAME} PRIVATE ${PROJECT_NAME}.rc)
 
 # ==================================================
 # Configure build mode
