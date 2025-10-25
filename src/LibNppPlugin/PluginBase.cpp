@@ -156,15 +156,15 @@ path_t PluginBase::pluginNameFromModule(HMODULE hInstace) {
 	const path_t modulePath = getModulePath(_hModule);
 	return modulePath.stem().native();
 }
+// --------------------------------------------------------------------------------------
+SciActiveDocument const &PluginBase::getDocument() const {
+	DWORD_PTR index = 0;
+	sendNppMessage(NPPM_GETCURRENTSCINTILLA, UNUSEDW, &index);
+	return _editor->getViews()[(index > 0)];
+}
 
 // --------------------------------------------------------------------------------------
 // SciApplication
-// --------------------------------------------------------------------------------------
-SciActiveDocument const &SciApplication::getDocument() const {
-	DWORD_PTR index = 0;
-	sendMessage(NPPM_GETCURRENTSCINTILLA, UNUSEDW, &index);
-	return getViews()[(index > 0)];
-}
 // --------------------------------------------------------------------------------------
 void SciApplication::setApiLevel(SciApiLevel api) {
 	SciViewList views = getViews();

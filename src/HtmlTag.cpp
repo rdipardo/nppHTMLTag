@@ -90,7 +90,7 @@ CMDMENUPROC commandEncodeEntitiesInclLineBreaks() {
 // --------------------------------------------------------------------------------------
 CMDMENUPROC commandDecodeEntities() {
 	CHECKCOMPATIBLE
-	if (!plugin.editor().activeDocument().currentSelection())
+	if (!plugin.activeDocument().currentSelection())
 		findAndDecode(0, dcEntity);
 	else
 		Entities::decode();
@@ -103,7 +103,7 @@ CMDMENUPROC commandEncodeJS() {
 // --------------------------------------------------------------------------------------
 CMDMENUPROC commandDecodeJS() {
 	CHECKCOMPATIBLE
-	if (!plugin.editor().activeDocument().currentSelection())
+	if (!plugin.activeDocument().currentSelection())
 		findAndDecode(0, dcUnicode);
 	else
 		Unicode::decode();
@@ -206,7 +206,7 @@ void HtmlTagPlugin::beNotified(SCNotification *scn) {
 		static intptr_t acInsertMode = SC_MULTIAUTOC_ONCE;
 		switch (scn->nmhdr.code) {
 			case SCN_AUTOCSELECTION:
-				acInsertMode = editor().activeDocument().sendMessage(SCI_AUTOCGETMULTI);
+				acInsertMode = activeDocument().sendMessage(SCI_AUTOCGETMULTI);
 				if (isWebDoc && isAutoCompletionCandidate &&
 				    autoCompleteMatchingTag(scn->position, scn->text)) {
 					SciViewList views = editor().getViews();
@@ -228,7 +228,7 @@ void HtmlTagPlugin::beNotified(SCNotification *scn) {
 				break;
 			case SCN_AUTOCCHARDELETED:
 				if (options.entityAutoCompletion && isWebDoc) {
-					SciActiveDocument doc = editor().activeDocument();
+					SciActiveDocument doc = activeDocument();
 					Sci_Position pos = doc.currentPosition();
 					int ch = static_cast<int>(doc.sendMessage(SCI_GETCHARAT, pos - 1));
 					if (isStartOfEntity(ch)) {
@@ -238,7 +238,7 @@ void HtmlTagPlugin::beNotified(SCNotification *scn) {
 				break;
 			case SCN_CHARADDED:
 				if ((scn->characterSource == SC_CHARACTERSOURCE_DIRECT_INPUT) &&
-				    !plugin.editor().activeDocument().currentSelection()) {
+				    !activeDocument().currentSelection()) {
 					findAndDecode(scn->ch);
 				}
 				if (options.entityAutoCompletion && isStartOfEntity(scn->ch) && isWebDoc) {
@@ -563,7 +563,7 @@ bool isWebDocument() noexcept {
 void autoCompleteEntity(bool preferEmoji) {
 	EntityList entities;
 	plugin.getEntities(entities, preferEmoji);
-	SciActiveDocument doc = plugin.editor().activeDocument();
+	SciActiveDocument const &doc = plugin.activeDocument();
 	int xpmId = preferEmoji ? XPM::getGitHubID() : XPM::getID();
 	std::stringstream delimBuf;
 	delimBuf << static_cast<char>(doc.sendMessage(SCI_AUTOCGETTYPESEPARATOR));
@@ -581,7 +581,7 @@ void autoCompleteEntity(bool preferEmoji) {
 // --------------------------------------------------------------------------------------
 bool autoCompleteMatchingTag(const Sci_Position startPos, const char *tagName) {
 	constexpr size_t maxTagLength = 72; // https://www.rfc-editor.org/rfc/rfc1866#section-3.2.3
-	SciActiveDocument doc = plugin.editor().activeDocument();
+	SciActiveDocument const &doc = plugin.activeDocument();
 
 	if (doc.getSelectionMode() != smStreamMulti || strlen(tagName) > maxTagLength) {
 		return false;
@@ -595,7 +595,7 @@ bool autoCompleteMatchingTag(const Sci_Position startPos, const char *tagName) {
 // --------------------------------------------------------------------------------------
 void findAndDecode(const int keyCode, DecodeCmd cmd) {
 	using Decoder = int (*)();
-	SciActiveDocument doc = plugin.editor().activeDocument();
+	SciActiveDocument const &doc = plugin.activeDocument();
 	int ch = keyCode & 0xff;
 
 	if ((cmd == dcAuto) && ((ch == 0x0D && doc.sendMessage(SCI_GETEOLMODE) == SC_EOL_CRLF) ||

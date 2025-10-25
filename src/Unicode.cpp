@@ -18,46 +18,25 @@ using HtmlTag::Entities::EntityReplacementScope;
 /////////////////////////////////////////////////////////////////////////////////////////
 namespace {
 int doEncode(std::wstring &text, bool multiSel);
-int doEncode(SciTextRange &range);
+[[maybe_unused]] int doEncode(SciTextRange &range);
 }
 
 // --------------------------------------------------------------------------------------
 // HtmlTag::Unicode
 // --------------------------------------------------------------------------------------
-void Unicode::encode(EntityReplacementScope scope) {
-	switch (scope) {
-		case EntityReplacementScope::ersDocument: {
-			SciActiveDocument doc = plugin.editor().activeDocument();
-			SciTextRange range = doc.getRange(0, doc.length());
-			doEncode(range);
-			range.clearSelection();
-			break;
-		}
-		case EntityReplacementScope::ersAllDocuments: {
-			for (size_t docIndex = 0; docIndex < plugin.editor().getViews().size; docIndex++) {
-				SciActiveDocument doc = plugin.editor().getViews()[docIndex];
-				SciTextRange range = doc.getRange(0, doc.length());
-				doEncode(range);
-				range.clearSelection();
-			}
-			break;
-		}
-		default: { // ersSelection
-			SciActiveDocument doc = plugin.editor().activeDocument();
-			std::wstring targetText{ doc.currentSelection().text() };
-			bool multiSel = (doc.getSelectionMode() != smStreamSingle);
-			if (doEncode(targetText, multiSel) > 0) {
-				doc.currentSelection() = &targetText[0];
-				doc.currentSelection().clearSelection();
-			}
-			break;
-		}
+void Unicode::encode(EntityReplacementScope /* scope */) {
+	SciActiveDocument const &doc = plugin.activeDocument();
+	std::wstring targetText{ doc.currentSelection().text() };
+	bool multiSel = (doc.getSelectionMode() != smStreamSingle);
+	if (doEncode(targetText, multiSel) > 0) {
+		doc.currentSelection() = &targetText[0];
+		doc.currentSelection().clearSelection();
 	}
 }
 // --------------------------------------------------------------------------------------
 int Unicode::decode() {
 	int result = 0;
-	SciActiveDocument doc = plugin.editor().activeDocument();
+	SciActiveDocument const &doc = plugin.activeDocument();
 
 	if (doc.getSelectionMode() != smStreamSingle)
 		return result;

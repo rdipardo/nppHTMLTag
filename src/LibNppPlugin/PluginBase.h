@@ -39,11 +39,9 @@ public:
 	void setApiLevel(SciApiLevel api) override;
 	HWND const &windowHandle() const noexcept { return _windowHandle; }
 	SciViewList const &getViews() const noexcept { return *_viewList; }
-	SciActiveDocument const &activeDocument() const { return getDocument(); }
 
 private:
 	std::unique_ptr<SciViewList> _viewList = nullptr;
-	SciActiveDocument const &getDocument() const;
 	explicit SciApplication(const NppData *data)
 	    : SciWindowedObject(data->_nppHandle),
 	      _viewList(std::make_unique<SciViewList>(data)) {}
@@ -91,7 +89,7 @@ public:
 	/// @brief @c true if the dark mode setting can be detected by sending @c NPPM_ISDARKMODEENABLED
 	bool isDarkModeEnabled() const;
 
-	SciApplication &editor() const noexcept { return *_editor; }
+	SciActiveDocument const &activeDocument() const { return getDocument(); }
 	HINSTANCE instance() const noexcept { return reinterpret_cast<HINSTANCE>(_hModule); }
 	NppData const &npp() const noexcept { return _data; }
 	Version const &nppVersion() const noexcept { return _nppVersion; }
@@ -102,12 +100,14 @@ public:
 
 protected:
 	path_t pluginNameFromModule(HMODULE hInstace);
+	SciApplication const &editor() const noexcept { return *_editor; }
 
 private:
 	HMODULE _hModule = nullptr;
 	NppData _data;
 	Version _nppVersion;
 	SciApplication *_editor = nullptr;
+	SciActiveDocument const &getDocument() const;
 };
 
 // --------------------------------------------------------------------------------------

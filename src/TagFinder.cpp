@@ -56,7 +56,7 @@ void TagFinder::findMatchingTag(SelectionOptions options) {
 	std::string tagName;
 	bool dispose = false;
 	SearchDirection searchDirection = dirUnknown;
-	SciActiveDocument doc = plugin.editor().activeDocument();
+	SciActiveDocument const &doc = plugin.activeDocument();
 	SciTextRange match{ doc };
 	std::shared_ptr<SciTextRange> currentTag = nullptr;
 	std::vector<TagPair> matchingTags;
@@ -251,7 +251,7 @@ void TagFinder::findMatchingTag(SelectionOptions options) {
 namespace {
 std::shared_ptr<SciTextRange> extractTagName(
     std::string &tagName, bool &isOpenTag, bool &isEndTag, Sci_Position tagPos) {
-	SciActiveDocument doc = plugin.editor().activeDocument();
+	SciActiveDocument const &doc = plugin.activeDocument();
 	bool closureFound = false;
 	isOpenTag = true;
 	isEndTag = false;
@@ -333,7 +333,7 @@ std::shared_ptr<SciTextRange> extractTagName(
 }
 // --------------------------------------------------------------------------------------
 void selectTags(SciTextRange *startTag, SciTextRange *endTag) {
-	SciActiveDocument doc = plugin.editor().activeDocument();
+	SciActiveDocument const &doc = plugin.activeDocument();
 	const std::wstring startTagName = startTag->text();
 	std::wstring tagNameBuf;
 	size_t tagAttrPos = pos(L" ", startTagName);

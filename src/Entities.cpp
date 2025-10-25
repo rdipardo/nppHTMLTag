@@ -21,46 +21,20 @@ int doEncode(std::wstring &text, EntityList const &entities, bool includeLineBre
 // --------------------------------------------------------------------------------------
 // HtmlTag::Entities
 // --------------------------------------------------------------------------------------
-void Entities::encode(EntityReplacementScope scope, bool includeLineBreaks) {
+void Entities::encode(EntityReplacementScope /* scope */, bool includeLineBreaks) {
 	EntityList entities{};
 	plugin.getEntities(entities);
-
-	switch (scope) {
-		case EntityReplacementScope::ersDocument: {
-			SciActiveDocument doc = plugin.editor().activeDocument();
-			SciTextRange range = doc.getRange(0, doc.length());
-			std::wstring text{ range.text() };
-			if (doEncode(text, entities, includeLineBreaks) > 0)
-				range = text;
-			break;
-		}
-
-		case EntityReplacementScope::ersAllDocuments: {
-			for (size_t docIndex = 0; docIndex < plugin.editor().getViews().size; docIndex++) {
-				SciActiveDocument doc = plugin.editor().getViews()[docIndex];
-				SciTextRange range = doc.getRange(0, doc.length());
-				std::wstring text{ range.text() };
-				if (doEncode(text, entities, includeLineBreaks) > 0)
-					range = text;
-			}
-			break;
-		}
-
-		default: { // ersSelection
-			SciActiveDocument doc = plugin.editor().activeDocument();
-			std::wstring text{ doc.currentSelection().text() };
-			if (doEncode(text, entities, includeLineBreaks) > 0) {
-				doc.currentSelection() = text;
-				doc.currentSelection().clearSelection();
-			}
-			break;
-		}
+	SciActiveDocument const &doc = plugin.activeDocument();
+	std::wstring text{ doc.currentSelection().text() };
+	if (doEncode(text, entities, includeLineBreaks) > 0) {
+		doc.currentSelection() = text;
+		doc.currentSelection().clearSelection();
 	}
 }
 // --------------------------------------------------------------------------------------
 int Entities::decode() {
 	int result = 0;
-	SciActiveDocument doc = plugin.editor().activeDocument();
+	SciActiveDocument const &doc = plugin.activeDocument();
 
 	if (doc.getSelectionMode() != smStreamSingle)
 		return result;
@@ -186,7 +160,7 @@ int Entities::decode() {
 namespace {
 int doEncode(std::wstring &text, Entities::EntityList const &entities, bool includeLineBreaks) {
 	int result = 0;
-	SciActiveDocument doc = plugin.editor().activeDocument();
+	SciActiveDocument const &doc = plugin.activeDocument();
 
 	if (!entities || doc.getSelectionMode() != smStreamSingle)
 		return result;
