@@ -35,6 +35,12 @@ enum TextDirection { RTL = -1, NONE, LTR };
 INT_PTR CALLBACK modalDlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK linkCtrlWndProc(HWND hLink, UINT message, WPARAM wParam, LPARAM lParam);
 
+bool minSubsystemVersionIsXP() noexcept {
+	const Version target{ 8, 4, 9 };
+	const intptr_t winOsVersion = plugin.sendNppMessage(NPPM_GETWINDOWSVERSION);
+	return plugin.nppVersion() < target && winOsVersion > WV_WIN10;
+}
+
 Version pluginVersion;
 HFONT hDefaultFont, hActiveLinkFont;
 bool hasWin11Dims;
@@ -59,7 +65,7 @@ constexpr int win11BorderPadding = 0x6;
 // AboutDlg
 // --------------------------------------------------------------------------------------
 AboutDlg::AboutDlg(HINSTANCE hInst, NppData const &data) : StaticDialog() {
-	hasWin11Dims = (::GetSystemMetrics(SM_CXPADDEDBORDER) >= win11BorderPadding);
+	hasWin11Dims = (::GetSystemMetrics(SM_CXPADDEDBORDER) >= win11BorderPadding || minSubsystemVersionIsXP());
 	pluginVersion = Version{ HTMLTAG_VERSION_WORDS };
 	Window::init(hInst, data._nppHandle);
 }
