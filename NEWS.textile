@@ -1,6 +1,11 @@
 
 h3. Released Versions
 
+* 1.5.5 (2025-10-28)
+** Fixed: ignore stray @﹤@'s when searching for start tags (#6, "#15":15) [3db20ae]
+** Changed: translating the About dialog no longer requires a resource file [ca3e62c]
+** Added: translations for Serbian (Latin and Cyrillic) ("#14":14)
+
 * 1.5.4 (2025-06-18)
 ** Fixed: HTML entities will be decoded even if the current selection contains a colon (@:@) [fd48ac0], regressed in [139908f]
 
@@ -15,7 +20,7 @@ This release includes all the same features and bug fixes as "v1.5.3":https://bi
 ** Changed: Windows XP is no longer supported [f8bfd81]. Note that Notepad++ requires at least Windows 7 since "version 8.4.7":compat
 ** Added: new option[^2^] to show an autocompletion list of entities when editing XML or HTML-based files [97d783e]
 
-bq. [^1.^] Edits to @dialogs.ini@ are applied immediately. However, changing the window position of translation text is not possible without editing the language's "RC script":rcs and "rebuilding":rebuilding the plugin. The main purpose of editable dialog text is to help future translators preview their work.
+bq. [^1.^] Edits to @dialogs.ini@ are applied immediately. -However, changing the window position of translation text is not possible without editing the language's "RC script":rcs and "rebuilding":rebuilding the plugin. The main purpose of editable dialog text is to help future translators preview their work.- (_Since v1.5.5, translated text is automatically positioned according to a best-effort algorithm._)
 
 bq. [^2.^] If you are upgrading, note that new menu items will _not_ be translated until you delete or rename the @localizations.ini@ file in @{%AppData%\Notepad++,$(PORTABLE_NPP_DIR)}\plugins\Config\HTMLTag@
 
@@ -150,6 +155,8 @@ bq. [^1.^] If you are upgrading, remove or rename your @entities.ini@ file in @%
 [11]https://github.com/rdipardo/nppHTMLTag/issues/11
 [12]https://github.com/rdipardo/nppHTMLTag/issues/12
 [13]https://github.com/rdipardo/nppHTMLTag/issues/13
+[14]https://github.com/rdipardo/nppHTMLTag/issues/14
+[15]https://github.com/rdipardo/nppHTMLTag/issues/15
 [cref]https://community.notepad-plus-plus.org/topic/22471/recompile-your-x64-plugins-with-new-header
 [cref-2]https://community.notepad-plus-plus.org/post/93441
 [jsDecodeBug]https://community.notepad-plus-plus.org/topic/18488/htmltag-1-1-plugin-broken-since-npp-7-7

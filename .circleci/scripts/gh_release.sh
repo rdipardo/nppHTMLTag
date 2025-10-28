@@ -1,12 +1,12 @@
 #!/usr/bin/bash
 #
 # Copyright (c) 2022,2025 Robert Di Pardo
-# License: https://github.com/rdipardo/nppFSIPlugin/blob/master/Copyright.txt
+# License: https://github.com/rdipardo/nppFSIPlugin/blob/master/.circleci/scripts/gh_release.sh
 #
 test -z "$GH_API_TOKEN_2025" && exit 0
 
 # https://discuss.circleci.com/t/circle-branch-and-pipeline-git-branch-are-empty/44317/3
-COMMIT=$(git rev-parse "${CIRCLE_TAG:-'@'}") \
+COMMIT=$(git rev-parse "${CIRCLE_TAG:-@}") \
   && TMP=$(git branch -a --contains $COMMIT) \
   && BRANCH="${TMP##*[ /]}"
 

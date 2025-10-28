@@ -20,8 +20,8 @@ This plugin provides the following core functions (see the full list of commands
 * HTML and XML tag jumping, synchronized tag renaming, and selection of tags with or without contents
 * HTML entity encoding/decoding (example: @é@ to @＆eacute;@)
 * Unicode character encoding/decoding (example: @é@ to @\u00E9@)
-* GitHub emoji decoding (example: @:clown_face:@ to 🤡)
-* autocompletion of HTML entities and GitHub emoji
+* Decoding (GitHub) emoji "shortcodes":sc (example: @:clown_face:@ to 🤡)
+* autocompletion of HTML entities and emoji shortcodes
 
 Visit "the wiki":https://github.com/rdipardo/nppHTMLTag/wiki for more detailed information and illustrations.
 
@@ -66,7 +66,7 @@ h2. Usage
 | Ctrl+Alt+T | to select only the contents between tags |
 | Ctrl+E | to encode all selected non-ASCII characters to their HTML entities |
 | Ctrl+Alt+E | same as Ctrl+E, but encodes line breaks as well |
-| Ctrl+Shift+E | to _decode_ all selected HTML entities or GitHub emoji |
+| Ctrl+Shift+E | to _decode_ all selected HTML entities or emoji shortcodes |
 | Alt+J | to encode all selected non-ASCII characters to their Unicode code point values |
 | Alt+Shift+J | to _decode_ all selected Unicode escape sequences |
 | | *Hint:* to decode entities when nothing is selected, position the caret after the target text and execute one of the commands above. |
@@ -94,3 +94,4 @@ h3. To do
 [autoclose]https://npp-user-manual.org/docs/auto-completion/#auto-insertion
 [autocomplete]https://npp-user-manual.org/docs/auto-completion/#how-to-make-it-work
 [pl-admin]https://npp-user-manual.org/docs/plugins/#install-using-plugins-admin
+[sc]https://emojipedia.org/shortcodes

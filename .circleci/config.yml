@@ -12,7 +12,8 @@ orbs:
 references:
   executor: &executor
     executor:
-      name: win/default
+      name: win/server-2022
+      version: '2024.12.1'
   development: &development
     filters:
       tags:
@@ -79,7 +80,8 @@ jobs:
   push-release:
     <<: *executor
     steps:
-      - checkout
+      - checkout:
+          method: full
       - attach_workspace:
           at: .
       - store_artifacts:
