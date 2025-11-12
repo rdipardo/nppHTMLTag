@@ -540,7 +540,7 @@ INT_PTR CALLBACK AboutDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM lPara
 					break;
 				case ID_RELEASE_NOTES_LINK: {
 					std::wstring url = RELEASE_NOTES_URL;
-					url = url.replace(url.find_first_of(L"HEAD"), url.size(),
+					url = url.replace(url.find(L"HEAD"), url.size(),
 					    L"v" + pluginVersion.str() + L"/NEWS.textile");
 					targetURL = (url.find(pluginVersion.str()) != std::wstring::npos)
 							? url

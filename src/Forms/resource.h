@@ -27,7 +27,7 @@
 
 #define ID_RELEASE_NOTES_LINK (ID_ABOUT_HTML_TAG_DLG + 0x2)
 #define DEFAULT_RELEASE_NOTES_TXT L"Release Notes"
-#define RELEASE_NOTES_URL L"https://bitbucket.org/rdipardo/htmltag/src/HEAD/NEWS.textile"
+#define RELEASE_NOTES_URL L"https://github.com/rdipardo/nppHTMLTag/blob/HEAD/NEWS.textile"
 
 #define ID_BUG_TRACKER_LINK (ID_ABOUT_HTML_TAG_DLG + 0x4)
 #define DEFAULT_BUG_TRACKER_TXT L"Bugs"
@@ -35,7 +35,7 @@
 
 #define ID_PLUGIN_REPO_LINK (ID_ABOUT_HTML_TAG_DLG + 0x8)
 #define DEFAULT_REPO_LINK_TXT L"Downloads"
-#define PLUGIN_REPO_URL L"https://bitbucket.org/rdipardo/htmltag/downloads";
+#define PLUGIN_REPO_URL L"https://github.com/rdipardo/nppHTMLTag/releases";
 
 #define ID_PLUGIN_AUTHOR_TXT (ID_ABOUT_HTML_TAG_DLG + 0x10)
 #define PLUGIN_AUTHOR_COPYRIGHT L"\251 2007-2020 Martijn Coppoolse (v0.1 - v1.1)"

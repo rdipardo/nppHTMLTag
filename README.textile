@@ -2,13 +2,13 @@ h1. HTML Tag plugin for Notepad++
 
 h2. Downloads
 
-h3. Current Versions (1.2.0, ...)
+h3. Current Versions (1.5.0, ...)
+
+* https://github.com/rdipardo/nppHTMLTag/releases
+
+h3. Old Versions
 
 * https://bitbucket.org/rdipardo/htmltag/downloads
-* https://github.com/rdipardo/nppHTMLTag/releases (mirror)
-
-h3. Old Versions (..., 1.1.0)
-
 * https://fossil.2of4.net/npp_htmltag
 
 *Note*

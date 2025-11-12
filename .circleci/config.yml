@@ -99,7 +99,6 @@ jobs:
       - run:
           name: Create Release
           command: |-
-            bash .circleci/scripts/bb_release.sh
             bash .circleci/scripts/gh_release.sh
           shell: bash.exe
           environment:
