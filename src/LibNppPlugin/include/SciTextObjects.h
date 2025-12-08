@@ -48,19 +48,18 @@ public:
 	virtual LRESULT sendMessage(const UINT msg, WPARAM wParam, void *lParam) const;
 	virtual void postMessage(const UINT msg, WPARAM wParam = UNUSEDW, LPARAM lParam = UNUSED) const;
 	virtual void postMessage(const UINT msg, WPARAM wParam, void *lParam) const;
+	virtual void setApiLevel(SciApiLevel api) { _apiLevel = api; }
 	SciApiLevel getApiLevel() const { return _apiLevel; }
 
 protected:
 	HWND _windowHandle;
 	SciApiLevel _apiLevel = SciApiLevel::sciApi_GTE_541;
-	virtual void setApiLevel(SciApiLevel api) { _apiLevel = api; }
 };
 
 // --------------------------------------------------------------------------------------
 // SciActiveDocument
 // --------------------------------------------------------------------------------------
 class SciActiveDocument : public SciWindowedObject {
-	friend SciTextRange;
 
 public:
 	explicit SciActiveDocument(HWND hWnd) : SciWindowedObject(hWnd) {
@@ -81,8 +80,6 @@ public:
 	Sci_Position nextLineStartPosition() const { return getNextLineStart(); }
 	Sci_Position length() const { return getLength(); }
 
-	void setApiLevel(SciApiLevel api) override { SciWindowedObject::setApiLevel(api); };
-
 private:
 	std::shared_ptr<SciSelection> _selection = nullptr;
 	SciSelection &getSelection() const;
@@ -100,7 +97,6 @@ private:
 // SciTextRange
 // --------------------------------------------------------------------------------------
 class SciTextRange {
-	friend SciActiveDocument;
 
 public:
 	explicit SciTextRange(SciActiveDocument const &editor_, Sci_Position startPos = 0, Sci_Position endPos = 0);

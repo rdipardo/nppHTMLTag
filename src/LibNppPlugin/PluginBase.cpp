@@ -167,6 +167,7 @@ SciActiveDocument const &PluginBase::getDocument() const {
 // SciApplication
 // --------------------------------------------------------------------------------------
 void SciApplication::setApiLevel(SciApiLevel api) {
+	SciWindowedObject::setApiLevel(api);
 	SciViewList views = getViews();
 	for (size_t i = 0; i < views.size; i++)
 		views[i].setApiLevel(api);

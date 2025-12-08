@@ -133,11 +133,11 @@ void SciActiveDocument::find(std::wstring const &text, SciTextRange &target, con
 	LRESULT rngStart = sendMessage(sciMsg, options, &ttf);
 
 	if (rngStart == INVALID_POSITION) {
-		target.setStart(0);
-		target.setEnd(0);
+		target.startPos(0);
+		target.endPos(0);
 	} else {
-		target.setStart(ttf.chrgText.cpMin);
-		target.setEnd(ttf.chrgText.cpMax);
+		target.startPos(ttf.chrgText.cpMin);
+		target.endPos(ttf.chrgText.cpMax);
 	}
 }
 // --------------------------------------------------------------------------------------
@@ -247,7 +247,7 @@ const std::wstring SciTextRange::text() {
 	if (getLength() <= 0)
 		return _text;
 
-	UINT sciMsg = (_editor._apiLevel < SciApiLevel::sciApi_GTE_523) ? SCI_GETTEXTRANGE : SCI_GETTEXTRANGEFULL;
+	UINT sciMsg = (_editor.getApiLevel() < SciApiLevel::sciApi_GTE_523) ? SCI_GETTEXTRANGE : SCI_GETTEXTRANGEFULL;
 	Sci_TextRangeFull tr = Sci_TextRangeFull{};
 	std::string lpstrText(getLength() + 1, 0);
 	tr.chrg.cpMin = _startPos;
@@ -262,7 +262,8 @@ const std::wstring SciTextRange::text() {
 void SciTextRange::setText(std::wstring const &value) {
 	Sci_Position txtRng = 0, nReplaced = 0;
 	std::string chars(sizeof(wchar_t) * value.size() + 1, 0);
-	UINT sciMsg = (_editor._apiLevel < SciApiLevel::sciApi_GTE_532) ? SCI_REPLACETARGET : SCI_REPLACETARGETMINIMAL;
+	UINT sciMsg =
+	    (_editor.getApiLevel() < SciApiLevel::sciApi_GTE_532) ? SCI_REPLACETARGET : SCI_REPLACETARGETMINIMAL;
 	textToBytes(&value[0], chars, (UINT)_editor.sendMessage(SCI_GETCODEPAGE));
 	txtRng = static_cast<Sci_Position>(chars.substr(0, chars.find_first_of('\0')).size());
 	_editor.sendMessage(SCI_SETTARGETSTART, _startPos);
