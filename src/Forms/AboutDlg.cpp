@@ -35,12 +35,6 @@ enum TextDirection { RTL = -1, NONE, LTR };
 INT_PTR CALLBACK modalDlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK linkCtrlWndProc(HWND hLink, UINT message, WPARAM wParam, LPARAM lParam);
 
-bool minSubsystemVersionIsXP() noexcept {
-	const Version target{ 8, 4, 9 };
-	const intptr_t winOsVersion = plugin.sendNppMessage(NPPM_GETWINDOWSVERSION);
-	return plugin.nppVersion() < target && winOsVersion > WV_WIN10;
-}
-
 Version pluginVersion;
 HFONT hDefaultFont, hActiveLinkFont;
 bool hasWin11Dims;
@@ -58,14 +52,24 @@ DialogHyperlink linkCtrls[] = {
 constexpr size_t nbLinkCtrls = ARRAYSIZE(linkCtrls);
 constexpr HWND nullDC = static_cast<HWND>(0ULL);
 constexpr unsigned defaultFlags = SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE;
-constexpr int win11BorderPadding = 0x6;
+
+extern "C" NTSYSAPI VOID NTAPI RtlGetNtVersionNumbers(
+    DWORD * /* NtMajorVersion */, DWORD * /* NtMinorVersion */, DWORD * /* NtBuildNumber */);
+
+bool isAtLeastWindows11(DWORD &major, DWORD &build) noexcept {
+	constexpr DWORD buildNrMask = ~0xF0000000;
+	::RtlGetNtVersionNumbers(&major, nullptr, &build);
+	build &= buildNrMask;
+	return major > 10 || (major == 10 && build >= 22000);
+}
 }
 
 // --------------------------------------------------------------------------------------
 // AboutDlg
 // --------------------------------------------------------------------------------------
 AboutDlg::AboutDlg(HINSTANCE hInst, NppData const &data) : StaticDialog() {
-	hasWin11Dims = (::GetSystemMetrics(SM_CXPADDEDBORDER) >= win11BorderPadding || minSubsystemVersionIsXP());
+	DWORD ntMajorVer = 0, ntBuildNr = 0;
+	hasWin11Dims = isAtLeastWindows11(ntMajorVer, ntBuildNr);
 	pluginVersion = Version{ HTMLTAG_VERSION_WORDS };
 	Window::init(hInst, data._nppHandle);
 }
@@ -76,6 +80,7 @@ void AboutDlg::show() {
 		_isCJK = plugin.menuLocaleIsCJK();
 		_isBrahmic = plugin.menuLocaleIsBrahmic();
 		_isCyrillic = plugin.menuLocaleIsCyrillic();
+		_isLatinSlavic = plugin.menuLocaleIsLatinSlavic();
 		_isNonLatin = (_isCJK || _isBrahmic || _isCyrillic);
 		int dlgRes = ID_ABOUT_HTML_TAG_DLG;
 		if (_isRTL)
@@ -242,8 +247,12 @@ void AboutDlg::alignText(HWND hwndDlg, int id, std::wstring const &text, HDC con
 	POINT pt;
 	SIZE sz;
 	TextDirection dir = (_isRTL ? TextDirection::RTL : TextDirection::LTR);
+	bool isFarsi = plugin.menuLocale() == "farsi";
+	bool isHebrew = plugin.menuLocale() == "hebrew";
 	bool isHindi = plugin.menuLocale() == "hindi";
+	bool isKorean = plugin.menuLocale() == "korean";
 	bool isSerbCyrl = plugin.menuLocale() == "serbianCyrillic";
+	bool isSinhala = plugin.menuLocale() == "sinhala";
 	bool isUkr = plugin.menuLocale() == "ukrainian";
 
 	int textLen = static_cast<int>(std::wcslen(text.c_str()));
@@ -298,18 +307,18 @@ void AboutDlg::alignText(HWND hwndDlg, int id, std::wstring const &text, HDC con
 				}
 			} else {
 				if (_isBrahmic) {
-					percentage = ((isHindi || plugin.menuLocale() == "sinhala") ? 0.136 : 0.04175);
+					percentage = ((isHindi || isSinhala) ? 0.136 : 0.04175);
 #ifdef _M_ARM
-					if (isHindi || plugin.menuLocale() == "sinhala")
+					if (isHindi || isSinhala)
 						percentage = 0.0834;
 #endif
 					bias = static_cast<int>(std::ceil(cx * percentage));
 				} else if (!(plugin.menuLocale() == LocalizedPlugin::defaultLangId || _isNonLatin)) {
-					bias = static_cast<int>(std::ceil(cx * -0.10425));
+					bias = static_cast<int>(std::ceil(cx * (isHebrew ? -0.04691 : -0.10425)));
 				} else {
 					percentage =
 #ifdef _M_ARM
-					    _isCyrillic ? (plugin.menuLocale() == "russian" ? 0 : -0.01752) : -0.0365;
+					    _isCyrillic ? (plugin.menuLocale() == "russian" ? 0 : -0.01752) : -0.045625;
 #else
 					    _isCyrillic ? 0.0209 : -0.0209;
 #endif
@@ -319,16 +328,30 @@ void AboutDlg::alignText(HWND hwndDlg, int id, std::wstring const &text, HDC con
 			break;
 		}
 		case ID_RELEASE_NOTES_LINK:
-			if (isSerbCyrl)
-				bias += static_cast<int>(std::floor((rc.right - rc.left) * 0.015625));
+			if (isSerbCyrl || (hasWin11Dims && isFarsi))
+				percentage = 0.015625;
 			else if (_isBrahmic || _isCyrillic) {
-				percentage = (hasWin11Dims ? (isUkr ? 0.0417 : 0.06255) : 0.07143);
-				bias += static_cast<int>(std::floor((rc.right - rc.left) * percentage));
+				if (hasWin11Dims) {
+					if (isUkr)
+						percentage = 0.0417;
+					else if (_isBrahmic)
+						percentage = isHindi ? 0.03125 : (isSinhala ? 0.05 : 0.07);
+					else
+						percentage = 0.06255;
+				} else
+					percentage = 0.07143;
 			}
+			if (static_cast<int>(percentage) < 1)
+				bias += static_cast<int>(std::floor((rc.right - rc.left) * percentage));
 			break;
 		case ID_BUG_TRACKER_LINK:
 			[[fallthrough]];
 		case ID_PLUGIN_REPO_LINK:
+			if (hasWin11Dims && plugin.menuLocale() == "romanian") {
+				percentage = (id == ID_BUG_TRACKER_LINK) ? 0.0208 : 0.0125;
+				bias += static_cast<int>(std::floor((rc.right - rc.left) * percentage));
+				break;
+			}
 			[[fallthrough]];
 		case ID_ENTITIES_FILE_LINK:
 			[[fallthrough]];
@@ -345,15 +368,48 @@ void AboutDlg::alignText(HWND hwndDlg, int id, std::wstring const &text, HDC con
 			}
 
 			if (id != ID_BUG_TRACKER_LINK || !isSerbCyrl) {
-				if (isHindi)
-					bias += (rc.right - rc.left) >> (hasWin11Dims ? 5 : 4);
-				else if (_isBrahmic || _isCyrillic) {
+				if (_isBrahmic) {
+					if (isHindi && !hasWin11Dims)
+						bias += (rc.right - rc.left) >> (hasWin11Dims ? 5 : 4);
+					else if (hasWin11Dims) {
+						switch (id) {
+							case ID_BUG_TRACKER_LINK:
+								if (!isHindi) {
+									percentage = isSinhala ? 0.02381 : 0.0417;
+									break;
+								}
+								[[fallthrough]];
+							case ID_PLUGIN_REPO_LINK:
+								if (!isHindi) {
+									percentage = isSinhala ? 0.0417 : 0.0625;
+									break;
+								}
+								[[fallthrough]];
+							case ID_ENTITIES_FILE_LINK:
+								if (isHindi)
+									percentage = 0.02381;
+								else
+									percentage = isSinhala ? 0.05 : 0.0417;
+								break;
+							case ID_TRANSLATIONS_FILE_LINK:
+								if (!isHindi) {
+									percentage = isSinhala ? 0.05 : 0.0625;
+									break;
+								}
+								[[fallthrough]];
+							case ID_UNICODE_CONFIG_LINK:
+								percentage = 0.0417;
+								break;
+						}
+					}
+				} else if (_isCyrillic) {
 					percentage = (hasWin11Dims ? 0.0417 : 0.0625);
 					if (isUkr)
 						percentage *= 0.7;
-					bias += static_cast<int>(std::floor((rc.right - rc.left) * percentage));
 				}
 			}
+			if (static_cast<int>(percentage) < 1)
+				bias += static_cast<int>(std::floor((rc.right - rc.left) * percentage));
 			break;
 		case ID_UNICODE_FMT_LABEL_TXT:
 			bias += static_cast<int>(std::ceil((rc.right - rc.left) * (_isBrahmic ? 0.225 : 0.125)));
@@ -377,22 +433,27 @@ void AboutDlg::alignText(HWND hwndDlg, int id, std::wstring const &text, HDC con
 			int dlgTextLen = static_cast<int>(std::wcslen(dlgText.c_str()));
 			::GetTextExtentPoint32W(hHDC, dlgText.c_str(), dlgTextLen, &sz2);
 
-			int fraction = (_isCyrillic ? (hasWin11Dims ? 2 : 1) : (_isBrahmic ? 1 : 3));
+			int fraction = 3;
+			if (_isCyrillic)
+				fraction = hasWin11Dims ? 2 : 1;
+			else if (_isBrahmic)
+				fraction = (!hasWin11Dims && isHindi) ? 0 : 1;
+
 			bias += (this->getWidth() >> 2) + (sz.cx >> fraction);
+
+			if (_isLatinSlavic)
+				bias += static_cast<int>(std::ceil(bias * 0.125));
 			int startPos = (this->getWidth() >> 1) - (sz.cx >> 1) - bias + charWidth;
 			if (_isBrahmic || _isCyrillic)
 				startPos += charWidth;
 
-			double displacement = 0.85;
+			double displacement = _isLatinSlavic ? 0.8667 : (hasWin11Dims ? 0.85 : 0.78);
 			if (!(hasWin11Dims || isSerbCyrl) && _isCyrillic)
 				displacement = 0.7;
 			else if (_isCJK || (hasWin11Dims && _isCyrillic))
-				displacement = 0.75;
+				displacement = (hasWin11Dims || isKorean) ? 0.75 : 0.65;
 			else if (_isBrahmic || _isCyrillic)
-				displacement = 1;
-
-			bool isFarsi = plugin.menuLocale() == "farsi";
-			bool isHebrew = plugin.menuLocale() == "hebrew";
+				displacement = (!hasWin11Dims && isHindi) ? 1.0625 : 1;
 
 			if (id == ID_SIMPLEINI_TXT) {
 				if (isFarsi)

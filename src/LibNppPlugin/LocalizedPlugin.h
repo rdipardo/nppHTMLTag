@@ -27,6 +27,11 @@ public:
 		return std::find(brahmicLangs.begin(), brahmicLangs.end(), menuLocale()) != std::end(brahmicLangs);
 	}
 
+	bool menuLocaleIsLatinSlavic() const noexcept {
+		return std::find(latinSlavicLangs.begin(), latinSlavicLangs.end(), menuLocale()) !=
+		       std::end(latinSlavicLangs);
+	}
+
 	bool menuLocaleIsCyrillic() const noexcept {
 		return std::find(cyrillicLangs.begin(), cyrillicLangs.end(), menuLocale()) != std::end(cyrillicLangs);
 	}
@@ -47,10 +52,15 @@ private:
 	/// @brief @c true if N++ is v8.7 or later
 	bool supportsLocalizedPluginMenus() const noexcept;
 
-	/// TODO: Add all applicable Notepad++ localization identifiers to these lists
-	static inline const auto rtlLangs = { "arabic", "farsi", "hebrew" };
-	static inline const auto brahmicLangs = { "hindi", "sinhala", "tamil" };
-	static inline const auto cyrillicLangs = { "russian", "serbianCyrillic", "ukrainian" };
-	static inline const auto cjkLangs = { "chineseSimplified", "japanese", "korean" };
+	static inline const auto rtlLangs = { "arabic", "farsi", "hebrew", "kurdish", "urdu", "uyghur" };
+	static inline const auto brahmicLangs = { "bengali", "georgian", "gujarati", "hindi", "kannada", "marathi",
+		"nepali", "punjabi", "sinhala", "tamil", "telugu", "thai" };
+	static inline const auto latinSlavicLangs = { "bosnian", "croatian", "czech", "latvian", "lithuanian", "polish",
+		"romanian", "serbian", "slovak", "slovenian", "uzbek" };
+	static inline const auto cyrillicLangs = { "abkhazian", "belarusian", "bulgarian", "kazakh", "kyrgyz",
+		"macedonian", "mongolian", "russian", "serbianCyrillic", "tajikCyrillic", "tatar", "ukrainian",
+		"uzbekCyrillic" };
+	static inline const auto cjkLangs = { "chineseSimplified", "japanese", "hongKongCantonese", "korean",
+		"taiwaneseMandarin" };
 };
 #endif // ~LOCALIZED_PLUGIN_H

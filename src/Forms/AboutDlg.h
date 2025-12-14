@@ -23,7 +23,8 @@ public:
 
 private:
 	bool _themeInitialized = false;
-	bool _isNonLatin = false, _isRTL = false, _isCJK = false, _isBrahmic = false, _isCyrillic = false;
+	bool _isNonLatin = false, _isRTL = false, _isCJK = false, _isBrahmic = false, _isCyrillic = false,
+	     _isLatinSlavic = false;
 	void alignText(HWND hwndDlg, int id, std::wstring const &text, HDC const &hdc, RECT const &rc);
 	INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) override;
 };

@@ -81,6 +81,7 @@ if (tinyxml2_ADDED)
 endif ()
 
 set (WINAPI_LIBS
+  ntdll.lib
   kernel32.lib
   user32.lib
   comdlg32.lib
