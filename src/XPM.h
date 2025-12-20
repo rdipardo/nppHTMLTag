@@ -13,11 +13,11 @@
 namespace HtmlTag {
 namespace Entities {
 	namespace XPM {
-		constexpr int decorationID = 0x7f;
-		constexpr int decorationDarkID = decorationID << 0x1;
-		constexpr int gitHubID = decorationID << 0x2;
-		constexpr int gitHubDarkID = decorationID << 0x3;
-		constexpr const char *decoration[] = {
+		inline constexpr int decorationID = 0x7f;
+		inline constexpr int decorationDarkID = decorationID << 0x1;
+		inline constexpr int gitHubID = decorationID << 0x2;
+		inline constexpr int gitHubDarkID = decorationID << 0x3;
+		inline constexpr const char *decoration[] = {
 			/* columns rows colors chars-per-pixel */
 			"16 16 2 1 ",
 			"  c #262626",
@@ -40,7 +40,7 @@ namespace Entities {
 			"zzzzzzzzzzzz zzz",
 			"zzzzzzzzzzzzzzzz",
 		};
-		constexpr const char *decorationDark[] = {
+		inline constexpr const char *decorationDark[] = {
 			/* columns rows colors chars-per-pixel */
 			"16 16 2 1 ",
 			"  c #A0A0A0",
@@ -63,7 +63,7 @@ namespace Entities {
 			"zzzzzzzzzzzz zzz",
 			"zzzzzzzzzzzzzzzz",
 		};
-		constexpr const char *gitHubDecoration[] = {
+		inline constexpr const char *gitHubDecoration[] = {
 			/* columns rows colors chars-per-pixel */
 			"16 16 4 1 ",
 			"  c None",
@@ -88,7 +88,7 @@ namespace Entities {
 			"   XXX    XXX   ",
 			"     o    o     ",
 		};
-		constexpr const char *gitHubDecorationDark[] = {
+		inline constexpr const char *gitHubDecorationDark[] = {
 			/* columns rows colors chars-per-pixel */
 			"16 16 2 1 ",
 			"  c None",

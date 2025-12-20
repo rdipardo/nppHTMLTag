@@ -646,10 +646,11 @@ void findAndDecode(const int keyCode, DecodeCmd cmd) {
 			chCurrent = static_cast<int>(doc.sendMessage(SCI_GETCHARAT, anchor - lenCodePt));
 			if (chCurrent == plugin.options.unicodePrefix[0]) {
 				doc.select(anchor - lenCodePt, lenCodePt);
-				int chValue =
-				    std::stoi(doc.currentSelection().text().substr(lenPrefix, 4), nullptr, 16);
-				if (chValue >= 0xD800 && chValue <= 0xDBFF) {
-					selStart -= lenCodePt;
+				const std::wstring &str = doc.currentSelection().text().substr(lenPrefix, 4);
+				if (std::all_of(str.begin(), str.end(), [](wchar_t ch) { return std::isxdigit(ch); })) {
+					int chValue = std::stoi(str, nullptr, 16);
+					if (chValue >= 0xD800 && chValue <= 0xDBFF)
+						selStart -= lenCodePt;
 				}
 			}
 			didReplace = replace(Unicode::decode, selStart, caret);
