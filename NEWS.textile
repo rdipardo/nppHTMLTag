@@ -2,92 +2,92 @@
 h3. Released Versions
 
 * 1.5.5 (2025-10-28)
-** Fixed: ignore stray @﹤@'s when searching for start tags (#6, "#15":15) [3db20ae]
-** Changed: translating the About dialog no longer requires a resource file [ca3e62c]
+** Fixed: ignore stray @﹤@ characters when searching for start tags (#6, "#15":15) ["3db20ae":https://github.com/rdipardo/nppHTMLTag/commit/3db20ae]
+** Changed: translating the About dialog no longer requires a resource file ["ca3e62c":https://github.com/rdipardo/nppHTMLTag/commit/ca3e62c]
 ** Added: translations for Serbian (Latin and Cyrillic) ("#14":14)
 
 * 1.5.4 (2025-06-18)
-** Fixed: HTML entities will be decoded even if the current selection contains a colon (@:@) [fd48ac0], regressed in [139908f]
+** Fixed: HTML entities will be decoded even if the current selection contains a colon (@:@) ["fd48ac0":https://github.com/rdipardo/nppHTMLTag/commit/fd48ac0], regressed in ["139908f":https://github.com/rdipardo/nppHTMLTag/commit/139908f]
 
 bq. *Note*
-This release includes all the same features and bug fixes as "v1.5.3":https://bitbucket.org/rdipardo/htmltag/src/d74b7de/NEWS.textile
+This release includes all the same features and bug fixes as "v1.5.3":https://github.com/rdipardo/nppHTMLTag/blob/d74b7de/NEWS.textile
 
 * 1.5.2 (2024-12-31)
-** Fixed: don't auto-decode entities farther back in the current line when the @ENTER@ key is pressed ("#12":12) [55d5d22], [6e3800c]
-** Fixed: calling a plugin command in the second Scintilla view will affect only that view, regressed in v1.5.0/1 ("#11":11) [6b9fb52]
-** Fixed: more regressions with tag matching ("#10":10) [5939c09] and tag selection [e0194fd]
-** Changed: dialog translation strings are now saved in a @dialogs.ini@ file[^1^] located in @{%AppData%\Notepad++,$(PORTABLE_NPP_DIR)}\plugins\Config\HTMLTag@ [0a4c16e]
-** Changed: Windows XP is no longer supported [f8bfd81]. Note that Notepad++ requires at least Windows 7 since "version 8.4.7":compat
-** Added: new option[^2^] to show an autocompletion list of entities when editing XML or HTML-based files [97d783e]
+** Fixed: don't auto-decode entities farther back in the current line when the @ENTER@ key is pressed ("#12":12) ["55d5d22":https://github.com/rdipardo/nppHTMLTag/commit/55d5d22], ["6e3800c":https://github.com/rdipardo/nppHTMLTag/commit/6e3800c]
+** Fixed: calling a plugin command in the second Scintilla view will affect only that view, regressed in v1.5.0/1 ("#11":11) ["6b9fb52":https://github.com/rdipardo/nppHTMLTag/commit/6b9fb52]
+** Fixed: more regressions with tag matching ("#10":10) ["5939c09":https://github.com/rdipardo/nppHTMLTag/commit/5939c09] and tag selection ["e0194fd":https://github.com/rdipardo/nppHTMLTag/commit/e0194fd]
+** Changed: dialog translation strings are now saved in a @dialogs.ini@ file[^1^] located in @{%AppData%\Notepad++,$(PORTABLE_NPP_DIR)}\plugins\Config\HTMLTag@ ["0a4c16e":https://github.com/rdipardo/nppHTMLTag/commit/0a4c16e]
+** Changed: Windows XP is no longer supported ["f8bfd81":https://github.com/rdipardo/nppHTMLTag/commit/f8bfd81]. Note that Notepad++ requires at least Windows 7 since "version 8.4.7":compat
+** Added: new option[^2^] to show an autocompletion list of entities when editing XML or HTML-based files ["97d783e":https://github.com/rdipardo/nppHTMLTag/commit/97d783e]
 
 bq. [^1.^] Edits to @dialogs.ini@ are applied immediately. -However, changing the window position of translation text is not possible without editing the language's "RC script":rcs and "rebuilding":rebuilding the plugin. The main purpose of editable dialog text is to help future translators preview their work.- (_Since v1.5.5, translated text is automatically positioned according to a best-effort algorithm._)
 
 bq. [^2.^] If you are upgrading, note that new menu items will _not_ be translated until you delete or rename the @localizations.ini@ file in @{%AppData%\Notepad++,$(PORTABLE_NPP_DIR)}\plugins\Config\HTMLTag@
 
 * 1.5.1 (2024-11-17)
-** Fixed: the tag matcher can distinguish parent elements from child ones, regressed in v1.5.0 ("#9":9) [31eca02], [4438502]
-** Fixed: the command menu follows the native language of non-portable N++ users, as well as portable ones [88dfaf6]
-** Changed: emoji with codepoints between U+010000 and U+10FFFF are encoded as Unicode scalars, not surrogate pairs, and they can now be (de/en)coded as HTML entities [9bdb140]
-** Changed: Windows on ARM64 users should not need to have a compatible Visual C++ runtime installed on their machines [c3ceba1]
-** Changed: HTML entity mappings will be reloaded if the INI file is edited in N++ [1403eff]
-** Added: help dialogs follow the user's native language (currently limited to 22 localizations) [3ea62bd]
+** Fixed: the tag matcher can distinguish parent elements from child ones, regressed in v1.5.0 ("#9":9) ["31eca02":https://github.com/rdipardo/nppHTMLTag/commit/31eca02], ["4438502":https://github.com/rdipardo/nppHTMLTag/commit/4438502]
+** Fixed: the command menu follows the native language of non-portable N++ users, as well as portable ones ["88dfaf6":https://github.com/rdipardo/nppHTMLTag/commit/88dfaf6]
+** Changed: emoji with codepoints between U+010000 and U+10FFFF are encoded as Unicode scalars, not surrogate pairs, and they can now be (de/en)coded as HTML entities ["9bdb140":https://github.com/rdipardo/nppHTMLTag/commit/9bdb140]
+** Changed: Windows on ARM64 users should not need to have a compatible Visual C++ runtime installed on their machines ["c3ceba1":https://github.com/rdipardo/nppHTMLTag/commit/c3ceba1]
+** Changed: HTML entity mappings will be reloaded if the INI file is edited in N++ ["1403eff":https://github.com/rdipardo/nppHTMLTag/commit/1403eff]
+** Added: help dialogs follow the user's native language (currently limited to 22 localizations) ["3ea62bd":https://github.com/rdipardo/nppHTMLTag/commit/3ea62bd]
 
 * 1.5.0 (2024-10-14)
 ** Fixed: decoding codepoints "between U+010000 and U+10FFFF":cref-2 finally Just Works(tm)
-** Changed: the source code has been rewritten in C++ [0d94837]
+** Changed: the source code has been rewritten in C++ ["0d94837":https://github.com/rdipardo/nppHTMLTag/commit/0d94837]
 ** Added: for _portable_ N++ users, the command menu follows the user's native language setting (currently limited to 22 languages; "#5":5)
 ** Added: for _portable_ N++ users, changing the editor's native language automatically updates the plugin menu (N++ 8.7 and newer)
 ** Added: first release for Windows on ARM64
 
 * 1.4.4 (2024-03-14)
-** Fixed: don't overwrite active selections when auto decoding is on ("#6":6) [0dd3aa6]
-** Fixed: position caret one space after auto-decoded entities [af8a88f], regressed by decrementing the initial value of @charOffset@ in [d59daf6]
-** Changed: roll back most of [a9c305c] and [d59daf6] to prevent overwriting multiple stream and rectangular selections [bf7a02d]
-** Changed: make Unicode conversions easier to undo [1c7a195]
+** Fixed: don't overwrite active selections when auto decoding is on ("#6":6) ["0dd3aa6":https://github.com/rdipardo/nppHTMLTag/commit/0dd3aa6]
+** Fixed: position caret one space after auto-decoded entities ["af8a88f":https://github.com/rdipardo/nppHTMLTag/commit/af8a88f], regressed by decrementing the initial value of @charOffset@ in ["d59daf6":https://github.com/rdipardo/nppHTMLTag/commit/d59daf6]
+** Changed: roll back most of ["a9c305c":https://github.com/rdipardo/nppHTMLTag/commit/a9c305c] and ["d59daf6":https://github.com/rdipardo/nppHTMLTag/commit/d59daf6] to prevent overwriting multiple stream and rectangular selections ["bf7a02d":https://github.com/rdipardo/nppHTMLTag/commit/bf7a02d]
+** Changed: make Unicode conversions easier to undo ["1c7a195":https://github.com/rdipardo/nppHTMLTag/commit/1c7a195]
 
 * 1.4.3 (2024-01-12)
-** Fixed: include semi-colons when decoding multi-selected named entities [08d07ec]
-** Fixed: avoid overwriting multi-selected tags when replacing them from an autocompletion list [203c3a9]
-** Fixed: avoid leaking memory when no valid start tag can be found [8d210c7]
-** Fixed: typing into the Unicode character prefix edit control now overwrites an active selection [f3e8786]
-** Changed: the Unicode prefix edit control now accepts a maximum of six characters [f3e8786]
+** Fixed: include semi-colons when decoding multi-selected named entities ["08d07ec":https://github.com/rdipardo/nppHTMLTag/commit/08d07ec]
+** Fixed: avoid overwriting multi-selected tags when replacing them from an autocompletion list ["203c3a9":https://github.com/rdipardo/nppHTMLTag/commit/203c3a9]
+** Fixed: avoid leaking memory when no valid start tag can be found ["8d210c7":https://github.com/rdipardo/nppHTMLTag/commit/8d210c7]
+** Fixed: typing into the Unicode character prefix edit control now overwrites an active selection ["f3e8786":https://github.com/rdipardo/nppHTMLTag/commit/f3e8786]
+** Changed: the Unicode prefix edit control now accepts a maximum of six characters ["f3e8786":https://github.com/rdipardo/nppHTMLTag/commit/f3e8786]
 
 * 1.4.1 (2023-07-26)
-** Added: new command to select matching tags [2ee0e5a]
+** Added: new command to select matching tags ["2ee0e5a":https://github.com/rdipardo/nppHTMLTag/commit/2ee0e5a]
 
 * 1.3.7 (2023-03-16)
-** Fixed: draw the About dialog with padded dimensions for N++ 8.4.9 and later [c4d621b]
-** Changed: copy HTML entities to the user's @Config@ directory for easier access and editing [b7ea8a5]
+** Fixed: draw the About dialog with padded dimensions for N++ 8.4.9 and later ["c4d621b":https://github.com/rdipardo/nppHTMLTag/commit/c4d621b]
+** Changed: copy HTML entities to the user's @Config@ directory for easier access and editing ["b7ea8a5":https://github.com/rdipardo/nppHTMLTag/commit/b7ea8a5]
 ** Changed: embed the logo from the old "Fossil repository":fossil in the DLL
 ** Changed: name release archives with dotted version numbers (to match the git tag; see next)
-** Added: a Circle CI workflow now builds release archives and updates "the release feed":mirror on GitHub [f916756], [d3c7d6d]
+** Added: a Circle CI workflow now builds release archives and updates "the release feed":mirror on GitHub ["f916756":https://github.com/rdipardo/nppHTMLTag/commit/f916756], ["d3c7d6d":https://github.com/rdipardo/nppHTMLTag/commit/d3c7d6d]
 
 * 1.3.6 (2022-11-25)
-** Fixed: remove calls to obsolete style byte APIs [3932513]
-** Changed: remove the non-Unicode compile-time option [eb11bf7]
-** Changed: call Scintilla's full-range APIs in editors that have them [5951d5b], [cffe269]
-** Changed: the About dialog dynamically sets line spacing [36a676c], and has a new dark theme [b6ebd72]
+** Fixed: remove calls to obsolete style byte APIs ["3932513":https://github.com/rdipardo/nppHTMLTag/commit/3932513]
+** Changed: remove the non-Unicode compile-time option ["eb11bf7":https://github.com/rdipardo/nppHTMLTag/commit/eb11bf7]
+** Changed: call Scintilla's full-range APIs in editors that have them ["5951d5b":https://github.com/rdipardo/nppHTMLTag/commit/5951d5b], ["cffe269":https://github.com/rdipardo/nppHTMLTag/commit/cffe269]
+** Changed: the About dialog dynamically sets line spacing ["36a676c":https://github.com/rdipardo/nppHTMLTag/commit/36a676c], and has a new dark theme ["b6ebd72":https://github.com/rdipardo/nppHTMLTag/commit/b6ebd72]
 
 * 1.3.5 (2022-08-18)
-** Fixed: prevent fpGUI from loading COM libraries that aren't thread safe in the context of DllMain (#4) [2286688]
-** Fixed: resize the About dialog after construction so long file paths are always legible [538d950]
+** Fixed: prevent fpGUI from loading COM libraries that aren't thread safe in the context of DllMain (#4) ["2286688":https://github.com/rdipardo/nppHTMLTag/commit/2286688]
+** Fixed: resize the About dialog after construction so long file paths are always legible ["538d950":https://github.com/rdipardo/nppHTMLTag/commit/538d950]
 
 * 1.2.3 (2022-04-14)
-** Fixed: don't fail the compatibility check when Notepad++ moves to a "short" version like 8.4 (#2) [ea0118f]
+** Fixed: don't fail the compatibility check when Notepad++ moves to a "short" version like 8.4 (#2) ["ea0118f":https://github.com/rdipardo/nppHTMLTag/commit/ea0118f]
 
 * 1.2.2 (2022-03-31)
-** Fixed: always treat selected text as UTF-8 when encoding entities (#1) [d2189a1]
-** Fixed: disable plugin functions for N++ versions 8.1.9.1, 8.1.9.2 and 8.1.9.3 [4a496ff]
-** Changed: when targeting Scintilla 5, add 1 to the length returned by @SCI_GETTEXT@ [4a496ff]
+** Fixed: always treat selected text as UTF-8 when encoding entities (#1) ["d2189a1":https://github.com/rdipardo/nppHTMLTag/commit/d2189a1]
+** Fixed: disable plugin functions for N++ versions 8.1.9.1, 8.1.9.2 and 8.1.9.3 ["4a496ff":https://github.com/rdipardo/nppHTMLTag/commit/4a496ff]
+** Changed: when targeting Scintilla 5, add 1 to the length returned by @SCI_GETTEXT@ ["4a496ff":https://github.com/rdipardo/nppHTMLTag/commit/4a496ff]
 
 * 1.2.1 (2022-02-27)
-** Fixed: the JavaScript decoder no longer skips codes at line ends when processing multi-line sequences [82f9b0e]
-** Changed: disable plugin functions when loaded into N++ versions older than 8.3 [9862bfd]
-** Changed: refactor all Scintilla API procedures to accommodate massive files of >2GiB (N++ 8.3 feature) [ad2e69c]
-** Changed: show which directories were searched when HTML entities file can't be found [2dd338c]
-** Changed: change the default key mappings of the JS (de/en)code functions to avoid collisions with N++'s builtin line operations [92dce18]
-** Added: update the README with minimum N++ version requirement [1ff61a7]
-** Added: new default mappings for encoding line breaks and tag content selection [92dce18]
+** Fixed: the JavaScript decoder no longer skips codes at line ends when processing multi-line sequences ["82f9b0e":https://github.com/rdipardo/nppHTMLTag/commit/82f9b0e]
+** Changed: disable plugin functions when loaded into N++ versions older than 8.3 ["9862bfd":https://github.com/rdipardo/nppHTMLTag/commit/9862bfd]
+** Changed: refactor all Scintilla API procedures to accommodate massive files of >2GiB (N++ 8.3 feature) ["ad2e69c":https://github.com/rdipardo/nppHTMLTag/commit/ad2e69c]
+** Changed: show which directories were searched when HTML entities file can't be found ["2dd338c":https://github.com/rdipardo/nppHTMLTag/commit/2dd338c]
+** Changed: change the default key mappings of the JS (de/en)code functions to avoid collisions with N++'s builtin line operations ["92dce18":https://github.com/rdipardo/nppHTMLTag/commit/92dce18]
+** Added: update the README with minimum N++ version requirement ["1ff61a7":https://github.com/rdipardo/nppHTMLTag/commit/1ff61a7]
+** Added: new default mappings for encoding line breaks and tag content selection ["92dce18":https://github.com/rdipardo/nppHTMLTag/commit/92dce18]
 
 * 1.2.0 (2022-02-05)
 ** Fixed: made it safe for x64 binaries to call into the @SCI_GETTEXTRANGE@ API without causing access violations in Notepad++ 8.3. Go "here":cref for a brief summary of the "breaking change":db330832 this addresses
@@ -97,53 +97,53 @@ bq. [^2.^] If you are upgrading, note that new menu items will _not_ be translat
 h3. Unreleased, Unstable Versions
 
 * 1.5.3 (2025-06-16)
-** Fixed: text containing 4-digit Unicode escapes will decode as expected, regressed in v1.5.0/2 ("#13":13) [6a27eb9]
-** Fixed: alphanumeric entities like @＆sup1;@ will decode as expected, also regressed in v1.5.0/2 [0c67848]
-** Added: "GitHub emoji":https://gist.github.com/rxaviers/7360908 can be decoded by the 'Decode entities' command[^1^] and inserted when entity autocompletion is enabled [139908f]
+** Fixed: text containing 4-digit Unicode escapes will decode as expected, regressed in v1.5.0/2 ("#13":13) ["6a27eb9":https://github.com/rdipardo/nppHTMLTag/commit/6a27eb9]
+** Fixed: alphanumeric entities like @＆sup1;@ will decode as expected, also regressed in v1.5.0/2 ["0c67848":https://github.com/rdipardo/nppHTMLTag/commit/0c67848]
+** Added: "GitHub emoji":https://gist.github.com/rxaviers/7360908 can be decoded by the 'Decode entities' command[^1^] and inserted when entity autocompletion is enabled ["139908f":https://github.com/rdipardo/nppHTMLTag/commit/139908f]
 
 bq. [^1.^] If you are upgrading, remove or rename your @entities.ini@ file in @%AppData%\Notepad++\plugins\Config\HTMLTag@ or @$(PORTABLE_NPP_DIR)\plugins\Config\HTMLTag@ to recreate the list of entity name mappings. Existing configurations will _not_ be overwritten.
 
 * 1.4.2 (2024-01-10)
-** Fixed: (de/en)code multiple stream selections in place [d59daf6]
-** Fixed: correctly measure the target range of rectangular selections and (de/en)code them in place [a9c305c]
-** Fixed: reposition the caret _after_ (not before) automatically replaced Unicode characters, same as entities [7fb8043]
-** Fixed: restore backward compatibility with N++ 8.4.1/2, regressed in 5951d5b, by checking for zero-padded version words [7fb8043]
-** Fixed: restore the About form's dimensions in N++ 8.4.1 thru 8.4.8, regressed in c4d621b [7fb8043]
-** Fixed: don't export functions with mangled names [9ef7a60]
-** Changed: when matching tags are selected, replace both if one of them is autocompleted [bfcf374]
-** Changed: send @SCI_REPLACETARGETMINIMAL@ when replacing Unicode character ranges [7fb8043]
-** Changed: remove some runtime checks to reduce binary size [2478b15]
-** Added: new option to configure the prefix used to detect Unicode escape characters [a2d8d08]
+** Fixed: (de/en)code multiple stream selections in place ["d59daf6":https://github.com/rdipardo/nppHTMLTag/commit/d59daf6]
+** Fixed: correctly measure the target range of rectangular selections and (de/en)code them in place ["a9c305c":https://github.com/rdipardo/nppHTMLTag/commit/a9c305c]
+** Fixed: reposition the caret _after_ (not before) automatically replaced Unicode characters, same as entities ["7fb8043":https://github.com/rdipardo/nppHTMLTag/commit/7fb8043]
+** Fixed: restore backward compatibility with N++ 8.4.1/2, regressed in 5951d5b, by checking for zero-padded version words ["7fb8043":https://github.com/rdipardo/nppHTMLTag/commit/7fb8043]
+** Fixed: restore the About form's dimensions in N++ 8.4.1 thru 8.4.8, regressed in c4d621b ["7fb8043":https://github.com/rdipardo/nppHTMLTag/commit/7fb8043]
+** Fixed: don't export functions with mangled names ["9ef7a60":https://github.com/rdipardo/nppHTMLTag/commit/9ef7a60]
+** Changed: when matching tags are selected, replace both if one of them is autocompleted ["bfcf374":https://github.com/rdipardo/nppHTMLTag/commit/bfcf374]
+** Changed: send @SCI_REPLACETARGETMINIMAL@ when replacing Unicode character ranges ["7fb8043":https://github.com/rdipardo/nppHTMLTag/commit/7fb8043]
+** Changed: remove some runtime checks to reduce binary size ["2478b15":https://github.com/rdipardo/nppHTMLTag/commit/2478b15]
+** Added: new option to configure the prefix used to detect Unicode escape characters ["a2d8d08":https://github.com/rdipardo/nppHTMLTag/commit/a2d8d08]
 
 * 1.4.0 (2023-07-18)
-** Changed: upgrade entity mappings to the HTML 5 specification [fccd1a0]
-** Changed: keep the entities file in a subfolder of the plugin config directory [34ae163]
-** Changed: remap some default shortcuts to avoid conflicts [a1f25bb]
-** Added: decode multibyte glyphs and emoji [8e66ddb]
-** Added: automatically decode entities/escape characters when typing, or on command when the caret is adjacent [85442c3], [abcd2fb]
+** Changed: upgrade entity mappings to the HTML 5 specification ["fccd1a0":https://github.com/rdipardo/nppHTMLTag/commit/fccd1a0]
+** Changed: keep the entities file in a subfolder of the plugin config directory ["34ae163":https://github.com/rdipardo/nppHTMLTag/commit/34ae163]
+** Changed: remap some default shortcuts to avoid conflicts ["a1f25bb":https://github.com/rdipardo/nppHTMLTag/commit/a1f25bb]
+** Added: decode multibyte glyphs and emoji ["8e66ddb":https://github.com/rdipardo/nppHTMLTag/commit/8e66ddb]
+** Added: automatically decode entities/escape characters when typing, or on command when the caret is adjacent ["85442c3":https://github.com/rdipardo/nppHTMLTag/commit/85442c3], ["abcd2fb":https://github.com/rdipardo/nppHTMLTag/commit/abcd2fb]
 
 * 1.3.4 (2022-07-15)
-** Fixed: display all message dialog text as Unicode [86211bd]
-** Fixed: purge unused type definitions and resolve some compiler warnings [6309167], [794b2a6]
-** Changed: the Scintilla interface now reflects v5.2.3 [23af405]
+** Fixed: display all message dialog text as Unicode ["86211bd":https://github.com/rdipardo/nppHTMLTag/commit/86211bd]
+** Fixed: purge unused type definitions and resolve some compiler warnings ["6309167":https://github.com/rdipardo/nppHTMLTag/commit/6309167], ["794b2a6":https://github.com/rdipardo/nppHTMLTag/commit/794b2a6]
+** Changed: the Scintilla interface now reflects v5.2.3 ["23af405":https://github.com/rdipardo/nppHTMLTag/commit/23af405]
 
 * 1.3.3 (2022-06-20)
-** Fixed: use Unicode API functions to locate plugin module and entities file path [6ee5ae0]
-** Fixed: restore selection area around decoded JavaScript entities [5fad78a]
-** Fixed: correct length-always-zero conversion error in @TActiveDocument.GetText@ and make @SetText@ consider document encoding [80cd87a]
-** Changed: open the entities file in Notepad++ when the About dialog is clicked [6ee5ae0]
+** Fixed: use Unicode API functions to locate plugin module and entities file path ["6ee5ae0":https://github.com/rdipardo/nppHTMLTag/commit/6ee5ae0]
+** Fixed: restore selection area around decoded JavaScript entities ["5fad78a":https://github.com/rdipardo/nppHTMLTag/commit/5fad78a]
+** Fixed: correct length-always-zero conversion error in @TActiveDocument.GetText@ and make @SetText@ consider document encoding ["80cd87a":https://github.com/rdipardo/nppHTMLTag/commit/80cd87a]
+** Changed: open the entities file in Notepad++ when the About dialog is clicked ["6ee5ae0":https://github.com/rdipardo/nppHTMLTag/commit/6ee5ae0]
 
 * 1.3.1, 1.3.2 (2022-06-12)
-** Fixed: encode text selections according to the document's code page (#3) [280d9fd]
-** Fixed: unmatched tags no longer hang up the editor [5c4de22], as was reported "here":tagFinderHangs
-** Fixed: the source licence is now more compliant with the GPL-covered units borrowed from DBGp [9da9a57]
+** Fixed: encode text selections according to the document's code page (#3) ["280d9fd":https://github.com/rdipardo/nppHTMLTag/commit/280d9fd]
+** Fixed: unmatched tags no longer hang up the editor ["5c4de22":https://github.com/rdipardo/nppHTMLTag/commit/5c4de22], as was reported "here":tagFinderHangs
+** Fixed: the source licence is now more compliant with the GPL-covered units borrowed from DBGp ["9da9a57":https://github.com/rdipardo/nppHTMLTag/commit/9da9a57]
 ** Changed: upgraded project to Lazarus 2.2.2 (FPC remains the same at 3.2.2)
 
 * 1.3.0 (2022-06-07) _*unstable*_
-** Fixed: resolve a memory leak in the JavaScript decoder [4fc5a0b]
-** Changed: conceal deprecated Scintilla messages from the compiler and pad the return value of @TActiveDocument.GetText@ [6947aab]
-** Changed: future-proof the compatibility check by using the zero-padded editor version number, available since N++ 8.4.1 [fde2a41]
-** Changed: the About dialog is now an interactive form [b4710f8]
+** Fixed: resolve a memory leak in the JavaScript decoder ["4fc5a0b":https://github.com/rdipardo/nppHTMLTag/commit/4fc5a0b]
+** Changed: conceal deprecated Scintilla messages from the compiler and pad the return value of @TActiveDocument.GetText@ ["6947aab":https://github.com/rdipardo/nppHTMLTag/commit/6947aab]
+** Changed: future-proof the compatibility check by using the zero-padded editor version number, available since N++ 8.4.1 ["fde2a41":https://github.com/rdipardo/nppHTMLTag/commit/fde2a41]
+** Changed: the About dialog is now an interactive form ["b4710f8":https://github.com/rdipardo/nppHTMLTag/commit/b4710f8]
 ** Changed: migrated project to Free Pascal and Lazarus 2.2.0
 
 
@@ -162,7 +162,7 @@ bq. [^1.^] If you are upgrading, remove or rename your @entities.ini@ file in @%
 [jsDecodeBug]https://community.notepad-plus-plus.org/topic/18488/htmltag-1-1-plugin-broken-since-npp-7-7
 [jsDecodeBugOrig]https://fossil.2of4.net/npp_htmltag/tktview?name=c3c733e21f
 [compat]https://github.com/notepad-plus-plus/notepad-plus-plus/blob/master/SUPPORTED_SYSTEM.md#supported-os-table
-[rcs]https://bitbucket.org/rdipardo/htmltag/src/default/src/Forms/localizations
+[rcs]https://github.com/rdipardo/nppHTMLTag/tree/default/src/Forms/localizations
 [rebuilding]https://github.com/rdipardo/nppHTMLTag/wiki/build
 [tagFinderHangs]https://community.notepad-plus-plus.org/topic/22503/new-version-of-html-tag/24
 [fossil]https://fossil.2of4.net/npp_htmltag

@@ -82,9 +82,9 @@ h3. To do
 * Add command to encode entities in the contents only (only apply encoding when not inside tags;
   leave valid tags and entities alone)
 * -Add command to select tags only (and leave the contents out of the selection)-
-  Added in "1.4.1":https://bitbucket.org/rdipardo/htmltag/src/v1.4.1/NEWS.textile
+  Added in "1.4.1":https://github.com/rdipardo/nppHTMLTag/blob/v1.4.1/NEWS.textile
 * Make it play nice(r) with PHP & ASP tags (either highlight those separately or ignore them)
-* -Add option to encode entities 'as-you-type'- Added in "1.4.0":https://bitbucket.org/rdipardo/htmltag/src/v1.4.0/NEWS.textile
+* -Add option to encode entities 'as-you-type'- Added in "1.4.0":https://github.com/rdipardo/nppHTMLTag/blob/v1.4.0/NEWS.textile
 * -Add option to close tags 'as-you-type' (type '</' and the rest will be inserted automagically)-
   Not needed if "tag auto-closing":autoclose is enabled in Notepad++
 * -drop down a list of tags after '<'-
