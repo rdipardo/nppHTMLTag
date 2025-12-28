@@ -1,0 +1,117 @@
+#
+# SPDX-FileCopyrightText: (c) 2025 Robert Di Pardo <dipardo.r@gmail.com>
+# SPDX-License-Identifier: MPL-2.0
+#
+name: MSVC
+on:
+  pull_request:
+  push:
+    tags:
+      - '**'
+    branches-ignore:
+      - 'objpas'
+      - 'dependabot/**'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: 'Build project with MSVC'
+    runs-on: windows-2022
+    strategy:
+      matrix:
+        target: [x86, x64, amd64_arm64]
+    env:
+      TARGETS: |
+        { "x64": "x64",
+          "x86": "x86",
+          "amd64_arm64": "arm64" }
+    steps:
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      with:
+        persist-credentials: false
+
+    - name: Set up MSVC
+      uses: TheMrMilchmann/setup-msvc-dev@79dac248aac9d0059f86eae9d8b5bfab4e95e97c # v4.0.0
+      with:
+        arch: ${{ matrix.target }}
+        sdk: '10.0.17763.0'    
+
+    - name: Build
+      run: .\build.cmd Release ${{ fromJSON(env.TARGETS)[matrix.target] }} clean nmake
+
+    # https://fossil.2of4.net/npp_htmltag/doc/trunk/doc/HTMLTag-readme.txt
+    - name: HTMLTag.dll -> HTMLTag_unicode.dll
+      if: matrix.target == 'x86'
+      run: mv -Force .\HTMLTag.dll .\HTMLTag_unicode.dll
+      working-directory: out/${{ matrix.target }}/Release
+
+    - name: Copy build artifacts
+      run: |
+        xcopy /DVY .\out\${{ fromJSON(env.TARGETS)[matrix.target] }}\Release\*.dll ".\out"
+        xcopy /DVY .\dat\*.ini ".\out"
+        xcopy /DIY .\*.textile ".\out\Doc"
+
+    - name: Upload HTMLTag-${{ github.run_id }}-${{ env.PLATFORM }}
+      env:
+        PLATFORM: ${{ fromJSON(env.TARGETS)[matrix.target] }}
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      with:
+        name: HTMLTag-${{ github.run_id }}-${{ env.PLATFORM }}
+        path: |
+          out/*.dll
+          out/*.ini
+          out/Doc/
+
+  push_release:
+    name: 'Publish new release'
+    if: ${{ contains(github.ref, 'tags') && github.event_name == 'push' }}
+    needs: build
+    concurrency:
+      group: rel-${{ github.ref_name }}
+      cancel-in-progress: true
+    runs-on: ubuntu-slim
+    permissions:
+      contents: write # required by softprops/action-gh-release
+    env:
+      SLUGX86: HTMLTag_${{ github.ref_name }}.zip
+      SLUGX64: HTMLTag_${{ github.ref_name }}_x64.zip
+      SLUGARM64: HTMLTag_${{ github.ref_name }}_arm64.zip
+    steps:
+    - name: Fetch release artifacts
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      with:
+        path: bin
+
+    - name: Pack release artifacts
+      working-directory: bin
+      run: |
+        ZIPBALL=
+        BINDIRS=('x86' 'x64' 'arm64')
+        for d in "${BINDIRS[@]}";
+        do
+          case "$d" in
+            'x86')   ZIPBALL="${SLUGX86}" ;;
+            'x64')   ZIPBALL="${SLUGX64}" ;;
+            'arm64') ZIPBALL="${SLUGARM64}" ;;
+          esac
+          pushd ./*-${d}/ 2>&1 >/dev/null || exit 1
+          zip "../${ZIPBALL}" ./Doc ./Doc/* ./*.{ini,dll}
+          popd 2>&1 >/dev/null
+        done
+
+    - name: Generate release notes
+      working-directory: bin
+      run: |
+        ASSETS=("${SLUGX86}" "${SLUGX64}" "${SLUGARM64}")
+        printf '#### SHA256 Checksums\n\n' > release_notes.txt
+        for slug in "${ASSETS[@]}"; do printf '\t%s\n' "$(sha256sum -b "$slug")" >> release_notes.txt; done
+
+    - name: Push release
+      uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+      with:
+        name: ${{ github.ref_name }}
+        body_path: bin/release_notes.txt
+        fail_on_unmatched_files: true
+        files: bin/*.zip
