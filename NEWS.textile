@@ -1,6 +1,12 @@
 
 h3. Released Versions
 
+* 1.5.6 (2026-01-02)
+** Fixed: auto-decoding invalid hexadecimal strings will not throw an exception ["b8f3ea8":https://github.com/rdipardo/nppHTMLTag/commit/b8f3ea8]
+** Changed: the About dialog can be translated into more languages without rebuilding the plugin (see "CONTRIBUTING":l10n)
+** Changed: release archives are now published by GitHub Actions
+** Changed: all documentation and help links now point to GitHub
+
 * 1.5.5 (2025-10-28)
 ** Fixed: ignore stray @﹤@ characters when searching for start tags (#6, "#15":15) ["3db20ae":https://github.com/rdipardo/nppHTMLTag/commit/3db20ae]
 ** Changed: translating the About dialog no longer requires a resource file ["ca3e62c":https://github.com/rdipardo/nppHTMLTag/commit/ca3e62c]
@@ -163,6 +169,7 @@ bq. [^1.^] If you are upgrading, remove or rename your @entities.ini@ file in @%
 [jsDecodeBugOrig]https://fossil.2of4.net/npp_htmltag/tktview?name=c3c733e21f
 [compat]https://github.com/notepad-plus-plus/notepad-plus-plus/blob/master/SUPPORTED_SYSTEM.md#supported-os-table
 [rcs]https://github.com/rdipardo/nppHTMLTag/tree/default/src/Forms/localizations
+[l10n]https://github.com/rdipardo/nppHTMLTag/blob/default/CONTRIBUTING.textile#translations
 [rebuilding]https://github.com/rdipardo/nppHTMLTag/wiki/build
 [tagFinderHangs]https://community.notepad-plus-plus.org/topic/22503/new-version-of-html-tag/24
 [fossil]https://fossil.2of4.net/npp_htmltag

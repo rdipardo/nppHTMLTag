@@ -27,6 +27,10 @@ jobs:
         { "x64": "x64",
           "x86": "x86",
           "amd64_arm64": "arm64" }
+    outputs:
+      x64_filehash:   ${{ steps.artifacts.outputs.x64_filehash }}
+      x86_filehash:   ${{ steps.artifacts.outputs.x86_filehash }}
+      arm64_filehash: ${{ steps.artifacts.outputs.arm64_filehash }}
     steps:
     - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
@@ -39,7 +43,9 @@ jobs:
         sdk: '10.0.17763.0'    
 
     - name: Build
-      run: .\build.cmd Release ${{ fromJSON(env.TARGETS)[matrix.target] }} clean nmake
+      env:
+        PLATFORM: ${{ fromJSON(env.TARGETS)[matrix.target] }}
+      run: .\build.cmd Release ${env:PLATFORM} clean nmake
 
     # https://fossil.2of4.net/npp_htmltag/doc/trunk/doc/HTMLTag-readme.txt
     - name: HTMLTag.dll -> HTMLTag_unicode.dll
@@ -48,8 +54,13 @@ jobs:
       working-directory: out/${{ matrix.target }}/Release
 
     - name: Copy build artifacts
+      id: artifacts
+      env:
+        PLATFORM: ${{ fromJSON(env.TARGETS)[matrix.target] }}
       run: |
-        xcopy /DVY .\out\${{ fromJSON(env.TARGETS)[matrix.target] }}\Release\*.dll ".\out"
+        $hash = $(Get-FileHash -A SHA256 .\out\${env:PLATFORM}\Release\*.dll).Hash
+        echo "${env:PLATFORM}_filehash=${hash}" >> "${env:GITHUB_OUTPUT}"
+        xcopy /DVY .\out\${env:PLATFORM}\Release\*.dll ".\out"
         xcopy /DVY .\dat\*.ini ".\out"
         xcopy /DIY .\*.textile ".\out\Doc"
 
@@ -78,6 +89,9 @@ jobs:
       SLUGX86: HTMLTag_${{ github.ref_name }}.zip
       SLUGX64: HTMLTag_${{ github.ref_name }}_x64.zip
       SLUGARM64: HTMLTag_${{ github.ref_name }}_arm64.zip
+      SHA256X86: ${{ needs.build.outputs.x86_filehash }}
+      SHA256X64: ${{ needs.build.outputs.x64_filehash }}
+      SHA256ARM64: ${{ needs.build.outputs.arm64_filehash }}
     steps:
     - name: Fetch release artifacts
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
@@ -87,16 +101,19 @@ jobs:
     - name: Pack release artifacts
       working-directory: bin
       run: |
+        FILEHASH=
         ZIPBALL=
         BINDIRS=('x86' 'x64' 'arm64')
         for d in "${BINDIRS[@]}";
         do
           case "$d" in
-            'x86')   ZIPBALL="${SLUGX86}" ;;
-            'x64')   ZIPBALL="${SLUGX64}" ;;
-            'arm64') ZIPBALL="${SLUGARM64}" ;;
+            'x86')   ZIPBALL="${SLUGX86}"; FILEHASH="${SHA256X86}" ;;
+            'x64')   ZIPBALL="${SLUGX64}"; FILEHASH="${SHA256X64}" ;;
+            'arm64') ZIPBALL="${SLUGARM64}"; FILEHASH="${SHA256ARM64}" ;;
           esac
           pushd ./*-${d}/ 2>&1 >/dev/null || exit 1
+          # ensure binary artifacts are the same ones we built
+          echo $FILEHASH *HTMLTag*.dll | sha256sum -c --quiet
           zip "../${ZIPBALL}" ./Doc ./Doc/* ./*.{ini,dll}
           popd 2>&1 >/dev/null
         done
