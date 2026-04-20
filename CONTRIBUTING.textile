@@ -83,4 +83,4 @@ unicode_dlg_reset = ; translation of the input dialog's "Reset" button label
 [2]https://github.com/notepad-plus-plus/notepad-plus-plus/tree/master/PowerEditor/installer/nativeLang
 [3]https://docs.github.com/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork
 [4]https://learn.microsoft.com/windows/win32/menurc/about-resource-files
-[5]https://github.com/rdipardo/nppHTMLTag/edit/default/CONTRIBUTING.textile#user-content-l10n-preview
+[5]https://github.com/rdipardo/nppHTMLTag/blob/default/CONTRIBUTING.textile#user-content-l10n-preview
