@@ -52,7 +52,7 @@ constexpr int ncHighlightTimeout = 1000;
 // --------------------------------------------------------------------------------------
 // HtmlTag::TagFinder
 // --------------------------------------------------------------------------------------
-void TagFinder::findMatchingTag(SelectionOptions options) {
+void TagFinder::findMatchingTag(unsigned options) {
 	std::string tagName;
 	bool dispose = false;
 	SearchDirection searchDirection = dirUnknown;
@@ -282,8 +282,8 @@ std::shared_ptr<SciTextRange> extractTagName(
 
 	std::string digits, letters, attrchars{ "-_.:" };
 	textToBytes(result->text().data(), tagName, CP_ACP);
-	textToBytes(Entities::scDigits, digits, CP_ACP);
-	textToBytes(Entities::scLetters, letters, CP_ACP);
+	textToBytes(&Entities::scDigits[0], digits, CP_ACP);
+	textToBytes(&Entities::scLetters[0], letters, CP_ACP);
 
 	size_t startIndex = 0;
 	size_t endIndex = 0;

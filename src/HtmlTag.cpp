@@ -43,7 +43,7 @@ constexpr bool isEndOfEntity(const int &ch) noexcept {
 constexpr char acListKey[] = "_autocompletions";
 constexpr char defaultUnicodePrefix[] = R"(\u)";
 constexpr wchar_t menuItemSeparator[] = L"-";
-constexpr wchar_t errorMessageDelimiter[] = L"|";
+constexpr wchar_t errorMessageDelimiter = L'|';
 std::unique_ptr<AboutDlg> aboutHtmlTag = nullptr;
 }
 
@@ -316,7 +316,7 @@ void HtmlTagPlugin::getEntities(EntityList &list, bool preferEmoji) {
 				acListBuf << ' ';
 			}
 		}
-		_entityMap[listName].addPair(acListKey, acListBuf.str());
+		_entityMap[listName].addPair(&acListKey[0], acListBuf.str());
 		list = _entityMap[listName];
 	} catch (...) {
 		config.~CSimpleIniTempl();
@@ -336,7 +336,7 @@ void HtmlTagPlugin::setUnicodeFormatOption(std::string const &userPrefix) {
 		options.unicodePrefix = userPrefix;
 		options.unicodeRE = reStr;
 	} else if (options.unicodePrefix.empty()) {
-		setUnicodeFormatOption(defaultUnicodePrefix);
+		setUnicodeFormatOption(&defaultUnicodePrefix[0]);
 	}
 }
 // --------------------------------------------------------------------------------------
@@ -356,19 +356,19 @@ void HtmlTagPlugin::initMenu() {
 	funcItems.add(getMessage(L"menu_1"), commandSelectMatchingTags, pSk(new sk{ false, true, false, 113U }));
 	funcItems.add(getMessage(L"menu_2"), commandSelectTagContents, pSk(new sk{ false, true, true, 'T' }));
 	funcItems.add(getMessage(L"menu_3"), commandSelectTagContentsOnly, pSk(new sk{ true, true, false, 'T' }));
-	funcItems.add(menuItemSeparator);
+	funcItems.add(&menuItemSeparator[0]);
 	funcItems.add(getMessage(L"menu_4"), commandEncodeEntities, pSk(new sk{ true, false, false, 'E' }));
 	funcItems.add(
 	    getMessage(L"menu_5"), commandEncodeEntitiesInclLineBreaks, pSk(new sk{ true, true, false, 'E' }));
 	funcItems.add(getMessage(L"menu_6"), commandDecodeEntities, pSk(new sk{ true, false, true, 'E' }));
-	funcItems.add(menuItemSeparator);
+	funcItems.add(&menuItemSeparator[0]);
 	funcItems.add(getMessage(L"menu_7"), commandEncodeJS, pSk(new sk{ false, true, false, 'J' }));
 	funcItems.add(getMessage(L"menu_8"), commandDecodeJS, pSk(new sk{ false, true, true, 'J' }));
-	funcItems.add(menuItemSeparator);
+	funcItems.add(&menuItemSeparator[0]);
 	funcItems.add(getMessage(L"menu_9"), toggleLiveEntityecoding);
 	funcItems.add(getMessage(L"menu_10"), toggleLiveUnicodeDecoding);
 	funcItems.add(getMessage(L"menu_12"), toggleEntityAutoCompletion);
-	funcItems.add(menuItemSeparator);
+	funcItems.add(&menuItemSeparator[0]);
 	funcItems.add(getMessage(L"menu_11"), commandAbout);
 }
 // --------------------------------------------------------------------------------------
@@ -383,7 +383,7 @@ void HtmlTagPlugin::updateMenu() {
 	HMENU hMenu = reinterpret_cast<HMENU>(sendNppMessage(NPPM_GETMENUHANDLE, NPPPLUGINMENU, nullptr));
 
 	for (intptr_t i = 0, menuId = 0; i < funcItems.count(); i++, menuId++) {
-		if (std::wcscmp(funcItems[i]._itemName, menuItemSeparator) == 0) {
+		if (std::wcscmp(&(funcItems[i]._itemName)[0], &menuItemSeparator[0]) == 0) {
 			menuId--;
 			continue;
 		} else if (menuId == formerMaxIndex) {
@@ -457,14 +457,14 @@ void HtmlTagPlugin::loadOptions() {
 			options.liveUnicodeDecoding = config.GetBoolValue("AUTO_DECODE", "UNICODE_ESCAPE_CHARS", false);
 			options.entityAutoCompletion = config.GetBoolValue("AUTO_COMPLETE", "ENTITIES", true);
 			std::string userPrefix =
-			    config.GetValue("FORMAT", "UNICODE_ESCAPE_PREFIX", defaultUnicodePrefix);
+			    config.GetValue("FORMAT", "UNICODE_ESCAPE_PREFIX", &defaultUnicodePrefix[0]);
 			setUnicodeFormatOption(userPrefix);
 		} catch (...) {
 			config.~CSimpleIniTempl();
 		}
 		ifs.close();
 	} else {
-		setUnicodeFormatOption(defaultUnicodePrefix);
+		setUnicodeFormatOption(&defaultUnicodePrefix[0]);
 	}
 
 	size_t autoCompleteEntities = funcItems.count() - CmdMenuPosition::cmpAcEntities;
@@ -569,10 +569,10 @@ void autoCompleteEntity(bool preferEmoji) {
 	delimBuf << static_cast<char>(doc.sendMessage(SCI_AUTOCGETTYPESEPARATOR));
 	delimBuf << xpmId;
 	delimBuf << static_cast<char>(doc.sendMessage(SCI_AUTOCGETSEPARATOR));
-	std::string acList = entities[{ acListKey }];
+	std::string acList = entities[{ &acListKey[0] }];
 	if (acList.find(delimBuf.str()) == std::string::npos) {
 		acList = std::regex_replace(acList, std::regex(R"(\?\d+ )"), delimBuf.str());
-		entities.addPair(acListKey, acList);
+		entities.addPair(&acListKey[0], acList);
 	}
 	const LPARAM xmpData = reinterpret_cast<LPARAM>(preferEmoji ? XPM::getGitHubData() : XPM::getData());
 	doc.sendMessage(SCI_REGISTERIMAGE, xpmId, xmpData);

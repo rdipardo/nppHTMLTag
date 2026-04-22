@@ -21,7 +21,7 @@ size_t FuncArray::add(
 	size_t index = _funcs.size();
 	_funcs.push_back(item);
 	_keyStore.push_back(sk);
-	wmemcpy(_funcs[index]._itemName, cmdName, menuItemSize - 1);
+	wmemcpy(&(_funcs[index]._itemName)[0], cmdName, menuItemSize - 1);
 	_funcs[index]._pFunc = pFunc;
 	_funcs[index]._pShKey = _keyStore.back().get();
 	_funcs[index]._init2Check = checkOnInit;

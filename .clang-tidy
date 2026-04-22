@@ -7,25 +7,24 @@ Checks: |
   cppcoreguidelines-*,
   -*avoid-c-arrays,
   -*avoid-do-while,
+  -*avoid-unchecked-container-access,
   -*magic-numbers,
-  -*avoid-non-const-global-variables,
   -*constant-array-index,
   -*easily-swappable-parameters,
   -*empty-catch,
+  -*enum-class,
   -*enum-size,
   -*no-int-to-ptr,
   -*non-private-member-variables-in-classes,
-  -*optin.core.EnumCastOutOfRange,
-  -*pro-bounds-array-to-pointer-decay,
   -*pro-type-reinterpret-cast,
   -*switch-missing-default-case
 CheckOptions:
+  - key: cppcoreguidelines-avoid-non-const-global-variables.AllowInternalLinkage
+    value: '1'
   - key: bugprone-narrowing-conversions.IgnoreConversionFromTypes
     value: 'size_t;ptrdiff_t;streamsize;int'
   - key: cppcoreguidelines-narrowing-conversions.IgnoreConversionFromTypes
     value: 'size_t;ptrdiff_t;streamsize;int'
-  - key: bugprone-non-zero-enum-to-bool-conversion.EnumIgnoreList
-    value: 'HtmlTag::SelectionOptions'
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 UseColor : true

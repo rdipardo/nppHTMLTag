@@ -12,7 +12,7 @@
 
 namespace HtmlTag {
 namespace TagFinder {
-	void findMatchingTag(SelectionOptions options = soNone);
+	void findMatchingTag(unsigned options = soNone);
 }
 }
 #endif // ~HTMLTAG_TAGFINDER_H

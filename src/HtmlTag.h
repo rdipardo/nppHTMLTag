@@ -15,8 +15,9 @@ using HtmlTag::Entities::EntityList;
 using HtmlTag::Entities::EntityMap;
 
 namespace HtmlTag {
-enum SelectionOptions { soNone = 0x1, soTags = 0x2, soContents = 0x4 };
-DEFINE_ENUM_FLAG_OPERATORS(SelectionOptions)
+constexpr inline unsigned soNone = 0x1;
+constexpr inline unsigned soTags = 0x2;
+constexpr inline unsigned soContents = 0x4;
 
 struct PluginOptions {
 	BOOL liveEntityDecoding = FALSE;

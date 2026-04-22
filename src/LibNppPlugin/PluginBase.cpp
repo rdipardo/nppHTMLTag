@@ -106,9 +106,9 @@ bool PluginBase::isDarkModeEnabled() const {
 }
 // --------------------------------------------------------------------------------------
 path_t PluginBase::pluginsConfigDir() const {
-	wchar_t s[MAX_WIDE_PATH]{};
-	sendNppMessage(NPPM_GETPLUGINSCONFIGDIR, (MAX_WIDE_PATH - 1ULL), s);
-	return path_t(s, path_t::format::native_format);
+	std::wstring s(MAX_WIDE_PATH, L'\0');
+	sendNppMessage(NPPM_GETPLUGINSCONFIGDIR, (MAX_WIDE_PATH - 1ULL), &s[0]);
+	return path_t(s.c_str(), path_t::format::native_format);
 }
 // --------------------------------------------------------------------------------------
 LangType PluginBase::documentLangType() const {
@@ -118,9 +118,13 @@ LangType PluginBase::documentLangType() const {
 }
 // --------------------------------------------------------------------------------------
 path_t PluginBase::pluginsHomeDir() const {
-	wchar_t s[MAX_WIDE_PATH]{};
-	sendNppMessage(NPPM_GETNPPDIRECTORY, (MAX_WIDE_PATH - 1ULL), s);
-	return path_t(s, path_t::format::native_format) / path_t(L"plugins");
+	std::wstring s(MAX_WIDE_PATH, L'\0');
+	sendNppMessage(NPPM_GETNPPDIRECTORY, (MAX_WIDE_PATH - 1ULL), &s[0]);
+	return path_t(s.c_str(), path_t::format::native_format) / path_t(L"plugins");
+}
+// --------------------------------------------------------------------------------------
+bool PluginBase::openFile(path_t const &path) const {
+	return openFile(path.wstring().data());
 }
 // --------------------------------------------------------------------------------------
 bool PluginBase::openFile(wchar_t *filename) const {
@@ -140,7 +144,7 @@ bool PluginBase::openFile(wchar_t *filename, Sci_Position line) const {
 // --------------------------------------------------------------------------------------
 path_t PluginBase::currentBufferPath(uintptr_t bufferId) const {
 	std::wstring result;
-	wchar_t pathbuf[MAX_WIDE_PATH]{};
+	std::wstring pathbuf(MAX_WIDE_PATH, L'\0');
 
 	if (bufferId > 0)
 		sendNppMessage(NPPM_GETFULLPATHFROMBUFFERID, bufferId, &pathbuf[0]);

@@ -244,8 +244,8 @@ void AboutDlg::localize(HWND hwnd) {
 }
 // --------------------------------------------------------------------------------------
 void AboutDlg::alignText(HWND hwndDlg, int id, std::wstring const &text, HDC const &hHDC, RECT const &rc) {
-	POINT pt;
-	SIZE sz;
+	POINT pt{};
+	SIZE sz{};
 	TextDirection dir = (_isRTL ? TextDirection::RTL : TextDirection::LTR);
 	bool isFarsi = plugin.menuLocale() == "farsi";
 	bool isHebrew = plugin.menuLocale() == "hebrew";
@@ -370,7 +370,7 @@ void AboutDlg::alignText(HWND hwndDlg, int id, std::wstring const &text, HDC con
 			if (id != ID_BUG_TRACKER_LINK || !isSerbCyrl) {
 				if (_isBrahmic) {
 					if (isHindi && !hasWin11Dims)
-						bias += (rc.right - rc.left) >> (hasWin11Dims ? 5 : 4);
+						bias += (rc.right - rc.left) >> 4;
 					else if (hasWin11Dims) {
 						switch (id) {
 							case ID_BUG_TRACKER_LINK:
@@ -512,7 +512,8 @@ INT_PTR CALLBACK AboutDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM lPara
 				localize(_hSelf);
 
 			std::wstringstream version;
-			wchar_t versionTxt[128]{ L'\0' };
+			wchar_t buffer[128]{ L'\0' };
+			wchar_t *versionTxt = &buffer[0];
 			::GetDlgItemTextW(_hSelf, ID_PLUGIN_VERSION_TXT, versionTxt, 127);
 			version << versionTxt << L" " << pluginVersion.str() << L" (" << sizeof(intptr_t) * 8 << L"-bit"
 #ifdef _M_ARM
@@ -541,7 +542,7 @@ INT_PTR CALLBACK AboutDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM lPara
 				std::wstring prefixTxt(plugin.options.unicodePrefix.size() + 1, L'\0');
 				TextConv::bytesToText(plugin.options.unicodePrefix.c_str(), prefixTxt, CP_ACP);
 				prefixTxt.append(L"0000");
-				::SetDlgItemTextW(_hSelf, ID_UNICODE_USER_FMT_TXT, &(prefixTxt)[0]);
+				::SetDlgItemTextW(_hSelf, ID_UNICODE_USER_FMT_TXT, prefixTxt.c_str());
 			}
 			toggleDarkMode(_hSelf, _themeInitialized ? dmfHandleChange : dmfInit);
 			_themeInitialized = true;
@@ -570,7 +571,7 @@ INT_PTR CALLBACK AboutDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM lPara
 					int txtLen = static_cast<int>(::SendMessageW(lpdi->hwndItem, WM_GETTEXT,
 					    ARRAYSIZE(txtBuf), reinterpret_cast<LPARAM>(txtBuf)));
 					::SetTextColor(lpdi->hDC, CL_LINK_DARK_MODE);
-					::TextOutW(lpdi->hDC, lpdi->rcItem.left, lpdi->rcItem.top, txtBuf, txtLen);
+					::TextOutW(lpdi->hDC, lpdi->rcItem.left, lpdi->rcItem.top, &txtBuf[0], txtLen);
 					break;
 				}
 			}
@@ -593,11 +594,11 @@ INT_PTR CALLBACK AboutDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM lPara
 					break;
 				}
 				case ID_TRANSLATIONS_FILE_LINK:
-					plugin.openFile(&plugin.dlgTranslations.wstring()[0]);
-					plugin.openFile(&plugin.menuTranslations.wstring()[0]);
+					plugin.openFile(plugin.dlgTranslations);
+					plugin.openFile(plugin.menuTranslations);
 					break;
 				case ID_ENTITIES_FILE_LINK:
-					plugin.openFile(&plugin.entities.wstring()[0]);
+					plugin.openFile(plugin.entities);
 					break;
 				case ID_RELEASE_NOTES_LINK: {
 					std::wstring url = RELEASE_NOTES_URL;
@@ -623,7 +624,7 @@ INT_PTR CALLBACK AboutDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM lPara
 			}
 
 			if (!targetURL.empty())
-				::ShellExecuteW(0, L"open", &targetURL[0], nullptr, nullptr, SW_SHOWNORMAL);
+				::ShellExecuteW(0, L"open", targetURL.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 
 			if (hideOnReturn)
 				display(false);
@@ -642,7 +643,7 @@ INT_PTR CALLBACK modalDlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM 
 		HWND hEdit = ::GetDlgItem(hwndDlg, ID_CONFIG_EDIT);
 		std::wstring editTxt(plugin.options.unicodePrefix.size() + 1, L'\0');
 		TextConv::bytesToText(plugin.options.unicodePrefix.c_str(), editTxt, CP_ACP);
-		::SetDlgItemTextW(hwndDlg, ID_CONFIG_EDIT, &editTxt[0]);
+		::SetDlgItemTextW(hwndDlg, ID_CONFIG_EDIT, editTxt.c_str());
 		::SetFocus(hEdit);
 		::SendMessageW(hEdit, EM_SETSEL, 0, -1);
 	};

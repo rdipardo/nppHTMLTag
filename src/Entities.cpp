@@ -77,16 +77,16 @@ int Entities::decode() {
 				if (i == 1) {
 					if (!preferEmoji && target[firstPos] == L'#') {
 						isNumeric = true;
-						allowedChars << L"x" << scDigits;
+						allowedChars << L"x" << &scDigits[0];
 					} else {
-						allowedChars << scLetters << scDigits;
+						allowedChars << &scLetters[0] << &scDigits[0];
 						if (preferEmoji)
 							allowedChars << L"+_-";
 					}
 				} else if (i == 2) {
 					if (isNumeric && target[firstPos + 1] == L'x') {
 						isHex = true;
-						allowedChars << scHexLetters;
+						allowedChars << &scHexLetters[0];
 					}
 					allowedChars << chEnd;
 				}
@@ -132,12 +132,12 @@ int Entities::decode() {
 			}
 
 			if (isValid) {
-				wchar_t decoded[3]{};
+				std::wstring decoded(2, L'\0');
 				if (codePoint >= 0x010000 && codePoint <= 0x10FFFF) {
 					decoded[0] = static_cast<wchar_t>(((codePoint - 0x10000) >> 10) + 0xD800);
 					decoded[1] = static_cast<wchar_t>(((codePoint - 0x10000) & 0x03FF) + 0xDC00);
 				} else {
-					*decoded = static_cast<wchar_t>(codePoint);
+					decoded[0] = static_cast<wchar_t>(codePoint);
 				}
 				target.replace(firstPos - 1, std::wstring::npos, decoded + target.substr(nextIndex));
 				++result;

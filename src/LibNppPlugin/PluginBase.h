@@ -66,6 +66,7 @@ public:
 	LRESULT sendNppMessage(const UINT msg, WPARAM wparam = UNUSEDW, LPARAM lparam = UNUSED) const;
 	/// @brief Wraps API calls when @p lparam is a pointer
 	LRESULT sendNppMessage(const UINT msg, WPARAM wparam, void *lparam = nullptr) const;
+	bool openFile(path_t const &path) const;
 	bool openFile(wchar_t *filename) const;
 	bool openFile(wchar_t *filename, Sci_Position line) const;
 	path_t pluginsHomeDir() const;
