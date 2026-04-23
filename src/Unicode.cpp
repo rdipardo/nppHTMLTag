@@ -113,7 +113,7 @@ int doEncode(std::wstring &text, bool multiSel) {
 	std::wstring prefix(plugin.options.unicodePrefix.size() + 1, L'\0');
 	TextConv::bytesToText(plugin.options.unicodePrefix.c_str(), prefix, CP_ACP);
 
-	for (intptr_t chIndex = static_cast<intptr_t>(text.length()) - 1; chIndex >= 0; chIndex--) {
+	for (std::ptrdiff_t chIndex = std::ssize(text) - 1; chIndex >= 0; chIndex--) {
 		uint32_t charCode = text[chIndex];
 		if (charCode > 127) {
 			std::wstringstream encoded;
@@ -131,7 +131,7 @@ int doEncode(std::wstring &text, bool multiSel) {
 				<< std::setw(nDigits) << std::setfill(L'0') << charCode << text.substr(endPos);
 			text = encoded.str();
 			++result;
-			if (chIndex >= static_cast<intptr_t>(text.length()))
+			if (chIndex >= std::ssize(text))
 				break;
 		}
 	}

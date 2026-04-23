@@ -169,7 +169,7 @@ int doEncode(std::wstring &text, Entities::EntityList const &entities, bool incl
 	bool didReplace = false;
 
 	try {
-		for (intptr_t chIndex = static_cast<intptr_t>(text.length()) - 1; chIndex >= 0; chIndex--) {
+		for (std::ptrdiff_t chIndex = std::ssize(text) - 1; chIndex >= 0; chIndex--) {
 			size_t startPos = chIndex, endPos = chIndex + 1;
 			uint32_t charCode = text[chIndex];
 			std::string entity = entities[std::to_string(charCode)];
@@ -198,7 +198,7 @@ int doEncode(std::wstring &text, Entities::EntityList const &entities, bool incl
 				text.replace(startPos, endPos - startPos, L'&' + encodedEntity + L';');
 				++result;
 			}
-			if (chIndex >= static_cast<intptr_t>(text.length()))
+			if (chIndex >= std::ssize(text))
 				break;
 		}
 	} catch (...) {

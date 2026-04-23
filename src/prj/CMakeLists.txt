@@ -30,7 +30,7 @@ endif ()
 # ==================================================
 # Add source files, libraries, resources
 # ==================================================
-CPMAddPackage ("gh:npp-plugins/plugintemplate@2025_September_30.23.1")
+CPMAddPackage ("gh:npp-plugins/plugintemplate@2026_April_05.30.1")
 CPMAddPackage ("gh:brofield/simpleini@4.22")
 CPMAddPackage ("gh:leethomason/tinyxml2@10.0.0")
 
@@ -152,7 +152,7 @@ if (VC_BUILD)
   target_compile_options (${PROJECT_NAME} PRIVATE
     /nologo
     /source-charset:utf-8
-    /std:c++17
+    /std:c++20
     /permissive-
     /Zc:__cplusplus,inline
     /EHsc
@@ -183,7 +183,7 @@ if (VC_BUILD)
   target_link_options (${PROJECT_NAME} PRIVATE ${LINK_FLAGS})
 else ()
   target_compile_options (${PROJECT_NAME} PRIVATE
-    -std=c++17
+    -std=c++20
     -Wall
     -Werror
     -Werror=init-self
