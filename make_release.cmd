@@ -8,7 +8,7 @@
 ::
 SETLOCAL
 
-set "VERSION=1.5.6"
+set "VERSION=1.5.6.1"
 set "PLUGIN=HTMLTag"
 set "PLUGIN_DLL=out\Win32\Release\%PLUGIN%.dll"
 set "PLUGINX64_DLL=out\x64\Release\%PLUGIN%.dll"
@@ -20,16 +20,18 @@ set "SLUGarm64_SRC=out\%PLUGIN%_v%VERSION%_arm64"
 set "SLUG=%SLUG_SRC%.zip"
 set "SLUGX64=%SLUGX64_SRC%.zip"
 set "SLUGarm64=%SLUGarm64_SRC%.zip"
+set "VERSION_HASHES=.\dat\%PLUGIN%.md5sums"
 
 call %~dp0build.cmd Release x86 clean
 call %~dp0build.cmd Release x64
 call %~dp0build.cmd Release ARM64
 xcopy /DIY *.textile "out\Doc"
+powershell .\dat\update_checksums.ps1
 
 :: https://fossil.2of4.net/npp_htmltag/doc/trunk/doc/HTMLTag-readme.txt
 echo F | xcopy /DV ".\%PLUGIN_DLL%" ".\%PLUGIN_LEGACY_DLL%"
-7z a -tzip "%SLUG%" ".\%PLUGIN_LEGACY_DLL%" ".\dat\*.ini" ".\out\Doc" -y
-7z a -tzip "%SLUGX64%" ".\%PLUGINX64_DLL%" ".\dat\*.ini" ".\out\Doc" -y
-7z a -tzip "%SLUGarm64%" ".\%PLUGINarm64_DLL%" ".\dat\*.ini" ".\out\Doc" -y
+7z a -tzip "%SLUG%" ".\%PLUGIN_LEGACY_DLL%" "%VERSION_HASHES%" ".\dat\*.ini" ".\out\Doc" -y
+7z a -tzip "%SLUGX64%" ".\%PLUGINX64_DLL%" "%VERSION_HASHES%" ".\dat\*.ini" ".\out\Doc" -y
+7z a -tzip "%SLUGarm64%" ".\%PLUGINarm64_DLL%" "%VERSION_HASHES%" ".\dat\*.ini" ".\out\Doc" -y
 
 ENDLOCAL

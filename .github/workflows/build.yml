@@ -60,8 +60,10 @@ jobs:
       run: |
         $hash = $(Get-FileHash -A SHA256 .\out\${env:PLATFORM}\Release\*.dll).Hash
         echo "${env:PLATFORM}_filehash=${hash}" >> "${env:GITHUB_OUTPUT}"
+        .\dat\update_checksums.ps1
         xcopy /DVY .\out\${env:PLATFORM}\Release\*.dll ".\out"
         xcopy /DVY .\dat\*.ini ".\out"
+        xcopy /DVY .\dat\*.md5sums ".\out"
         xcopy /DIY .\*.textile ".\out\Doc"
 
     - name: Upload HTMLTag-${{ github.run_id }}-${{ env.PLATFORM }}
@@ -73,6 +75,7 @@ jobs:
         path: |
           out/*.dll
           out/*.ini
+          out/*.md5sums
           out/Doc/
 
   push_release:
@@ -114,7 +117,7 @@ jobs:
           pushd ./*-${d}/ 2>&1 >/dev/null || exit 1
           # ensure binary artifacts are the same ones we built
           echo $FILEHASH *HTMLTag*.dll | sha256sum -c --quiet
-          zip "../${ZIPBALL}" ./Doc ./Doc/* ./*.{ini,dll}
+          zip "../${ZIPBALL}" ./Doc ./Doc/* ./*.{ini,md5sums,dll}
           popd 2>&1 >/dev/null
         done
 

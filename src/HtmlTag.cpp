@@ -142,7 +142,7 @@ void HtmlTagPlugin::setInfo(const NppData *data) {
 	path_t configPath = pluginsConfigDir() / _pluginName;
 	path_t installationPath = pluginsHomeDir() / _pluginDLLName;
 	path_t defaultEntities = installationPath / (_pluginName + L"-entities.ini");
-	path_t defaultMenuTranslations = installationPath / (_pluginName + L"-translations.ini");
+	path_t defaultMenuTranslations = installationPath / (_pluginName + L"-localizations.ini");
 	path_t defaultDlgTranslations = installationPath / (_pluginName + L"-dialogs.ini");
 	entities = configPath / L"entities.ini";
 	menuTranslations = configPath / L"localizations.ini";
@@ -151,15 +151,37 @@ void HtmlTagPlugin::setInfo(const NppData *data) {
 	std::error_code result;
 	if (!fs::exists(configPath))
 		fs::create_directory(configPath, result);
-	if (result.value() == 0 && !fs::exists(entities))
+	if (result.value() == 0) {
+		loadOptions();
+		VersionChecksums checksums(installationPath / (_pluginName + L".md5sums"));
+		for (path_t const &cfg : { entities, menuTranslations, dlgTranslations }) {
+			if (!fs::exists(cfg))
+				continue;
+			std::string const &key = cfg.stem().string();
+			std::string const &hash = checksums[key];
+			if (options.currency[key] != hash) {
+				options.currency.addPair(key, hash);
+				std::wstringstream newName;
+				newName << cfg.stem().wstring() << L"-"
+					<< std::to_wstring(fs::last_write_time(cfg, result).time_since_epoch().count())
+					<< L".ini";
+				path_t const &backup = configPath / newName.view();
+				unsigned long mvFlags = MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH;
+				::MoveFileExW(cfg.c_str(), backup.c_str(), mvFlags);
+				::SetLastError(0);
+			}
+		}
 		::CopyFileW(defaultEntities.c_str(), entities.c_str(), TRUE);
-	if (result.value() == 0 && !fs::exists(menuTranslations))
 		::CopyFileW(defaultMenuTranslations.c_str(), menuTranslations.c_str(), TRUE);
-	if (result.value() == 0 && !fs::exists(dlgTranslations))
 		::CopyFileW(defaultDlgTranslations.c_str(), dlgTranslations.c_str(), TRUE);
-
+	}
 	initMenu();
-	loadOptions();
+	size_t autoCompleteEntities = funcItems.count() - CmdMenuPosition::cmpAcEntities;
+	size_t autoDecodeJs = funcItems.count() - CmdMenuPosition::cmpUnicode;
+	size_t autoDecodeEntities = funcItems.count() - CmdMenuPosition::cmpEntities;
+	funcItems[autoCompleteEntities]._init2Check = options.entityAutoCompletion;
+	funcItems[autoDecodeJs]._init2Check = options.liveUnicodeDecoding;
+	funcItems[autoDecodeEntities]._init2Check = options.liveEntityDecoding;
 }
 // --------------------------------------------------------------------------------------
 void HtmlTagPlugin::beNotified(SCNotification *scn) {
@@ -459,6 +481,8 @@ void HtmlTagPlugin::loadOptions() {
 			std::string userPrefix =
 			    config.GetValue("FORMAT", "UNICODE_ESCAPE_PREFIX", &defaultUnicodePrefix[0]);
 			setUnicodeFormatOption(userPrefix);
+			for (auto &&[key, fname] : options.currency.keys)
+				options.currency.addPair(fname, config.GetValue("VERSION_HASHES", key, ""));
 		} catch (...) {
 			config.~CSimpleIniTempl();
 		}
@@ -466,13 +490,6 @@ void HtmlTagPlugin::loadOptions() {
 	} else {
 		setUnicodeFormatOption(&defaultUnicodePrefix[0]);
 	}
-
-	size_t autoCompleteEntities = funcItems.count() - CmdMenuPosition::cmpAcEntities;
-	size_t autoDecodeJs = funcItems.count() - CmdMenuPosition::cmpUnicode;
-	size_t autoDecodeEntities = funcItems.count() - CmdMenuPosition::cmpEntities;
-	funcItems[autoCompleteEntities]._init2Check = options.entityAutoCompletion;
-	funcItems[autoDecodeJs]._init2Check = options.liveUnicodeDecoding;
-	funcItems[autoDecodeEntities]._init2Check = options.liveEntityDecoding;
 }
 // --------------------------------------------------------------------------------------
 void HtmlTagPlugin::saveOptions() {
@@ -487,6 +504,8 @@ void HtmlTagPlugin::saveOptions() {
 		config.SetLongValue("AUTO_DECODE", "UNICODE_ESCAPE_CHARS", options.liveUnicodeDecoding);
 		config.SetLongValue("AUTO_COMPLETE", "ENTITIES", options.entityAutoCompletion);
 		config.SetValue("FORMAT", "UNICODE_ESCAPE_PREFIX", options.unicodePrefix.c_str());
+		for (auto &&[key, fname] : options.currency.keys)
+			config.SetValue("VERSION_HASHES", key, options.currency[{ fname }].c_str());
 		config.Save(ofs);
 	} catch (...) {
 		config.~CSimpleIniTempl();
@@ -518,6 +537,27 @@ MenuTitles::MenuTitles() : HashedStringList<std::wstring>() {
 		// clang-format on
 	};
 	addStrings(defaultMenuTitles);
+};
+
+// --------------------------------------------------------------------------------------
+// HtmlTag::VersionChecksums
+// --------------------------------------------------------------------------------------
+VersionChecksums::VersionChecksums(path_t const &hashfile) : HashedStringList<std::string>() {
+	nameValueSeparator = "\x20";
+	std::ifstream ifs(hashfile, std::ios::in | std::ios::binary);
+	if (ifs.is_open()) {
+		std::string hash;
+		while (std::getline(ifs, hash)) {
+			size_t delim = hash.find_first_of(this->nameValueSeparator);
+			size_t keyEnd = hash.find_first_of('.', delim);
+			std::string const &key =
+			    hash.substr(delim + 1, keyEnd != hash.npos ? --keyEnd - delim : keyEnd);
+			std::string const &checksum = hash.substr(0, delim);
+			size_t keyBegin = key.find_first_of('-');
+			this->addPair(key.substr(keyBegin == key.npos ? 0 : keyBegin + 1), checksum);
+		}
+		ifs.close();
+	}
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////

@@ -16,7 +16,7 @@ h3. New menu localizations
 
 To translate the command menu found at @Plugins ﹥ HTML Tag@
 
-* Open the "HTMLTag-translations.ini":dat/HTMLTag-translations.ini file and create a section like the following:
+* Open the "HTMLTag-localizations.ini":dat/HTMLTag-localizations.ini file and create a section like the following:
 
 bc[ini]. [﹤language_name﹥]
 menu_0  = ; translation of the "Find matching tag" command
@@ -48,7 +48,7 @@ err_config_msg = ; translation of these 3 phrases:
      <img width="648" alt="htmltag-decode-selections" src="https://raw.githubusercontent.com/wiki/rdipardo/npphtmltag/img/locating-user-translations.gif">
    </picture>
 ** rename the @localizations.ini@ file by selecting @File ﹥ Save As...@
-** save your edited @HTMLTag-translations.ini@ file in the same folder as the old @localizations.ini@ file
+** save your edited @HTMLTag-localizations.ini@ file in the same folder as the old @localizations.ini@ file
 
 h3. New dialog localizations
 

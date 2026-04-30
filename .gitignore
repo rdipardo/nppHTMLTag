@@ -29,6 +29,7 @@
 *.todo
 *.tvsconfig
 *.zip
+*.md5sums
 _deps/
 CMakeFiles/
 CPM_modules/

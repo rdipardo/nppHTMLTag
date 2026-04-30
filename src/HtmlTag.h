@@ -19,12 +19,23 @@ constexpr inline unsigned soNone = 0x1;
 constexpr inline unsigned soTags = 0x2;
 constexpr inline unsigned soContents = 0x4;
 
+struct VersionChecksums final : HashedStringList<std::string> {
+	VersionChecksums() noexcept = default;
+	explicit VersionChecksums(path_t const &hashfile);
+	static inline const std::unordered_map<const char *, const char *> keys = {
+		{ "HTML", "entities" },
+		{ "MENU", "localizations" },
+		{ "DIALOGS", "dialogs" },
+	};
+};
+
 struct PluginOptions {
 	BOOL liveEntityDecoding = FALSE;
 	BOOL liveUnicodeDecoding = FALSE;
 	BOOL entityAutoCompletion = TRUE;
 	std::string unicodePrefix;
 	std::string unicodeRE;
+	VersionChecksums currency;
 };
 
 struct MenuTitles final : HashedStringList<std::wstring> {
