@@ -413,6 +413,8 @@ void AboutDlg::alignText(HWND hwndDlg, int id, std::wstring const &text, HDC con
 			break;
 		case ID_UNICODE_FMT_LABEL_TXT:
 			bias += static_cast<int>(std::ceil((rc.right - rc.left) * (_isBrahmic ? 0.225 : 0.125)));
+			if (hasWin11Dims && !_isCyrillic)
+				bias -= static_cast<int>(std::floor(bias * 0.33));
 			break;
 		case ID_CONFIG_LABEL_1: {
 			RECT rc2;
@@ -441,7 +443,7 @@ void AboutDlg::alignText(HWND hwndDlg, int id, std::wstring const &text, HDC con
 
 			bias += (this->getWidth() >> 2) + (sz.cx >> fraction);
 
-			if (_isLatinSlavic)
+			if (hasWin11Dims)
 				bias += static_cast<int>(std::ceil(bias * 0.125));
 			int startPos = (this->getWidth() >> 1) - (sz.cx >> 1) - bias + charWidth;
 			if (_isBrahmic || _isCyrillic)
