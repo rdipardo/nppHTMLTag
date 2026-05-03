@@ -7,7 +7,6 @@
 */
 #include <cstdio>
 #include <share.h>
-#include <tinyxml2.h>
 #include "LocalizedPlugin.h"
 
 // --------------------------------------------------------------------------------------
@@ -24,22 +23,7 @@ void LocalizedPlugin::setLanguage() {
 		std::string fname(++fnameLen, 0);
 		sendNppMessage(NPPM_GETNATIVELANGFILENAME, fnameLen, &fname[0]);
 		_nativeLangId = path_t(fname).stem().string();
-		return;
 	}
-
-	FILE *xml = _wfsopen(getNativeLangFile().c_str(), L"rb", _SH_DENYNO);
-	tinyxml2::XMLDocument doc;
-	if (doc.LoadFile(xml) != tinyxml2::XML_SUCCESS) {
-		fclose(xml);
-		return;
-	}
-
-	tinyxml2::XMLElement *root = doc.FirstChildElement();
-	while (root && !root->FirstAttribute())
-		root = root->FirstChildElement();
-	if (root && root->Attribute("filename"))
-		_nativeLangId = path_t(root->Attribute("filename")).stem().string();
-	fclose(xml);
 }
 // --------------------------------------------------------------------------------------
 path_t LocalizedPlugin::getNativeLangFile() const {

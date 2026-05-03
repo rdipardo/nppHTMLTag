@@ -64,7 +64,6 @@ about_bugs = ; translation of the "Bug tracker" label
 about_downloads = ; translation of the "Downloads" label
 about_license = ; translation of the "Licensed under the MPL 2.0" label
 about_3rd_party = ; translation of the "Using (i.e., 3rd-party software)" label
-about_3rd_party_also = ; translation of the "Also using (i.e., 3rd-party software)" label
 about_entities_file = ; translation of the "HTML entities file" label
 about_l10n_file = ; translation of the "Localizations file(s)" label
 about_unicode_format = ; translation of the "Unicode character format" label

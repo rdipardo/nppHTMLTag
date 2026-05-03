@@ -47,7 +47,6 @@ DialogHyperlink linkCtrls[] = {
 	{ ID_TRANSLATIONS_FILE_LINK, nullptr },
 	{ ID_UNICODE_CONFIG_LINK, nullptr },
 	{ ID_SIMPLEINI_LINK, nullptr },
-	{ ID_TINYXML_LINK, nullptr },
 };
 constexpr size_t nbLinkCtrls = ARRAYSIZE(linkCtrls);
 constexpr HWND nullDC = static_cast<HWND>(0ULL);
@@ -117,7 +116,6 @@ void AboutDlg::localize(HWND hwnd) {
 			::SetDlgItemTextW(hwnd, ID_PLUGIN_REPO_LINK, DEFAULT_REPO_LINK_TXT);
 			::SetDlgItemTextW(hwnd, ID_PLUGIN_LICENSE_TXT, PLUGIN_LICENSE);
 			::SetDlgItemTextW(hwnd, ID_SIMPLEINI_TXT, DEFAULT_ABOUT_3RD_PARTY);
-			::SetDlgItemTextW(hwnd, ID_TINYXML_TXT, DEFAULT_ABOUT_3RD_PARTY_ALSO);
 			::SetDlgItemTextW(hwnd, ID_ENTITIES_FILE_LINK, DEFAULT_ENTITIES_FILE_TXT);
 			::SetDlgItemTextW(hwnd, ID_TRANSLATIONS_FILE_LINK, DEFAULT_L10N_FILE_TXT);
 			::SetDlgItemTextW(hwnd, ID_UNICODE_FMT_LABEL_TXT, DEFAULT_UNICODE_FORMAT_LABEL);
@@ -141,7 +139,7 @@ void AboutDlg::localize(HWND hwnd) {
 			return;
 
 		std::wstring section(64, L'\0');
-		std::wstring relNotes, bugs, repo, simpleIni, tinyXml, entities, l10ns, fmtLbl, cfgLbl, cfgDlgLbl;
+		std::wstring relNotes, bugs, repo, simpleIni, entities, l10ns, fmtLbl, cfgLbl, cfgDlgLbl;
 		TextConv::bytesToText(plugin.menuLocale().c_str(), section, CP_ACP);
 		std::list<CSimpleIniW::Entry> keys;
 		if (!config.GetAllKeys(section.c_str(), keys)) // Unknown language
@@ -172,10 +170,6 @@ void AboutDlg::localize(HWND hwnd) {
 					simpleIni =
 					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_ABOUT_3RD_PARTY);
 					::SetDlgItemTextW(hwnd, ID_SIMPLEINI_TXT, simpleIni.c_str());
-				} else if (sameString(msgId.pItem, L"about_3rd_party_also")) {
-					tinyXml =
-					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_ABOUT_3RD_PARTY_ALSO);
-					::SetDlgItemTextW(hwnd, ID_TINYXML_TXT, tinyXml.c_str());
 				} else if (sameString(msgId.pItem, L"about_entities_file")) {
 					entities =
 					    config.GetValue(section.c_str(), msgId.pItem, DEFAULT_ENTITIES_FILE_TXT);
@@ -229,7 +223,6 @@ void AboutDlg::localize(HWND hwnd) {
 			::SetWindowLongPtr(dlgItem, GWL_STYLE, wstyle | SS_CENTER);
 
 			alignText(hwnd, ID_SIMPLEINI_TXT, simpleIni, hHDC, bounds);
-			alignText(hwnd, ID_TINYXML_TXT, tinyXml, hHDC, bounds);
 			alignText(hwnd, ID_ENTITIES_FILE_LINK, entities, hHDC, bounds);
 			alignText(hwnd, ID_TRANSLATIONS_FILE_LINK, l10ns, hHDC, bounds);
 			alignText(hwnd, ID_UNICODE_FMT_LABEL_TXT, fmtLbl, hHDC, bounds);
@@ -422,9 +415,7 @@ void AboutDlg::alignText(HWND hwndDlg, int id, std::wstring const &text, HDC con
 			bias += static_cast<int>(std::ceil(((cx >> 1) + rc2.right - rc2.left) * (_isCJK ? 0.4 : 0.7)));
 			break;
 		}
-		case ID_SIMPLEINI_TXT:
-			[[fallthrough]];
-		case ID_TINYXML_TXT: {
+		case ID_SIMPLEINI_TXT: {
 			SIZE sz2;
 			int linkId = (id == ID_SIMPLEINI_TXT ? ID_SIMPLEINI_LINK : ID_TINYXML_LINK);
 			int textId = (id == ID_SIMPLEINI_TXT ? ID_SIMPLEINI_LICENSE_TXT : ID_TINYXML_LICENSE_TXT);
@@ -441,10 +432,7 @@ void AboutDlg::alignText(HWND hwndDlg, int id, std::wstring const &text, HDC con
 			else if (_isBrahmic)
 				fraction = (!hasWin11Dims && isHindi) ? 0 : 1;
 
-			bias += (this->getWidth() >> 2) + (sz.cx >> fraction);
-
-			if (hasWin11Dims)
-				bias += static_cast<int>(std::ceil(bias * 0.125));
+			bias += static_cast<int>(std::ceil(1.125 * ((this->getWidth() >> 2) + (sz.cx >> fraction))));
 			int startPos = (this->getWidth() >> 1) - (sz.cx >> 1) - bias + charWidth;
 			if (_isBrahmic || _isCyrillic)
 				startPos += charWidth;
@@ -464,15 +452,6 @@ void AboutDlg::alignText(HWND hwndDlg, int id, std::wstring const &text, HDC con
 					displacement = (isHebrew ? 1.34 : 1.25);
 				else if (_isRTL)
 					displacement = 1.8;
-			} else if (id == ID_TINYXML_TXT) {
-				if (isFarsi)
-					displacement = (hasWin11Dims ? 0.42 : 0.25);
-				else if (!hasWin11Dims && _isRTL)
-					displacement = (isHebrew ? 1 : 0.8);
-				else if (isHebrew)
-					displacement = 1.34;
-				else if (_isRTL)
-					displacement = 1.125;
 			}
 
 			int linkStart = (dir * startPos) + static_cast<int>(std::ceil(cx * displacement));
@@ -619,9 +598,6 @@ INT_PTR CALLBACK AboutDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM lPara
 					break;
 				case ID_SIMPLEINI_LINK:
 					targetURL = SIMPLEINI_URL;
-					break;
-				case ID_TINYXML_LINK:
-					targetURL = TINYXML_URL;
 					break;
 			}
 

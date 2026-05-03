@@ -32,7 +32,6 @@ endif ()
 # ==================================================
 CPMAddPackage ("gh:npp-plugins/plugintemplate@2026_April_05.30.1")
 CPMAddPackage ("gh:brofield/simpleini@4.22")
-CPMAddPackage ("gh:leethomason/tinyxml2@10.0.0")
 
 set (${PROJECT_NAME}_src
   ${CMAKE_SOURCE_DIR}/../LibNppPlugin/include/SciTextObjects.cpp
@@ -73,11 +72,6 @@ endif ()
 
 if (simpleini_ADDED)
   target_include_directories (${PROJECT_NAME} PUBLIC "${simpleini_SOURCE_DIR}")
-endif ()
-
-if (tinyxml2_ADDED)
-  target_include_directories (${PROJECT_NAME} PUBLIC "${tinyxml2_SOURCE_DIR}")
-  target_sources (${PROJECT_NAME} PRIVATE "${tinyxml2_SOURCE_DIR}/tinyxml2.cpp")
 endif ()
 
 set (WINAPI_LIBS
