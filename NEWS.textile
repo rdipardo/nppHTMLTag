@@ -1,6 +1,12 @@
 
 h3. Released Versions
 
+* 1.6.0 (2026-05-08)
+** Fixed: debug builds will not crash when opening configuration files from the About dialog ["cf4c5f7":https://github.com/rdipardo/nppHTMLTag/commit/cf4c5f7]
+** Changed: updated translations and entities are now copied automatically to the user's configuration folder ["5cb662e":https://github.com/rdipardo/nppHTMLTag/commit/5cb662e]
+** Changed: versions of Notepad older than 8.7 are no longer supported by the menu localization feature ["51870fb":https://github.com/rdipardo/nppHTMLTag/commit/51870fb]
+** Added: translations for Taiwanese Mandarin ("#18":18)
+
 * 1.5.6 (2026-01-02)
 ** Fixed: auto-decoding invalid hexadecimal strings will not throw an exception ["b8f3ea8":https://github.com/rdipardo/nppHTMLTag/commit/b8f3ea8]
 ** Changed: the About dialog can be translated into more languages without rebuilding the plugin (see "CONTRIBUTING":l10n)
@@ -163,6 +169,7 @@ bq. [^1.^] If you are upgrading, remove or rename your @entities.ini@ file in @%
 [13]https://github.com/rdipardo/nppHTMLTag/issues/13
 [14]https://github.com/rdipardo/nppHTMLTag/issues/14
 [15]https://github.com/rdipardo/nppHTMLTag/issues/15
+[18]https://github.com/rdipardo/nppHTMLTag/issues/18
 [cref]https://community.notepad-plus-plus.org/topic/22471/recompile-your-x64-plugins-with-new-header
 [cref-2]https://community.notepad-plus-plus.org/post/93441
 [jsDecodeBug]https://community.notepad-plus-plus.org/topic/18488/htmltag-1-1-plugin-broken-since-npp-7-7

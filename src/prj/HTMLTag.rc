@@ -8,7 +8,7 @@
 */
 #include "resource.h"
 
-MAINICON ICON "HTMLTag.ico"
+/* MAINICON ICON "HTMLTag.ico" */
 
 1 VERSIONINFO
   FILEVERSION HTMLTAG_VERSION_WORDS
