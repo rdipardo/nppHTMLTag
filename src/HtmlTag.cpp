@@ -162,9 +162,9 @@ void HtmlTagPlugin::setInfo(const NppData *data) {
 			if (options.currency[key] != hash) {
 				options.currency.addPair(key, hash);
 				std::wstringstream newName;
-				newName << cfg.stem().wstring() << L"-"
-					<< std::to_wstring(fs::last_write_time(cfg, result).time_since_epoch().count())
-					<< L".ini";
+				auto const &mtime =
+				    static_cast<int64_t>(fs::last_write_time(cfg, result).time_since_epoch().count());
+				newName << cfg.stem().wstring() << L"-" << std::to_wstring(mtime) << L".ini";
 				path_t const &backup = configPath / newName.view();
 				unsigned long mvFlags = MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH;
 				::MoveFileExW(cfg.c_str(), backup.c_str(), mvFlags);
