@@ -29,13 +29,13 @@ namespace {
 enum DecodeCmd { dcAuto = -1, dcEntity, dcUnicode };
 enum CmdMenuPosition { cmpAcEntities = 3, cmpUnicode, cmpEntities };
 
-bool isWebDocument() noexcept;
+bool isWebDocument(LangType &lang);
 bool autoCompleteMatchingTag(const Sci_Position startPos, const char *tagName);
 void autoCompleteEntity(bool preferEmoji);
 void findAndDecode(const int keyCode, DecodeCmd cmd = dcAuto);
 
-constexpr bool isStartOfEntity(const int &ch) noexcept {
-	return ch == Entities::amp || ch == Entities::colon;
+constexpr bool isStartOfEntity(const int &ch, bool isXml = false) noexcept {
+	return ch == Entities::amp || (!isXml && ch == Entities::colon);
 }
 constexpr bool isEndOfEntity(const int &ch) noexcept {
 	return ch == Entities::semi || ch == Entities::colon;
@@ -185,7 +185,7 @@ void HtmlTagPlugin::setInfo(const NppData *data) {
 }
 // --------------------------------------------------------------------------------------
 void HtmlTagPlugin::beNotified(SCNotification *scn) {
-	static bool isWebDoc = false;
+	static bool isWebDoc = false, isXml = false;
 	if (scn->nmhdr.hwndFrom == plugin.editor().windowHandle()) {
 		switch (scn->nmhdr.code) {
 			case NPPN_READY:
@@ -202,9 +202,12 @@ void HtmlTagPlugin::beNotified(SCNotification *scn) {
 				}
 #endif
 				break;
-			case NPPN_BUFFERACTIVATED:
-				isWebDoc = ::isWebDocument();
+			case NPPN_BUFFERACTIVATED: {
+				LangType bufferLang{};
+				isWebDoc = ::isWebDocument(bufferLang);
+				isXml = (bufferLang == L_XML);
 				break;
+			}
 			case NPPN_FILESAVED: {
 				path_t const &filePath = currentBufferPath(scn->nmhdr.idFrom);
 				if (sameText(filePath, this->menuTranslations))
@@ -250,10 +253,10 @@ void HtmlTagPlugin::beNotified(SCNotification *scn) {
 				break;
 			case SCN_AUTOCCHARDELETED:
 				if (options.entityAutoCompletion && isWebDoc) {
-					SciActiveDocument doc = activeDocument();
+					SciActiveDocument const &doc = activeDocument();
 					Sci_Position pos = doc.currentPosition();
 					int ch = static_cast<int>(doc.sendMessage(SCI_GETCHARAT, pos - 1));
-					if (isStartOfEntity(ch)) {
+					if (isStartOfEntity(ch, isXml)) {
 						autoCompleteEntity(ch == Entities::colon);
 					}
 				}
@@ -263,7 +266,7 @@ void HtmlTagPlugin::beNotified(SCNotification *scn) {
 				    !activeDocument().currentSelection()) {
 					findAndDecode(scn->ch);
 				}
-				if (options.entityAutoCompletion && isStartOfEntity(scn->ch) && isWebDoc) {
+				if (options.entityAutoCompletion && isStartOfEntity(scn->ch, isXml) && isWebDoc) {
 					autoCompleteEntity(scn->ch == Entities::colon);
 				}
 				break;
@@ -562,9 +565,10 @@ VersionChecksums::VersionChecksums(path_t const &hashfile) : HashedStringList<st
 
 /////////////////////////////////////////////////////////////////////////////////////////
 namespace {
-bool isWebDocument() noexcept {
+bool isWebDocument(LangType &lang) {
 	const auto webLangs = { L_HTML, L_XML, L_PHP, L_ASP, L_JSP };
-	if (std::find(webLangs.begin(), webLangs.end(), plugin.documentLangType()) != std::end(webLangs))
+	lang = plugin.documentLangType();
+	if (std::find(webLangs.begin(), webLangs.end(), lang) != std::end(webLangs))
 		return true;
 
 	const auto ftypes = {
