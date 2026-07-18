@@ -243,6 +243,7 @@ void AboutDlg::alignText(HWND hwndDlg, int id, std::wstring const &text, HDC con
 	bool isFarsi = plugin.menuLocale() == "farsi";
 	bool isHebrew = plugin.menuLocale() == "hebrew";
 	bool isHindi = plugin.menuLocale() == "hindi";
+	bool isHungarian = plugin.menuLocale() == "hungarian";
 	bool isKorean = plugin.menuLocale() == "korean";
 	bool isSerbCyrl = plugin.menuLocale() == "serbianCyrillic";
 	bool isSinhala = plugin.menuLocale() == "sinhala";
@@ -381,11 +382,11 @@ void AboutDlg::alignText(HWND hwndDlg, int id, std::wstring const &text, HDC con
 							case ID_ENTITIES_FILE_LINK:
 								if (isHindi)
 									percentage = 0.02381;
-								else
+								else if (!isHungarian)
 									percentage = isSinhala ? 0.05 : 0.0417;
 								break;
 							case ID_TRANSLATIONS_FILE_LINK:
-								if (!isHindi) {
+								if (!isHindi && !isHungarian) {
 									percentage = isSinhala ? 0.05 : 0.0625;
 									break;
 								}
@@ -437,7 +438,8 @@ void AboutDlg::alignText(HWND hwndDlg, int id, std::wstring const &text, HDC con
 			if (_isBrahmic || _isCyrillic)
 				startPos += charWidth;
 
-			double displacement = _isLatinSlavic ? 0.8667 : (hasWin11Dims ? 0.85 : 0.78);
+			double displacement =
+			    isHungarian ? 0.75 : (_isLatinSlavic ? 0.8667 : (hasWin11Dims ? 0.85 : 0.78));
 			if (!(hasWin11Dims || isSerbCyrl) && _isCyrillic)
 				displacement = 0.7;
 			else if (_isCJK || (hasWin11Dims && _isCyrillic))
@@ -467,7 +469,9 @@ void AboutDlg::alignText(HWND hwndDlg, int id, std::wstring const &text, HDC con
 			break;
 	}
 	int offsetX = ((rc.right - rc.left) >> 1) - (sz.cx >> 1) - (dir * bias);
-	if (!(id == ID_PLUGIN_VERSION_TXT || hasWin11Dims || _isCyrillic || _isBrahmic))
+	if ((id == ID_TRANSLATIONS_FILE_LINK || id == ID_UNICODE_CONFIG_LINK) && isHungarian)
+		offsetX -= static_cast<int>(std::ceil(cx * (hasWin11Dims ? 0.03125 : -0.1)));
+	else if (!(id == ID_PLUGIN_VERSION_TXT || hasWin11Dims || _isCyrillic || _isBrahmic))
 		offsetX += static_cast<int>(std::ceil(cx * 0.125));
 	::SetWindowPos(item, HWND_TOP, offsetX, offsetY, cx, sz.cy, defaultFlags);
 }
