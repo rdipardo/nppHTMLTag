@@ -18,7 +18,7 @@ permissions:
 jobs:
   build:
     name: 'Build project with MSVC'
-    runs-on: windows-2025
+    runs-on: windows-2022
     strategy:
       matrix:
         target: [x86, x64, amd64_arm64]
