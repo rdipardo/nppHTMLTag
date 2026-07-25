@@ -1,10 +1,14 @@
 
 h3. Released Versions
 
+* 1.6.1 (2026-07-25)
+** Fixed: the autocompletion prompt for emoji shortcodes will not appear when editing XML files ["fe9c16a":https://github.com/rdipardo/nppHTMLTag/commit/fe9c16a]
+** Added: translations for Croation ("#20":20, "#21":21) and Hungarian ("#22":22, "#23":23)
+
 * 1.6.0 (2026-05-08)
 ** Fixed: debug builds will not crash when opening configuration files from the About dialog ["cf4c5f7":https://github.com/rdipardo/nppHTMLTag/commit/cf4c5f7]
 ** Changed: updated translations and entities are now copied automatically to the user's configuration folder ["5cb662e":https://github.com/rdipardo/nppHTMLTag/commit/5cb662e]
-** Changed: versions of Notepad older than 8.7 are no longer supported by the menu localization feature ["51870fb":https://github.com/rdipardo/nppHTMLTag/commit/51870fb]
+** Changed: versions of Notepad++ older than 8.7 are no longer supported by the menu localization feature ["51870fb":https://github.com/rdipardo/nppHTMLTag/commit/51870fb]
 ** Added: translations for Taiwanese Mandarin ("#18":18)
 
 * 1.5.6 (2026-01-02)
@@ -170,6 +174,10 @@ bq. [^1.^] If you are upgrading, remove or rename your @entities.ini@ file in @%
 [14]https://github.com/rdipardo/nppHTMLTag/issues/14
 [15]https://github.com/rdipardo/nppHTMLTag/issues/15
 [18]https://github.com/rdipardo/nppHTMLTag/issues/18
+[20]https://github.com/rdipardo/nppHTMLTag/pull/20
+[21]https://github.com/rdipardo/nppHTMLTag/pull/21
+[22]https://github.com/rdipardo/nppHTMLTag/pull/22
+[23]https://github.com/rdipardo/nppHTMLTag/pull/23
 [cref]https://community.notepad-plus-plus.org/topic/22471/recompile-your-x64-plugins-with-new-header
 [cref-2]https://community.notepad-plus-plus.org/post/93441
 [jsDecodeBug]https://community.notepad-plus-plus.org/topic/18488/htmltag-1-1-plugin-broken-since-npp-7-7
