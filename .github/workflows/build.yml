@@ -18,7 +18,11 @@ permissions:
 jobs:
   build:
     name: 'Build project with MSVC'
+    environment:
+      name: azure
     runs-on: windows-2022
+    permissions:
+      id-token: write # required by azure/login
     strategy:
       matrix:
         target: [x86, x64, amd64_arm64]
@@ -52,6 +56,37 @@ jobs:
       if: matrix.target == 'x86'
       run: mv -Force .\HTMLTag.dll .\HTMLTag_unicode.dll
       working-directory: out/${{ matrix.target }}/Release
+
+    - name: Login to Azure
+      # if: ${{ contains(github.ref, 'tags') && github.event_name == 'push' }}
+      uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Sign build artifacts
+      # if: ${{ contains(github.ref, 'tags') && github.event_name == 'push' }}
+      uses: azure/artifact-signing-action@c7ab2a863ab5f9a846ddb8265964877ef296ee82 # v2.0.0
+      with:
+        endpoint: https://ncus.codesigning.azure.net/
+        signing-account-name: devcerts
+        certificate-profile-name: gha-artifact-signing
+        files-folder: ${{ github.workspace }}\out\${{ fromJSON(env.TARGETS)[matrix.target] }}\Release
+        files-folder-filter: dll
+        file-digest: SHA256
+        timestamp-rfc3161: http://timestamp.acs.microsoft.com
+        timestamp-digest: SHA256
+        exclude-azure-cli-credential: false
+        exclude-environment-credential: true
+        exclude-workload-identity-credential: true
+        exclude-managed-identity-credential: true
+        exclude-shared-token-cache-credential: true
+        exclude-visual-studio-credential: true
+        exclude-visual-studio-code-credential: true
+        exclude-azure-powershell-credential: true
+        exclude-azure-developer-cli-credential: true
+        exclude-interactive-browser-credential: true
 
     - name: Copy build artifacts
       id: artifacts
